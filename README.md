@@ -108,7 +108,7 @@ The format for `Gesund Custom Format` is shown below under `Example JSON Inputs`
 
 Only the Highlighted Overall Metrics are printed to the console. The output on the consol should look like so:
 
-```json
+```
 Validation Metrics:
 ----------------------------------------
 Accuracy:
