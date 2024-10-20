@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='gesund',
-    version='0.3.17',
+    version='0.3.18',
     author='Gesund AI',
     author_email='veysel@gesund.ai',
     license="MIT",
