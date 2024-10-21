@@ -48,12 +48,13 @@ class Object_Detection_Plot:
         else:
             raise ValueError(f"Unsupported plot type: {plot_type}")
     
-    def _plot_blind_spot(self, blind_spot_args, save_path):
+    def _plot_blind_spot(self, blind_spot_args, save_path=None):
         if not self.result_dict or 'Average' not in self.result_dict:
             print("No valid 'Average' data found in the JSON.")
             return
         
         data = self.result_dict['Average']
+        
         df = pd.DataFrame([(k, v) for k, v in data.items() if v != "None"], columns=['Metric', 'Value'])
         df['Value'] = df['Value'].astype(float)
         
@@ -64,23 +65,34 @@ class Object_Detection_Plot:
                 df = df[df['Value'] > blind_spot_args['threshold']]
         
         df = df.sort_values('Value', ascending=False)
-        plt.figure(figsize=(12, 8))
-        sns.barplot(x='Value', y='Metric', hue='Metric', data=df, palette='viridis')
-        plt.title('Average Metrics', fontsize=16)
-        plt.xlabel('Value', fontsize=12)
-        plt.ylabel('Metric', fontsize=12)
-        for i, v in enumerate(df['Value']):
-            plt.text(v, i, f' {v:.4f}', va='center')
+        
+        plt.figure(figsize=(14, 8))
+        sns.barplot(x='Value', y='Metric', data=df, palette='pastel', edgecolor='black')
+        plt.title('Average Metrics', fontsize=20, fontweight='bold', pad=20)
+        plt.xlabel('Value', fontsize=14, labelpad=15)
+        plt.ylabel('Metric', fontsize=14, labelpad=15)
+        
+        plt.xticks(fontsize=12)
+        plt.yticks(fontsize=12)
+        
+        plt.grid(True, axis='x', linestyle='--', alpha=0.7)
+        
+        for i, value in enumerate(df['Value']):
+            plt.text(value + 0.01, i, f'{value:.4f}', va='center', ha='left', fontsize=12, color='black', fontweight='bold')
+        
+        plt.tight_layout()
+
         if save_path:
-            plt.savefig(save_path)
+            plt.savefig(save_path, bbox_inches='tight', dpi=300)
         else:
-            plt.savefig('average_metrics.png')
+            plt.savefig('average_metrics.png', bbox_inches='tight', dpi=300)
+        
         plt.show()
         plt.close()
         
-    def _plot_overall_metrics(self, overall_args, save_path):
+    def _plot_overall_metrics(self, overall_args, save_path=None):
         if not self.overall_json_data or self.overall_json_data.get('type') != 'overall':
-            print("No valid 'overall' data found in the new JSON.")
+            print("No valid 'overall' data found in the JSON.")
             return
         
         data = self.overall_json_data.get('data', {})
@@ -94,25 +106,34 @@ class Object_Detection_Plot:
         
         df = df.sort_values('Value', ascending=False)
         
-        plt.figure(figsize=(12, 8))
-        sns.barplot(x='Value', y='Metric', hue='Metric', data=df, palette='viridis')
-        plt.title('Overall Metrics', fontsize=16)
-        plt.xlabel('Value', fontsize=12)
-        plt.ylabel('Metric', fontsize=12)
-        for i, v in enumerate(df['Value']):
-            plt.text(v, i, f' {v:.4f}', va='center')
+        plt.figure(figsize=(14, 8))
+        sns.barplot(x='Value', y='Metric', data=df, palette='pastel', edgecolor='black')
+        
+        plt.title('Overall Metrics', fontsize=20, fontweight='bold', pad=20)
+        plt.xlabel('Metric Value', fontsize=14, labelpad=15)
+        plt.ylabel('Metric', fontsize=14, labelpad=15)
+        plt.xticks(fontsize=12)
+        plt.yticks(fontsize=12)
+        
+        plt.grid(True, axis='x', linestyle='--', alpha=0.7)
+        
+        for i, value in enumerate(df['Value']):
+            plt.text(value + 0.01, i, f'{value:.4f}', va='center', ha='left', fontsize=12, color='black', fontweight='bold')
+        
         plt.tight_layout()
+        
         if save_path:
-            plt.savefig(save_path)
+            plt.savefig(save_path, bbox_inches='tight', dpi=300)
         else:
-            plt.savefig('overall_metrics.png')
+            plt.savefig('overall_metrics.png', bbox_inches='tight', dpi=300)
+        
         plt.show()
         plt.close()
 
 
-    def _plot_top_misses(self, top_misses_args, save_path):
+    def _plot_top_misses(self, top_misses_args, save_path=None):
         if not self.new_json_data or self.new_json_data.get('type') != 'image':
-            print("No valid 'image' data found in the new JSON.")
+            print("No valid 'image' data found in the JSON.")
             return
         
         data = self.new_json_data.get('data', [])
@@ -127,24 +148,32 @@ class Object_Detection_Plot:
                 df = df.nsmallest(top_misses_args['top_n'], 'rank')
 
         df = df.sort_values('rank')
-        plt.figure(figsize=(12, 8))
-        sns.barplot(x='mIoU', y='image_id', hue='image_id', data=df, palette='viridis')
-        plt.title('mIoU for Each Image', fontsize=16)
-        plt.xlabel('mIoU', fontsize=12)
-        plt.ylabel('Image ID', fontsize=12)
-        for i, v in enumerate(df['mIoU']):
-            plt.text(v, i, f' {v:.4f}', va='center')
+        
+        plt.figure(figsize=(14, 8))
+        sns.barplot(x='mIoU', y='image_id', data=df, palette='pastel', edgecolor='black')
+        plt.title('Top Misses: mIoU for Each Image', fontsize=20, fontweight='bold', pad=20)
+        plt.xlabel('mIoU', fontsize=14, labelpad=15)
+        plt.ylabel('Image ID', fontsize=14, labelpad=15)
+        plt.xticks(fontsize=12)
+        plt.yticks(fontsize=12)
+        
+        plt.grid(True, axis='x', linestyle='--', alpha=0.7)
+
+        for index, value in enumerate(df['mIoU']):
+            plt.text(value + 0.01, index, f'{value:.4f}', va='center', ha='left', fontsize=12, color='black', fontweight='bold')
+        
         if save_path:
-            plt.savefig(save_path)
+            plt.savefig(save_path, bbox_inches='tight', dpi=300)
         else:
-            plt.savefig('top_misses.png')
+            plt.savefig('top_misses.png', bbox_inches='tight', dpi=300)
+        
         plt.show()
         plt.close()
 
 
-    def _plot_classbased_table_metrics(self,classbased_table_args, save_path):
+    def _plot_classbased_table_metrics(self, classbased_table_args, save_path=None):
         if not self.table_json_data or self.table_json_data.get('type') != 'table':
-            print("No valid 'table' data found in the new JSON.")
+            print("No valid 'table' data found in the JSON.")
             return
         
         data = self.table_json_data.get('data', {}).get('Validation', {})
@@ -152,35 +181,48 @@ class Object_Detection_Plot:
         
         if classbased_table_args:
             if 'metrics' in classbased_table_args:
-                df = df[classbased_table_args['metrics']]
+                available_metrics = set(df.columns) & set(classbased_table_args['metrics'])
+                df = df[list(available_metrics)]
             if 'threshold' in classbased_table_args:
                 df = df[df.apply(lambda row: all(float(val) > classbased_table_args['threshold'] for val in row if val != "None"), axis=1)]
         
         df = df.reset_index().rename(columns={'index': 'Class'})
         df = df.melt(id_vars=['Class'], var_name='Metric', value_name='Value')
-        df['Value'] = df['Value'].astype(float)
+        
+        df['Value'] = pd.to_numeric(df['Value'], errors='coerce')
         plt.figure(figsize=(12, 8))
-        sns.barplot(x='Value', y='Class', hue='Class', data=df, palette='viridis')
-        plt.title('Table Metrics', fontsize=16)
-        plt.xlabel('Value', fontsize=12)
-        plt.ylabel('Class', fontsize=12)
-        plt.legend(title='Metric')
+        ax = sns.barplot(x='Value', y='Class', hue='Metric', data=df, palette='Set2', dodge=True)
+        plt.title('Class-Based Table Metrics', fontsize=16, fontweight='bold', pad=20)
+        plt.xlabel('Metric Value', fontsize=12, labelpad=10)
+        plt.ylabel('Class', fontsize=12, labelpad=10)
+        plt.xticks(fontsize=10)
+        plt.yticks(fontsize=10)
+        plt.grid(True, axis='x', linestyle='--', alpha=0.7)
+       
+        for container in ax.containers:
+            ax.bar_label(container, fmt='%.2f', label_type='center', fontsize=8)        
+       
+        plt.legend(title='Metric', bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=10, title_fontsize=12)
+        plt.tight_layout()
+        
         if save_path:
-            plt.savefig(save_path)
+            plt.savefig(save_path, bbox_inches='tight', dpi=300)
         else:
-            plt.savefig('table_metrics.png')
+            plt.savefig('class_table_metrics.png', bbox_inches='tight', dpi=300)
+        
         plt.show()
         plt.close()
 #histogram_save_path = save_path.replace('.png', '_histogram.png') if save_path else 'histogram.png'
 
 
-    def _plot_mixed_metrics(self, mixed_args, save_path):
+    def _plot_mixed_metrics(self, mixed_args, save_path=None):
         if not self.mixed_json_data or self.mixed_json_data.get('type') != 'mixed':
-            print("No valid 'mixed' data found in the new JSON.")
+            print("No valid 'mixed' data found in the JSON.")
             return
         
         data = self.mixed_json_data.get('data', {}).get('ap_results', {})
         df = pd.DataFrame.from_dict(data, orient='index').reset_index().rename(columns={'index': 'Metric', 0: 'Value'})
+        
         df['Value'] = pd.to_numeric(df['Value'], errors='coerce')
 
         if mixed_args:
@@ -189,54 +231,74 @@ class Object_Detection_Plot:
             if 'threshold' in mixed_args:
                 df = df[df['Value'] > mixed_args['threshold']]
         
+        df = df.dropna(subset=['Value'])
+
         plt.figure(figsize=(12, 8))
-        sns.barplot(x='Value', y='Metric', data=df, hue='Metric', palette='viridis', dodge=False, legend=False)
-        plt.title('Mixed Metrics', fontsize=16)
-        plt.xlabel('Value', fontsize=12)
-        plt.ylabel('Metric', fontsize=12)
-        for i, v in enumerate(df['Value']):
-            if pd.notna(v):
-                plt.text(v, i, f' {v:.4f}', ha='center')
+        sns.barplot(x='Value', y='Metric', data=df, palette='pastel', dodge=False)
+        plt.title('Mixed Metrics', fontsize=18, fontweight='bold', pad=20)
+        plt.xlabel('Metric Value', fontsize=14, labelpad=15)
+        plt.ylabel('Metric Name', fontsize=14, labelpad=15)
+        plt.xticks(fontsize=12)
+        plt.yticks(fontsize=12)
+        plt.grid(True, axis='x', linestyle='--', alpha=0.7)
+
+        for index, value in enumerate(df['Value']):
+            plt.text(value + 0.02, index, f'{value:.4f}', ha='center', va='center', fontsize=12, color='black', fontweight='bold')
+
         if save_path:
-            plt.savefig(save_path)
+            plt.savefig(save_path, bbox_inches='tight', dpi=300)
         else:
-            plt.savefig('mixed_metrics.png')
+            plt.savefig('mixed_metrics_new.png', bbox_inches='tight', dpi=300)
+
         plt.show()
         plt.close()
 
-    def _plot_confidence_histogram(self, confidence_histogram_args, save_path):
+
+    def _plot_confidence_histogram(self, confidence_histogram_args, save_path=None):
         if not self.confidence_histogram_data or self.confidence_histogram_data.get('type') != 'mixed':
-            print("No valid 'confidence_histogram' data found in the new JSON.")
+            print("No valid 'confidence_histogram' data found in the JSON.")
             return
-        
         points_data = self.confidence_histogram_data.get('data', {}).get('points', [])
         histogram_data = self.confidence_histogram_data.get('data', {}).get('histogram', [])
         points_df = pd.DataFrame(points_data)
         histogram_df = pd.DataFrame(histogram_data)
-        
-        if confidence_histogram_args:
-            if 'labels' in confidence_histogram_args:
-                points_df = points_df[points_df['labels'].isin(confidence_histogram_args['labels'])]
-        
-        # Scatter plot of points
+
+        if confidence_histogram_args and 'labels' in confidence_histogram_args:
+            points_df = points_df[points_df['labels'].isin(confidence_histogram_args['labels'])]
+
         plt.figure(figsize=(12, 8))
-        sns.scatterplot(x='x', y='y', hue='labels', data=points_df, palette='viridis')
-        plt.title('Scatter Plot of Points', fontsize=16)
-        plt.xlabel('X', fontsize=12)
-        plt.ylabel('Y', fontsize=12)
-        plt.legend(title='Labels')
+        sns.scatterplot(x='x', y='y', hue='labels', data=points_df, palette='rocket', s=100, alpha=0.7)
+        plt.title('Scatter Plot of Points', fontsize=18, fontweight='bold', pad=20)
+        plt.xlabel('X ', fontsize=14, labelpad=15)
+        plt.ylabel('Y ', fontsize=14, labelpad=15)
+        
+        plt.grid(True, linestyle='--', alpha=0.7)
+        
+        plt.legend(title='Labels', fontsize=12, title_fontsize=14, loc='upper left', bbox_to_anchor=(1, 1))
+        
         scatter_save_path = save_path.replace('.png', '_scatter.png') if save_path else 'scatter_plot_points.png'
-        plt.savefig(scatter_save_path)
+        plt.savefig(scatter_save_path, bbox_inches='tight', dpi=300)
+        
         plt.show()
+        
         plt.close()
 
-        # Histogram
+        ### Histogram ###
         plt.figure(figsize=(12, 8))
-        sns.barplot(x='category', y='value', hue='value', data=histogram_df, palette='viridis')
-        plt.title('Histogram', fontsize=16)
-        plt.xlabel('Category', fontsize=12)
-        plt.ylabel('Value', fontsize=12)
+        
+        sns.barplot(x='category', y='value', data=histogram_df, palette='pastel')
+
+        plt.title('Confidence Histogram', fontsize=18, fontweight='bold', pad=20)
+        plt.xlabel('Confidence Category', fontsize=14, labelpad=15)
+        plt.ylabel('Frequency', fontsize=14, labelpad=15)
+        
+        plt.grid(True, axis='y', linestyle='--', alpha=0.7)
+        
+        for index, row in histogram_df.iterrows():
+            plt.text(index, row['value'] + 0.2, f'{row["value"]}', ha='center', fontsize=12, color='black', fontweight='bold')
+        
         histogram_save_path = save_path.replace('.png', '_histogram.png') if save_path else 'histogram.png'
-        plt.savefig(histogram_save_path)
+        plt.savefig(histogram_save_path, bbox_inches='tight', dpi=300)
+        
         plt.show()
         plt.close()
