@@ -196,58 +196,54 @@ class ValidationCreation:
                 
         return overall_metrics
 
-    def plot_metrics(self, metrics, jsons_dir, plot_dir):
+    def plot_metrics(self, metrics, json_output_dir, plot_outputs_dir, plot_configs):
         """
-        Plot the specified metrics and save them to a given directory.
+        Generate and save various types of plots based on the provided metrics and configurations.
 
-        :param metrics: Dictionary containing the metrics to be plotted (dict).
-        :param jsons_dir: Path to the directory containing JSON files with plot data (str).
-        :param plot_dir: Path to the directory where plots will be saved (str).
+        This function creates different types of plots (e.g., mixed plots, top misses, confidence histograms, etc.)
+        and saves them to the specified output directories.
+
+        :param metrics: Dictionary containing the computed metrics (dict).
+        :param json_output_dir: Directory path where JSON files for the plots will be saved (str).
+        :param plot_outputs_dir: Directory path where the generated plot images will be saved (str).
+        :param plot_configs: Configuration dictionary specifying the types of plots to generate and their parameters (dict).
 
         :return: None
         """
-        try:
-            draw_type = 'mixed_plot'
-            plot = Object_Detection_Plot(mixed_json_path=os.path.join(jsons_dir, 'plot_performance_by_iou_threshold.json'))
-            mixed_args = {'metrics': metrics.get('mixed_plot', ['map10', 'map50', 'map75']), 'threshold': 0.5}
-            plot.draw('mixed_plot', mixed_args=mixed_args, save_path=os.path.join(plot_dir, f'{draw_type}.png'))
-        except Exception as e:
-            print(f"Error creating mixed_plot: {e}")
-        try:
-            draw_type = 'top_misses'
-            plot = Object_Detection_Plot(top_misses_path=os.path.join(jsons_dir, f'plot_{draw_type}.json'))
-            top_misses_args = {'min_miou': metrics.get('top_misses_min_miou', 0.80), 'top_n': metrics.get('top_misses_top_n', 5)}
-            plot.draw('top_misses', top_misses_args=top_misses_args, save_path=os.path.join(plot_dir, f'{draw_type}.png'))
-        except Exception as e:
-            print(f"Error creating top_misses: {e}")
-        try:
-            draw_type = 'confidence_histogram'
-            plot = Object_Detection_Plot(confidence_histogram_path=os.path.join(jsons_dir, f'plot_{draw_type}_scatter_distribution.json'))
-            confidence_histogram_args = {'labels': metrics.get('confidence_histogram_labels', ['TP', 'FP'])}
-            plot.draw('confidence_histogram', confidence_histogram_args=confidence_histogram_args, save_path=os.path.join(plot_dir, f'{draw_type}.png'))
-        except Exception as e:
-            print(f"Error creating confidence_histogram: {e}")
-        try:
-            draw_type = 'classbased_table'
-            plot = Object_Detection_Plot(table_json_path=os.path.join(jsons_dir, f'plot_statistics_{draw_type}.json'))
-            classbased_table_args = {'metrics': metrics.get('classbased_table_metrics', ['AP@10', 'AP@50']), 'threshold': metrics.get('classbased_table_threshold', 0.8)}
-            plot.draw('classbased_table', classbased_table_args=classbased_table_args, save_path=os.path.join(plot_dir, f'{draw_type}.png'))
-        except Exception as e:
-            print(f"Error creating classbased_table: {e}")
-        try:
-            draw_type = 'overall_metrics'
-            plot = Object_Detection_Plot(overall_json_path=os.path.join(jsons_dir, f'plot_highlighted_{draw_type}.json'))
-            overall_args = {'metrics': metrics.get('overall_metrics_metrics', ['mAP@75', 'mAR@max=10']), 'threshold': metrics.get('overall_metrics_threshold', 0.5)}
-            plot.draw('overall_metrics', overall_args=overall_args, save_path=os.path.join(plot_dir, f'{draw_type}.png'))
-        except Exception as e:
-            print(f"Error creating overall_metrics: {e}")
-        try:
-            draw_type = 'blind_spot'
-            plot = Object_Detection_Plot(blind_spot_path=os.path.join(jsons_dir, f'plot_{draw_type}_metrics.json'))
-            blind_spot_args = {'Average': metrics.get('blind_spot_Average', ['mAP@50', 'mAP@75']), 'threshold': metrics.get('blind_spot_threshold', 0.54)}
-            plot.draw('blind_spot', blind_spot_args=blind_spot_args, save_path=os.path.join(plot_dir, f'{draw_type}.png'))
-        except Exception as e:
-            print(f"Error creating blind_spot: {e}")
+        file_name_patterns = {
+            'mixed_plot': ('mixed_json_path', 'plot_performance_by_iou_threshold.json'),
+            'top_misses': ('top_misses_path', 'plot_{}.json'),
+            'confidence_histogram': ('confidence_histogram_path', 'plot_{}_scatter_distribution.json'),
+            'classbased_table': ('table_json_path', 'plot_statistics_{}.json'),
+            'overall_metrics': ('overall_json_path', 'plot_highlighted_{}.json'),
+            'blind_spot': ('blind_spot_path', 'plot_{}_metrics.json')
+        }
+
+        draw_params = {
+            'mixed_plot': lambda c: {'mixed_args': c},
+            'top_misses': lambda c: {'top_misses_args': c},
+            'confidence_histogram': lambda c: {'confidence_histogram_args': c},
+            'classbased_table': lambda c: {'classbased_table_args': c},
+            'overall_metrics': lambda c: {'overall_args': c},
+            'blind_spot': lambda c: {'blind_spot_args': c}
+        }
+
+        for draw_type, config in plot_configs.items():
+            arg_name, file_pattern = file_name_patterns.get(draw_type, (None, 'plot_{}.json'))
+            if arg_name is None:
+                print(f"Warning: Unknown draw type '{draw_type}'. Skipping.")
+                continue
+
+            file_name = file_pattern.format(draw_type)
+            file_path = os.path.join(json_output_dir, file_name)
+            plot = Object_Detection_Plot(**{arg_name: file_path})
+            save_path = os.path.join(plot_outputs_dir, f'{draw_type}.png')
+
+            try:
+                params = draw_params.get(draw_type, lambda _: {})(config)
+                plot.draw(draw_type, save_path=save_path, **params)
+            except Exception as e:
+                print(f"Error creating {draw_type}: {e}")
 
     def _load_pred_coco(self, validation_collection_data=None):
         """
