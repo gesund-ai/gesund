@@ -12,3 +12,4 @@ numpy==1.21.6
 numba==0.55.2
 tqdm
 pycocotools @ git+https://github.com/HammadK44/cocoapi.git@Dev#subdirectory=PythonAPI/
+seaborn==0.13.2
