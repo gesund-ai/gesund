@@ -6,6 +6,20 @@ import seaborn as sns
 import os 
 
 class Classification_Plot:
+    """
+    A class for creating various plots and visualizations for classification metrics results.
+
+    :param blind_spot_path: (str, optional) Path to the blind spot analysis JSON file.
+    :param performance_threshold_path: (str, optional) Path to the performance by threshold JSON file.
+    :param class_distributions_path: (str, optional) Path to the class distributions JSON file.
+    :param roc_statistics_path: (str, optional) Path to the ROC statistics JSON file.
+    :param precision_recall_statistics_path: (str, optional) Path to the precision-recall statistics JSON file.
+    :param confidence_histogram_path: (str, optional) Path to the confidence histogram JSON file.
+    :param overall_json_path: (str, optional) Path to the overall metrics JSON file.
+    :param mixed_json_path: (str, optional) Path to the mixed metrics JSON file.
+    :param output_dir: (str, optional) Directory path for saving output plots.
+    """
+
     def __init__(self, blind_spot_path=None, performance_threshold_path=None, class_distributions_path=None, 
                 roc_statistics_path=None, precision_recall_statistics_path=None,
                 confidence_histogram_path=None, overall_json_path=None, mixed_json_path=None,
@@ -33,6 +47,13 @@ class Classification_Plot:
 
 
     def _load_json(self, json_path):
+        """
+        Load data from a JSON file.
+
+        :param json_path: (str) Path to the JSON file to be loaded.
+
+        :return: (dict) Loaded JSON data as a Python dictionary.
+        """
         with open(json_path, 'r') as file:
             data = json.load(file)
         return data
@@ -40,9 +61,25 @@ class Classification_Plot:
     def draw(self, plot_type, metrics=None, threshold=None, class_type='Average',
                 graph_type='graph_1',roc_class='normal', pr_class='normal',
                 confidence_histogram_args=None, overall_args=None, mixed_args=None,
-
                  save_path=None):
-        
+        """
+        Draw various types of plots based on the specified plot type and parameters.
+
+        :param plot_type: (str) Type of plot to generate ('class_distributions', 'blind_spot', 'performance_by_threshold', 
+                          'roc', 'precision_recall', 'confidence_histogram', 'overall_metrics', 'mixed_plot').
+        :param metrics: (list, optional) List of specific metrics or classes to include in the plot.
+        :param threshold: (float, optional) Threshold value for filtering metrics.
+        :param class_type: (str or list, optional) Class type(s) for 'blind_spot' plot.
+        :param graph_type: (str, optional) Graph type for 'performance_by_threshold' plot.
+        :param roc_class: (str or list, optional) Class(es) for 'roc' plot.
+        :param pr_class: (str or list, optional) Class(es) for 'precision_recall' plot.
+        :param confidence_histogram_args: (dict, optional) Arguments for 'confidence_histogram' plot.
+        :param overall_args: (dict, optional) Arguments for 'overall_metrics' plot.
+        :param mixed_args: (dict, optional) Arguments for 'mixed_plot'.
+        :param save_path: (str, optional) Path to save the generated plot.
+
+        :raises ValueError: If an unsupported plot type is specified.
+        """
         if plot_type == 'class_distributions':
             self._plot_class_distributions(metrics, threshold, save_path)
         elif plot_type == 'blind_spot':
@@ -66,6 +103,16 @@ class Classification_Plot:
 
 
     def _plot_class_distributions(self, metrics=None, threshold=None, save_path=None):
+        """
+        Create a bar plot visualization for class distributions in validation data.
+
+        :param metrics: (list, optional) List of specific classes to include in the plot.
+        :param threshold: (float, optional) Minimum count threshold for filtering classes.
+        :param save_path: (str, optional) Path where the plot should be saved. If None, saves as 'class_distributions.png'.
+
+        :return: None
+        :raises AttributeError: If no valid class distribution data is loaded.
+        """
         if not hasattr(self, 'class_data') or self.class_data.get('type') != 'bar':
             print("No valid 'bar' data found in the JSON.")
             return
@@ -101,6 +148,16 @@ class Classification_Plot:
 
 
     def _plot_blind_spot(self, class_types, save_path=None):
+        """
+        Create a grouped bar plot visualization for comparing performance metrics across class types.
+
+        :param class_types: (list) List of class types to include in the plot.
+        :param save_path: (str, optional) Path where the plot should be saved. If None, saves as 'class_comparison_metrics.png'.
+
+        :return: None
+        :raises AttributeError: If no metrics data is loaded.
+        """
+
         if not hasattr(self, 'metrics_data'):
             print("No metrics data found.")
             return
@@ -142,6 +199,19 @@ class Classification_Plot:
 
 
     def _plot_class_performance_by_threshold(self, graph_type, metrics, threshold, save_path=None):
+        """
+        Create a bar plot visualization for class performance metrics by threshold.
+
+        :param graph_type: (str) The type of graph to plot (e.g., 'graph_1').
+        :param metrics: (list, optional) List of specific metrics to include in the plot.
+        :param threshold: (float, optional) Minimum threshold value for filtering metrics.
+        :param save_path: (str, optional) Path where the plot should be saved. 
+                          If None, saves as '{graph_type}_performance_metrics.png'.
+
+        :return: None
+        :raises AttributeError: If no performance threshold data is loaded.
+        """
+
         if not self.performance_by_threshold:
             print("No performance threshold data found.")
             return
@@ -184,6 +254,15 @@ class Classification_Plot:
 
 
     def _plot_roc_statistics(self, roc_classes, save_path=None):
+        """
+        Create ROC curves for specified classes.
+
+        :param roc_classes: (list) List of classes to plot ROC curves for.
+        :param save_path: (str, optional) Path where the plot should be saved.
+
+        :return: None
+        :raises AttributeError: If no ROC statistics data is loaded.
+        """
         if not hasattr(self, 'roc_statistics'):
             print("No ROC statistics data found.")
             return
@@ -224,6 +303,16 @@ class Classification_Plot:
 
 
     def _plot_precision_recall_statistics(self, pr_classes, save_path):
+        """
+        Create Precision-Recall curves for specified classes.
+
+        :param pr_classes: (list) List of classes to plot Precision-Recall curves for.
+        :param save_path: (str, optional) Path where the plot should be saved.
+
+        :return: None
+        :raises AttributeError: If no Precision-Recall statistics data is loaded.
+        """
+
         if not hasattr(self, 'precision_recall_statistics'):
             print("No Precision-Recall statistics data found.")
             return
@@ -261,6 +350,17 @@ class Classification_Plot:
 
 
     def _plot_confidence_histogram(self, confidence_histogram_args, save_path):
+        """
+        Create scatter and histogram plots for confidence histogram data.
+
+        :param confidence_histogram_args: (dict, optional) Dictionary containing:
+            - 'labels': (list) List of labels to include in the scatter plot.
+        :param save_path: (str, optional) Path where the plots should be saved.
+                          If None, saves as 'scatter_plot_points.png' and 'histogram.png'.
+
+        :return: None
+        :raises AttributeError: If no valid confidence histogram data is loaded.
+        """
         if not self.confidence_histogram_data or self.confidence_histogram_data.get('type') != 'mixed':
             print("No valid 'confidence_histogram' data found in the new JSON.")
             return
@@ -308,6 +408,17 @@ class Classification_Plot:
 
 
     def _plot_overall_metrics(self, overall_args, save_path):
+        """
+        Create a bar plot visualization for overall validation metrics.
+
+        :param overall_args: (dict, optional) Dictionary containing:
+            - 'metrics': (list) List of specific metrics to include in the plot.
+            - 'threshold': (float) Minimum threshold value for filtering metrics.
+        :param save_path: (str, optional) Path where the plot should be saved.
+
+        :return: None
+        :raises AttributeError: If no valid overall data is loaded.
+        """
         if not self.overall_json_data or self.overall_json_data.get('type') != 'overall':
             print("No valid 'overall' data found in the new JSON.")
             return
