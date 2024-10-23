@@ -5,6 +5,17 @@ import seaborn as sns
 import os 
 
 class Object_Detection_Plot:
+    """
+    A class for creating various plots and visualizations for object detection results.
+
+    :param blind_spot_path: (str, optional) Path to the blind spot analysis JSON file.
+    :param top_misses_path: (str, optional) Path to the top misses analysis JSON file.
+    :param table_json_path: (str, optional) Path to the table metrics JSON file.
+    :param mixed_json_path: (str, optional) Path to the mixed metrics JSON file.
+    :param overall_json_path: (str, optional) Path to the overall metrics JSON file.
+    :param confidence_histogram_path: (str, optional) Path to the confidence histogram JSON file.
+    :param output_dir: (str, optional) Directory path for saving output plots.
+    """
     def __init__(self, blind_spot_path=None,
                   top_misses_path=None, table_json_path=None,
                     mixed_json_path=None, overall_json_path=None,
@@ -25,6 +36,13 @@ class Object_Detection_Plot:
             self.confidence_histogram_data = self._load_json(confidence_histogram_path)
     
     def _load_json(self, json_path):
+        """
+        Load data from a JSON file.
+
+        :param json_path: (str) Path to the JSON file to be loaded.
+
+        :return: (dict) Loaded JSON data as a Python dictionary.
+        """
         with open(json_path, 'r') as file:
             data = json.load(file)
         return data
@@ -33,6 +51,21 @@ class Object_Detection_Plot:
               top_misses_args=None, classbased_table_args=None, mixed_args=None,
                 overall_args=None, confidence_histogram_args=None,
                 save_path=None):
+        """
+        Draw various types of plots based on the specified plot type and parameters.
+
+        :param plot_type: (str) Type of plot to generate ('blind_spot', 'top_misses', 'classbased_table', 
+                         'mixed_plot', 'overall_metrics', 'confidence_histogram').
+        :param blind_spot_args: (dict, optional) Arguments for blind spot analysis plot.
+        :param top_misses_args: (dict, optional) Arguments for top misses plot.
+        :param classbased_table_args: (dict, optional) Arguments for class-based table plot.
+        :param mixed_args: (dict, optional) Arguments for mixed metrics plot.
+        :param overall_args: (dict, optional) Arguments for overall metrics plot.
+        :param confidence_histogram_args: (dict, optional) Arguments for confidence histogram plot.
+        :param save_path: (str, optional) Path to save the generated plot.
+
+        :raises ValueError: If an unsupported plot type is specified.
+        """
         if plot_type == 'blind_spot':
             self._plot_blind_spot(blind_spot_args, save_path)
         elif plot_type == 'top_misses':
@@ -49,6 +82,19 @@ class Object_Detection_Plot:
             raise ValueError(f"Unsupported plot type: {plot_type}")
     
     def _plot_blind_spot(self, blind_spot_args, save_path=None):
+        """
+        Create a bar plot visualization for blind spot analysis metrics.
+
+        :param blind_spot_args: (dict, optional) Dictionary containing:
+            - 'Average': (list) List of specific metrics to include in the plot
+            - 'threshold': (float) Minimum threshold value for filtering metrics
+        :param save_path: (str, optional) Path where the plot should be saved. 
+                         If None, saves as 'average_metrics.png'.
+
+        :return: None
+        :raises AttributeError: If no valid blind spot data is loaded.
+        """
+
         if not self.result_dict or 'Average' not in self.result_dict:
             print("No valid 'Average' data found in the JSON.")
             return
@@ -91,6 +137,19 @@ class Object_Detection_Plot:
         plt.close()
         
     def _plot_overall_metrics(self, overall_args, save_path=None):
+        """
+        Create a bar plot visualization for overall validation metrics.
+
+        :param overall_args: (dict, optional) Dictionary containing:
+            - 'metrics': (list) List of specific metrics to include in the plot
+            - 'threshold': (float) Minimum threshold value for filtering metrics
+        :param save_path: (str, optional) Path where the plot should be saved. 
+                        If None, saves as 'overall_metrics.png'.
+
+        :return: None
+        :raises AttributeError: If no valid overall data is loaded.
+        """
+
         if not self.overall_json_data or self.overall_json_data.get('type') != 'overall':
             print("No valid 'overall' data found in the JSON.")
             return
@@ -132,6 +191,20 @@ class Object_Detection_Plot:
 
 
     def _plot_top_misses(self, top_misses_args, save_path=None):
+        """
+        Create a bar plot visualization for top missed detections based on mIoU scores.
+
+        :param top_misses_args: (dict, optional) Dictionary containing:
+            - 'min_miou': (float) Minimum mIoU threshold for filtering
+            - 'max_miou': (float) Maximum mIoU threshold for filtering
+            - 'top_n': (int) Number of top misses to display
+        :param save_path: (str, optional) Path where the plot should be saved. 
+                        If None, saves as 'top_misses.png'.
+
+        :return: None
+        :raises AttributeError: If no valid image data is loaded.
+        """
+
         if not self.new_json_data or self.new_json_data.get('type') != 'image':
             print("No valid 'image' data found in the JSON.")
             return
@@ -172,6 +245,18 @@ class Object_Detection_Plot:
 
 
     def _plot_classbased_table_metrics(self, classbased_table_args, save_path=None):
+        """
+        Create a grouped bar plot visualization for class-based metrics comparison.
+
+        :param classbased_table_args: (dict, optional) Dictionary containing:
+            - 'metrics': (list) List of specific metrics to include in the plot
+            - 'threshold': (float) Minimum threshold value for filtering metrics
+        :param save_path: (str, optional) Path where the plot should be saved. 
+                        If None, saves as 'class_table_metrics.png'.
+
+        :return: None
+        :raises AttributeError: If no valid table data is loaded.
+        """
         if not self.table_json_data or self.table_json_data.get('type') != 'table':
             print("No valid 'table' data found in the JSON.")
             return
@@ -212,10 +297,21 @@ class Object_Detection_Plot:
         
         plt.show()
         plt.close()
-#histogram_save_path = save_path.replace('.png', '_histogram.png') if save_path else 'histogram.png'
 
 
     def _plot_mixed_metrics(self, mixed_args, save_path=None):
+        """
+        Create a bar plot visualization for mixed metrics data.
+
+        :param mixed_args: (dict, optional) Dictionary containing:
+            - 'metrics': (list) List of specific metrics to include in the plot
+            - 'threshold': (float) Minimum threshold value for filtering metrics
+        :param save_path: (str, optional) Path where the plot should be saved. 
+                          If None, saves as 'mixed_metrics_new.png'.
+
+        :return: None
+        :raises AttributeError: If no valid mixed data is loaded.
+        """
         if not self.mixed_json_data or self.mixed_json_data.get('type') != 'mixed':
             print("No valid 'mixed' data found in the JSON.")
             return
@@ -255,6 +351,17 @@ class Object_Detection_Plot:
 
 
     def _plot_confidence_histogram(self, confidence_histogram_args, save_path=None):
+        """
+        Create scatter and histogram plots for confidence histogram data.
+
+        :param confidence_histogram_args: (dict, optional) Dictionary containing:
+            - 'labels': (list) List of labels to include in the scatter plot
+        :param save_path: (str, optional) Path where the plots should be saved. 
+                          If None, saves as 'scatter_plot_points.png' and 'histogram.png'.
+
+        :return: None
+        :raises AttributeError: If no valid confidence histogram data is loaded.
+        """
         if not self.confidence_histogram_data or self.confidence_histogram_data.get('type') != 'mixed':
             print("No valid 'confidence_histogram' data found in the JSON.")
             return
