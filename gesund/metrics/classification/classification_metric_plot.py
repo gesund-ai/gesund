@@ -80,6 +80,7 @@ class Classification_Plot:
 
         :raises ValueError: If an unsupported plot type is specified.
         """
+
         if plot_type == 'class_distributions':
             self._plot_class_distributions(metrics, threshold, save_path)
         elif plot_type == 'blind_spot':
@@ -126,7 +127,7 @@ class Classification_Plot:
             df = df[df['Count'] >= threshold]
         
         plt.figure(figsize=(12, 8))
-        sns.barplot(x='Class', y='Count', data=df, palette='pastel', width=0.6)
+        sns.barplot(x='Class', y='Count', hue='Class', data=df, palette='pastel', width=0.6, legend=False)
         plt.title('Class Distribution in Validation Data', fontsize=18, fontweight='bold', pad=20)        
         plt.xlabel('Class Type', fontsize=14, labelpad=15)
         plt.ylabel('Number of Samples', fontsize=14, labelpad=15)
@@ -228,7 +229,7 @@ class Classification_Plot:
         
         plt.figure(figsize=(12, 8))
         
-        sns.barplot(x='Value', y='Metric', data=df, palette='pastel')
+        sns.barplot(x='Value', y='Metric', hue='Metric', data=df, palette='pastel', legend=False)
 
         plt.title(f'{graph_type} Performance Metrics (Threshold ≥ {threshold})', fontsize=18, fontweight='bold', pad=20)
 
@@ -391,7 +392,7 @@ class Classification_Plot:
         # Histogram Plot
         plt.figure(figsize=(12, 8))
         custom_palette = sns.color_palette('pastel', n_colors=len(histogram_df))        
-        bars = sns.barplot(x='category', y='value', data=histogram_df, palette=custom_palette)
+        sns.barplot(x='category', y='value', hue='category', data=histogram_df, palette=custom_palette, legend=False)
         plt.title('Confidence Histogram', fontsize=18, weight='bold')
         plt.xlabel('Category', fontsize=14)
         plt.ylabel('Value', fontsize=14)        
@@ -435,7 +436,7 @@ class Classification_Plot:
         df = df.sort_values('Value', ascending=False)
         
         plt.figure(figsize=(12, 8))
-        sns.barplot(x='Value', y='Metric', data=df, palette='viridis')
+        sns.barplot(x='Value', y='Metric', hue='Metric', data=df, palette='viridis', legend=False)
         plt.title('Overall Metrics', fontsize=16)
         plt.xlabel('Value', fontsize=12)
         plt.ylabel('Metric', fontsize=12)
