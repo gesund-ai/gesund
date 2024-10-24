@@ -113,7 +113,7 @@ class Object_Detection_Plot:
         df = df.sort_values('Value', ascending=False)
         
         plt.figure(figsize=(14, 8))
-        sns.barplot(x='Value', y='Metric', data=df, palette='pastel', edgecolor='black')
+        sns.barplot(x='Value', y='Metric', hue='Metric', data=df, palette='pastel', edgecolor='black', legend=False)
         plt.title('Average Metrics', fontsize=20, fontweight='bold', pad=20)
         plt.xlabel('Value', fontsize=14, labelpad=15)
         plt.ylabel('Metric', fontsize=14, labelpad=15)
@@ -166,7 +166,7 @@ class Object_Detection_Plot:
         df = df.sort_values('Value', ascending=False)
         
         plt.figure(figsize=(14, 8))
-        sns.barplot(x='Value', y='Metric', data=df, palette='pastel', edgecolor='black')
+        sns.barplot(x='Value', y='Metric', hue='Metric', data=df, palette='pastel', edgecolor='black', legend=False)
         
         plt.title('Overall Metrics', fontsize=20, fontweight='bold', pad=20)
         plt.xlabel('Metric Value', fontsize=14, labelpad=15)
@@ -223,7 +223,7 @@ class Object_Detection_Plot:
         df = df.sort_values('rank')
         
         plt.figure(figsize=(14, 8))
-        sns.barplot(x='mIoU', y='image_id', data=df, palette='pastel', edgecolor='black')
+        sns.barplot(x='mIoU', y='image_id', hue='image_id', data=df, palette='pastel', edgecolor='black', legend=False)
         plt.title('Top Misses: mIoU for Each Image', fontsize=20, fontweight='bold', pad=20)
         plt.xlabel('mIoU', fontsize=14, labelpad=15)
         plt.ylabel('Image ID', fontsize=14, labelpad=15)
@@ -330,7 +330,7 @@ class Object_Detection_Plot:
         df = df.dropna(subset=['Value'])
 
         plt.figure(figsize=(12, 8))
-        sns.barplot(x='Value', y='Metric', data=df, palette='pastel', dodge=False)
+        sns.barplot(x='Value', y='Metric', hue='Metric', data=df, palette='pastel', dodge=False, legend=False)
         plt.title('Mixed Metrics', fontsize=18, fontweight='bold', pad=20)
         plt.xlabel('Metric Value', fontsize=14, labelpad=15)
         plt.ylabel('Metric Name', fontsize=14, labelpad=15)
@@ -393,7 +393,7 @@ class Object_Detection_Plot:
         ### Histogram ###
         plt.figure(figsize=(12, 8))
         
-        sns.barplot(x='category', y='value', data=histogram_df, palette='pastel')
+        sns.barplot(x='category', y='value', hue='category', data=histogram_df, palette='pastel', legend=False)
 
         plt.title('Confidence Histogram', fontsize=18, fontweight='bold', pad=20)
         plt.xlabel('Confidence Category', fontsize=14, labelpad=15)
