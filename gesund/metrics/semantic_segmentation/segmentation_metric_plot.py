@@ -190,21 +190,23 @@ class Semantic_Segmentation_Plot:
         
         if overall_args:
             df = df[overall_args]
-
-        df = df.T
-        df.columns = ['Value'] 
+        
+        df = df.T.reset_index()
+        df.columns = ['Metric', 'Value']  
+        
         plt.figure(figsize=(14, 8))
-        sns.barplot(x=df.index, y='Value', data=df, palette='pastel', edgecolor='black')
+        sns.barplot(x='Metric', y='Value', hue='Metric', data=df, palette='pastel', edgecolor='black', legend=False)
         plt.title('Overall Metrics', fontsize=20, fontweight='bold', pad=20)
         plt.xlabel('Metrics', fontsize=14, labelpad=15)
         plt.ylabel('Values', fontsize=14, labelpad=15)
 
         plt.xticks(rotation=45, ha='right', fontsize=12)
-
         plt.grid(True, axis='y', linestyle='--', alpha=0.7)
-
-        for i, value in enumerate(df['Value']):
-            plt.text(i, value + 0.02, f'{value:.4f}', ha='center', va='bottom', fontsize=12, color='black', fontweight='bold')
+        
+        for i, row in enumerate(df.itertuples()):
+            plt.text(i, row.Value + 0.02, f'{row.Value:.4f}', 
+                    ha='center', va='bottom', fontsize=12, 
+                    color='black', fontweight='bold')
         
         plt.tight_layout()
 
