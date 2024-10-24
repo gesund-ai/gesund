@@ -127,45 +127,53 @@ class ValidationCreation:
         
         return overall_metrics
     
-    def plot_metrics(self, metrics, jsons_dir, plot_dir):
+    def plot_metrics(self, metrics, json_outputs_dir, plot_outputs_dir, plot_configs):
         """
-        Plot the specified metrics and save them to a given directory.
+        Generate and save various types of plots based on the provided metrics and configurations.
 
-        :param metrics: Dictionary containing the metrics to be plotted.
-        :param jsons_dir: Path to the directory containing JSON files with plot data.
-        :param plot_dir: Path to the directory where plots will be saved.
+        This function creates different types of plots (e.g., class_distributions, blind_spot, performance_by_threshold, etc.)
+        and saves them to the specified output directories.
+
+        :param metrics: Dictionary containing the computed metrics (dict).
+        :param json_output_dir: Directory path where JSON files for the plots will be saved (str).
+        :param plot_outputs_dir: Directory path where the generated plot images will be saved (str).
+        :param plot_configs: Configuration dictionary specifying the types of plots to generate and their parameters (dict).
 
         :return: None
         """
+        file_name_patterns = {
+            'class_distributions': ('class_distributions_path', 'plot_{}.json'),
+            'blind_spot': ('blind_spot_path', 'plot_{}_metrics.json'),
+            'performance_by_threshold': ('performance_threshold_path', 'plot_class_{}.json'),
+            'roc': ('roc_statistics_path', 'plot_{}_multiclass_statistics.json'),
+            'precision_recall': ('precision_recall_statistics_path', 'plot_{}_multiclass_statistics.json'),
+            'confidence_histogram': ('confidence_histogram_path', 'plot_{}_scatter_distribution.json'),
+            'overall_metrics': ('overall_json_path', 'plot_highlighted_{}.json')
+        }
 
-        draw_type = 'class_distributions'
-        plot = Classification_Plot(class_distributions_path=os.path.join(jsons_dir, f'plot_{draw_type}.json'))
-        plot.draw('class_distributions', metrics=['normal'], threshold=10, save_path=os.path.join(plot_dir, f'{draw_type}.png'))
+        draw_params = {
+            'class_distributions': lambda c: {'metrics': c.get('metrics'), 'threshold': c.get('threshold')},
+            'blind_spot': lambda c: {'class_type': c.get('class_type')},
+            'performance_by_threshold': lambda c: {'graph_type': c.get('graph_type'), 'metrics': c.get('metrics'), 'threshold': c.get('threshold')},
+            'roc': lambda c: {'roc_class': c.get('roc_class')},
+            'precision_recall': lambda c: {'pr_class': c.get('pr_class')},
+            'confidence_histogram': lambda c: {'metrics': c.get('metrics'), 'threshold': c.get('threshold')},
+            'overall_metrics': lambda c: {'metrics': c.get('metrics')}
+        }
 
-        draw_type = 'blind_spot'
-        plot = Classification_Plot(blind_spot_path=os.path.join(jsons_dir, f'plot_{draw_type}_metrics.json'))
-        plot.draw('blind_spot', class_type='Average', save_path=os.path.join(plot_dir, f'{draw_type}.png'))
+        for draw_type, config in plot_configs.items():
+            arg_name, file_pattern = file_name_patterns.get(draw_type, (None, 'plot_{}.json'))
+            if arg_name is None:
+                print(f"Warning: Unknown draw type '{draw_type}'. Skipping.")
+                continue
 
-        draw_type = 'performance_by_threshold'
-        plot = Classification_Plot(performance_threshold_path=os.path.join(jsons_dir, f'plot_class_{draw_type}.json'))
-        plot.draw('performance_by_threshold', graph_type='graph_1', metrics=['F1', 'Sensitivity', 'Specificity', 'Precision'], threshold=0.2, save_path=os.path.join(plot_dir, f'{draw_type}.png'))
-        
-        draw_type = 'roc'
-        plot = Classification_Plot(roc_statistics_path=os.path.join(jsons_dir, f'plot_{draw_type}_multiclass_statistics.json'))
-        plot.draw('roc', roc_class='normal', save_path=os.path.join(plot_dir, f'{draw_type}.png'))
+            file_name = file_pattern.format(draw_type)
+            file_path = os.path.join(json_outputs_dir, file_name)
+            plot = Classification_Plot(**{arg_name: file_path})
+            save_path = os.path.join(plot_outputs_dir, f'{draw_type}.png')
 
-        draw_type = 'precision_recall'
-        plot = Classification_Plot(precision_recall_statistics_path=os.path.join(jsons_dir, f'plot_{draw_type}_multiclass_statistics.json'))
-        plot.draw('precision_recall', pr_class='normal', save_path=os.path.join(plot_dir, f'{draw_type}.png'))
-
-        draw_type = 'confidence_histogram'
-        plot = Classification_Plot(confidence_histogram_path=os.path.join(jsons_dir, f'plot_{draw_type}_scatter_distribution.json'))
-        plot.draw('confidence_histogram', metrics=['TP','FP'], threshold=0.5, save_path=os.path.join(plot_dir, f'{draw_type}.png'))  
-
-        draw_type = 'overall_metrics'
-        plot = Classification_Plot(overall_json_path=os.path.join(jsons_dir, f'plot_highlighted_{draw_type}.json'))
-        plot.draw('overall_metrics', metrics=['mean AUC', 'fwIoU'],  save_path=os.path.join(plot_dir, f'{draw_type}.png'))
-
+            params = draw_params.get(draw_type, lambda _: {})(config)
+            plot.draw(draw_type, save_path=save_path, **params)
 
 
     def _load_plotting_data(self, validation_collection_data):
