@@ -14,6 +14,11 @@ from gesund.utils.validation_data_utils import Statistics
 
 class StatsTables:
     def __init__(self, class_mappings):
+        """
+        Initialize the StatsTables object with class mappings.
+
+        :param class_mappings: A dictionary mapping class indices to class names.
+        """
         self.class_mappings = class_mappings
         self.class_order = list(range(len(class_mappings.keys())))
 
@@ -21,6 +26,18 @@ class StatsTables:
         self.accuracy = Accuracy(class_mappings)
 
     def calculate_statistics_classbased_table(self, true, pred_categorical):
+        """
+        Calculate statistics for class-based metrics.
+
+        This function computes various statistics such as True Positives, False Positives,
+        True Negatives, and False Negatives for each class based on the true and predicted
+        categorical values. It renames the metrics for better readability.
+
+        :param true: The ground truth values as a pandas Series or array-like.
+        :param pred_categorical: The predicted values as a pandas Series or array-like.
+        
+        :return: A dictionary containing the renamed statistics for each class.
+        """
         rename_statistics_dict = {
             "FP": "False Positive",
             "TP": "True Positive",
@@ -54,6 +71,20 @@ class StatsTables:
     def calculate_highlighted_overall_metrics(
         self, true, pred_categorical, pred_logits, cal_conf_interval=False
     ):
+        """
+        Calculate overall highlighted metrics including accuracy, F1 scores, and AUC.
+
+        This function aggregates various metrics across all classes, including accuracy,
+        macro and micro F1 scores, precision, recall, and AUC, optionally calculating
+        confidence intervals for the metrics.
+
+        :param true: The ground truth values as a pandas Series or array-like.
+        :param pred_categorical: The predicted categorical values as a pandas Series or array-like.
+        :param pred_logits: The predicted logits from the model as an array-like.
+        :param cal_conf_interval: Whether to calculate confidence intervals for metrics.
+        
+        :return: A tuple of calculated metrics or a list of metrics with confidence intervals if specified.
+        """
         accuracy = self.accuracy.calculate_accuracy(
             true=true, pred_categorical=pred_categorical, target_class="overall"
         )
@@ -106,6 +137,16 @@ class StatsTables:
         return metrics_list
 
     def _calculate_shannon_diversity_index(self, true):
+        """
+        Calculate the Shannon diversity index for the true labels.
+
+        This function computes the Shannon diversity index, which quantifies
+        the diversity of classes present in the true labels.
+
+        :param true: The ground truth values as a pandas Series or array-like.
+        
+        :return: A float representing the Shannon diversity index.
+        """
         class_dist_dict = true.value_counts().to_dict()
         if len(class_dist_dict) > 1:
             n = true.shape[0]
@@ -122,7 +163,19 @@ class StatsTables:
             return 0
 
     def calculate_blind_spot_metrics(self, true, pred_categorical, pred_logits):
+        """
+        Calculate metrics focusing on blind spots in the predictions.
 
+        This function computes a range of metrics, including overall accuracy, 
+        class-wise accuracy, and Shannon diversity index, to identify potential
+        blind spots in the model's performance.
+
+        :param true: The ground truth values as a pandas Series or array-like.
+        :param pred_categorical: The predicted categorical values as a pandas Series or array-like.
+        :param pred_logits: The predicted logits from the model as an array-like.
+        
+        :return: A dictionary containing the metrics for blind spots across classes.
+        """
         # Calculate Metrics
         accuracy = self.accuracy.calculate_accuracy(
             true=true, pred_categorical=pred_categorical, target_class="overall"

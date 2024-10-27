@@ -14,6 +14,22 @@ from .blind_spot import PlotBlindSpot
 from .lift_chart import PlotLiftGainChart
 
 
+import pandas as pd
+import warnings
+from tqdm import tqdm
+
+from .top_losses import PlotTopLosses
+from .auc import PlotAUC
+from .confusion_matrix import PlotConfusionMatrix
+from .threshold import PlotThreshold
+from .parallel_plot import PlotParallel
+from .prediction_data_analysis import PlotPredictionDataAnalysis
+from .most_confused import PlotMostConfused
+from .stats_tables import PlotStatsTables
+from .blind_spot import PlotBlindSpot
+from .lift_chart import PlotLiftGainChart
+
+
 class ClassificationPlotDriver:
     def __init__(
         self,
@@ -27,6 +43,19 @@ class ClassificationPlotDriver:
         loss,
         filtering_meta
     ):
+        """
+        Initialize the ClassificationPlotDriver with required parameters.
+
+        :param true: Ground truth labels for the classification task.
+        :param pred: Predicted labels for the classification task.
+        :param meta: Metadata related to the predictions.
+        :param pred_categorical: Categorical predictions made by the model.
+        :param pred_logits: Raw logits output by the model.
+        :param meta_pred_true: Metadata with both predictions and true labels.
+        :param class_mappings: Mapping of classes for the problem domain.
+        :param loss: Loss values for the predictions.
+        :param filtering_meta: Metadata used for filtering plots and analysis.
+        """
         self.filtering_meta = filtering_meta
         # Import Classes
         self.plot_loss = PlotTopLosses(

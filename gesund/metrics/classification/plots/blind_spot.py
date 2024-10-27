@@ -16,6 +16,16 @@ class PlotBlindSpot:
     def __init__(
         self, true, pred_logits, pred_categorical, class_mappings, meta_pred_true
     ):
+        """
+        Initialize the PlotBlindSpot class with true labels, prediction logits, categorical predictions, 
+        class mappings, and metadata of predictions.
+
+        :param true: (pd.Series) True labels for the classification problem.
+        :param pred_logits: (pd.DataFrame) Prediction logits for each class.
+        :param pred_categorical: (pd.Series) Categorical predictions based on the logits.
+        :param class_mappings: (dict) Mapping of class indices to class names.
+        :param meta_pred_true: (pd.DataFrame) Metadata containing additional information about predictions.
+        """
         self.true = true
         self.pred_logits = pred_logits
         self.pred_categorical = pred_categorical
@@ -34,12 +44,17 @@ class PlotBlindSpot:
 
     def blind_spot_metrics(self, target_attribute_dict=None):
         """
-        Plots ROC Curve for target_class.
-        References:
-        https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html
-        https://plotly.com/python/roc-and-pr-curves/
-        :param target_class: target class to produce ROC plot
-        :return: payload_dict
+        Calculate blind spot metrics for the classification problem.
+
+        This function utilizes the PlotStatsTables class to compute metrics that help identify 
+        the blind spots in predictions, specifically where certain classes may be underrepresented 
+        or misclassified.
+
+        :param target_attribute_dict: (dict, optional) A dictionary of attributes to filter the metrics. 
+            If provided, only metrics for the specified attributes will be calculated.
+
+        :return: (dict) A dictionary containing the blind spot metrics, including class-wise statistics 
+            and any relevant performance metrics.
         """
         blind_spot_metrics_dict = self.plot_stats_tables.blind_spot_metrics(
             target_attribute_dict

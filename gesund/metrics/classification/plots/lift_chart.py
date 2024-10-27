@@ -9,6 +9,14 @@ from gesund.utils.validation_data_utils import ValidationUtils, Statistics
 
 class PlotLiftGainChart:
     def __init__(self, true, pred_logits, meta, class_mappings):
+        """
+        Initialize the PlotLiftGainChart class with true labels, predicted logits, metadata, and class mappings.
+
+        :param true: (pd.Series) A Series containing the true labels for the samples.
+        :param pred_logits: (pd.DataFrame) A DataFrame containing the predicted logits for the samples.
+        :param meta: (pd.DataFrame) A DataFrame containing metadata associated with the samples.
+        :param class_mappings: (dict) Mapping of class indices to class names.
+        """
         self.class_mappings = class_mappings
         self.class_order = [int(i) for i in list(class_mappings.keys())]
 
@@ -19,12 +27,23 @@ class PlotLiftGainChart:
 
     def lift_chart(self, target_attribute_dict, predicted_class=None):
         """
-        Calculates confusion matrix given true/predicted labels.
-        :param true: True labels for samples
-        :param pred_categorical: Prediction for samples
-        :return:
-        """
+        Calculate the lift curve points based on true labels and predicted logits.
 
+        This function filters the metadata according to the specified attributes, computes the lift points,
+        and formats the results to include class names.
+
+        :param target_attribute_dict: (dict) A dictionary of attributes used to filter the samples.
+            The function will only consider the samples that match these attributes when calculating the lift curve.
+
+        :param predicted_class: (int, optional) The specific predicted class for which to calculate the lift curve.
+            If not provided, the lift curve will be calculated for all classes.
+
+        :return: A dictionary containing the lift curve data and additional information, including:
+            - 'type' (str): Type of the metric, which is "lift".
+            - 'data' (dict): Contains:
+                - 'points' (list): A list of points representing the lift curve.
+                - 'class_order' (dict): The class mappings used in the lift calculation.
+        """
         filtered_meta_pred_true = self.validation_utils.filter_attribute_by_dict(
             target_attribute_dict
         )

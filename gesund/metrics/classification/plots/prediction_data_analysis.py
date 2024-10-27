@@ -29,11 +29,18 @@ class PlotPredictionDataAnalysis:
 
     def prediction_distribution(self, target_attribute_dict=None):
         """
-        Calculates true positive, true negative, false positive, false negatives for the given class.
-        :param target_class: Class to calculate metrics.
-        :param true: True labels for samples
-        :param pred_categorical: Prediction for samples
-        :return: payload_dict
+        Calculates the distribution of predictions for the specified target attributes.
+
+        This function computes the occurrences of predicted classes based on 
+        the provided target attributes. The results are formatted into a 
+        payload dictionary for visualization.
+
+        :param target_attribute_dict: (dict, optional) A dictionary of attributes 
+            to filter the predictions by. If None, no filtering is applied.
+        
+        :return: A dictionary containing:
+            - 'type' (str): The type of visualization (e.g., 'square').
+            - 'data' (dict): A dictionary mapping class names to their occurrence counts.
         """
         filtered_meta_pred_true = self.validation_utils.filter_attribute_by_dict(
             target_attribute_dict
@@ -54,8 +61,23 @@ class PlotPredictionDataAnalysis:
     def gtless_confidence_histogram_scatter_distribution(
         self, predicted_class="overall", n_samples=300, randomize_x=True, n_bins=25
     ):
-        # Plot Scatters
+        """
+        Generates a scatter distribution and histogram for prediction confidence levels.
 
+        This function filters the predictions based on the specified class 
+        and visualizes the confidence levels as a scatter plot along with 
+        a histogram of those confidence levels.
+
+        :param predicted_class: (str) The class for which to filter predictions. 
+            If 'overall', all predictions are included.
+        :param n_samples: (int) The number of samples to include in the visualization.
+        :param randomize_x: (bool) Whether to randomize the x-axis values.
+        :param n_bins: (int) The number of bins for the histogram.
+
+        :return: A dictionary containing:
+            - 'type' (str): The type of visualization (e.g., 'mixed').
+            - 'data' (dict): A dictionary with 'points' and 'histogram' for plotting.
+        """
         # Filtering data
         filtered_pred_categorical = pd.DataFrame(self.pred_categorical.copy())
         if n_samples > filtered_pred_categorical.shape[0]:
@@ -110,11 +132,21 @@ class PlotPredictionDataAnalysis:
 
     def explore_predictions(self, predicted_class=None, top_k=3000):
         """
-        Calculates minimum loss samples with appropriate information.
-        :param self:
-        :param predicted_class: Class of interest to calculate top losses.
-        :param top_k: Number of most loss samples
-        :return: payload_dict
+        Identifies the samples with the highest losses for further analysis.
+
+        This function computes and organizes the samples with the highest 
+        loss, allowing for examination of the model's predictions on these 
+        challenging cases.
+
+        :param predicted_class: (str, optional) The specific class to focus 
+            on when calculating top losses. If None, evaluates overall losses.
+        :param top_k: (int) The number of samples with the highest losses to return.
+
+        :return: A dictionary containing:
+            - 'type' (str): The type of visualization (e.g., 'image').
+            - 'data' (list): A list of dictionaries containing information about 
+              the top loss samples including image IDs, ranks, predictions, 
+              confidences, and associated metadata.
         """
 
         # Check if overall top loss need to be observed.
@@ -152,6 +184,19 @@ class PlotPredictionDataAnalysis:
         return payload_dict
 
     def softmax_probabilities_distribution(self, predicted_class, n_bins=25):
+        """
+        Computes and visualizes the distribution of softmax probabilities for a given class.
+
+        This function calculates the histogram of softmax probabilities for the 
+        specified predicted class and prepares it for visualization.
+
+        :param predicted_class: (str) The class for which to compute the softmax probabilities.
+        :param n_bins: (int) The number of bins for the histogram.
+
+        :return: A dictionary containing:
+            - 'type' (str): The type of visualization (e.g., 'scatter').
+            - 'data' (dict): The histogram data for the specified class.
+        """
         payload_dict = {
             "type": "scatter",
             "data": Statistics.calculate_histogram(
@@ -165,11 +210,15 @@ class PlotPredictionDataAnalysis:
 
     def class_distributions(self):
         """
-        Calculates statistics on classes.
-        :param true: true labels as a list = [1,0,3,4] for 4 sample dataset
-        :param pred_categorical: categorical predictions as a list = [1,0,3,4] for 4 sample dataset
-        :param labels: order of classes inside list
-        :return: confusion matrix
+        Computes and returns the distributions of the predicted classes.
+
+        This function gathers statistics on the true and predicted class labels, 
+        providing counts of each class for validation.
+
+        :return: A dictionary containing:
+            - 'type' (str): The type of visualization (e.g., 'bar').
+            - 'data' (dict): A dictionary with the counts of each class in 
+              the validation dataset.
         """
         data = {}
         counts = self.dataset_stats.calculate_class_distributions(self.true)
@@ -185,6 +234,17 @@ class PlotPredictionDataAnalysis:
         return payload_dict
 
     def meta_distributions(self):
+        """
+        Analyzes and returns distributions of metadata associated with predictions.
+
+        This function computes counts of various metadata attributes in the 
+        validation dataset, providing insights into the characteristics of 
+        the dataset used for predictions.
+
+        :return: A dictionary containing:
+            - 'type' (str): The type of visualization (e.g., 'bar').
+            - 'data' (dict): A dictionary with counts of each metadata attribute.
+        """
         meta_counts = self.dataset_stats.calculate_meta_distributions(self.meta)
         data_dict = {}
         data_dict["Validation"] = meta_counts
@@ -194,6 +254,19 @@ class PlotPredictionDataAnalysis:
         return payload_dict
 
     def prediction_dataset_distribution(self, target_attribute_dict=None):
+        """
+        Computes and compares the distributions of true and predicted classes.
+
+        This function analyzes the distributions of true labels and predicted 
+        labels, providing a visual representation of the model's performance.
+
+        :param target_attribute_dict: (dict, optional) A dictionary of attributes 
+            to filter the predictions by. If None, no filtering is applied.
+
+        :return: A dictionary containing:
+            - 'type' (str): The type of visualization (e.g., 'bar').
+            - 'data' (dict): A dictionary with distributions of true and predicted classes.
+        """
         filtered_meta_pred_true = self.validation_utils.filter_attribute_by_dict(
             target_attribute_dict
         )

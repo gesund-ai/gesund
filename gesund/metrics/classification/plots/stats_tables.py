@@ -13,6 +13,15 @@ class PlotStatsTables:
     def __init__(
         self, true, pred_logits, pred_categorical, class_mappings, meta_pred_true
     ):
+        """
+        Initialize the PlotStatsTables class.
+
+        :param true: True labels for the dataset.
+        :param pred_logits: Predicted logits for the dataset.
+        :param pred_categorical: Categorical predictions for the dataset.
+        :param class_mappings: Mappings of class indices to class names.
+        :param meta_pred_true: Metadata containing predictions and true values.
+        """
         self.true = true
         self.pred_logits = pred_logits
         self.pred_categorical = pred_categorical
@@ -26,6 +35,14 @@ class PlotStatsTables:
         self.validation_utils = ValidationUtils(meta_pred_true)
 
     def training_validation_comparison_classbased_table(self):
+        """
+        Create a comparison table of validation metrics.
+
+        This function calculates overall metrics such as accuracy, F1 scores, and AUC for the 
+        validation data and returns them in a structured format.
+
+        :return: A dictionary containing a table of validation metrics.
+        """
         rename_statistics_dict = {
             "FP": "False Positive",
             "TP": "True Positive",
@@ -75,11 +92,11 @@ class PlotStatsTables:
 
     def tp_tn_fp_fn(self, target_class=None, target_attribute_dict=None):
         """
-        Calculates true positive, true negative, false positive, false negatives for the given class.
+        Calculates true positive, true negative, false positive, false negative for the given class.
+
         :param target_class: Class to calculate metrics.
-        :param true: True labels for samples
-        :param pred_categorical: Prediction for samples
-        :return: payload_dict
+        :param target_attribute_dict: Dictionary of attributes for filtering.
+        :return: A dictionary containing TP, TN, FP, FN for the target class.
         """
         filtered_meta_pred_true = self.validation_utils.filter_attribute_by_dict(target_attribute_dict)
         true = filtered_meta_pred_true["true"]
@@ -107,6 +124,16 @@ class PlotStatsTables:
     def highlighted_overall_metrics(
         self, target_attribute_dict=None, cal_conf_interval=True
     ):
+        """
+        Calculate highlighted overall metrics for the dataset.
+
+        This function computes various validation metrics, optionally including confidence intervals,
+        for the true and predicted labels based on given attributes.
+
+        :param target_attribute_dict: Dictionary of attributes for filtering.
+        :param cal_conf_interval: Boolean flag to calculate confidence intervals.
+        :return: A dictionary containing overall validation metrics.
+        """
         payload_dict = {}
 
         image_ids = self.true.index
@@ -189,12 +216,12 @@ class PlotStatsTables:
 
     def statistics_classbased_table(self, target_attribute_dict=None):
         """
-        Calculates True Positive,True Negative, False Positive, False Negative for an attribute filtered data.
-        :param target_class: Class of interest to calculate ROC.
-        :param target_attribute_dict: Dictionary of attribute-value pairs.
-        If "Age" in meta_data, target_attribute_dict = {"Age:[10,30]} indicates  Age between 10 and 30.
-        If "Gender" in meta_data, target_attribute_dict = {"Gender:"male"] indicates  male accuracy.
-        :return: payload_dict
+        Calculates class-based statistics including true positives, false positives, and AUC.
+
+        This function filters the dataset based on the specified attributes and computes the required statistics.
+
+        :param target_attribute_dict: Dictionary of attribute-value pairs for filtering.
+        :return: A dictionary containing class-based statistics in table format.
         """
         #  TO DO: Reduce nofilter/filtered/multifiltered functions to single one, which is possible.
         filtered_meta_pred_true = self.validation_utils.filter_attribute_by_dict(
@@ -235,6 +262,14 @@ class PlotStatsTables:
         return payload_dict
 
     def class_performances(self):
+        """
+        Calculate performance metrics for each class.
+
+        This function computes metrics such as accuracy, F1 score, sensitivity, and specificity 
+        for each class and returns the results in a structured format.
+
+        :return: A dictionary containing performance metrics by class in a bar format.
+        """
         data = {}
         metrics = ["Accuracy", "F1", "TPR", "TNR", "PPV"]
         rename_statistics_dict = {
@@ -284,6 +319,16 @@ class PlotStatsTables:
         return payload_dict
 
     def blind_spot_metrics(self, target_attribute_dict=None):
+        """
+        Calculate blind spot metrics for the dataset.
+
+        This function computes metrics that indicate areas where the model fails to make 
+        accurate predictions. Optionally, it can filter the dataset based on specified 
+        attributes before calculation.
+
+        :param target_attribute_dict: Dictionary of attributes for filtering the dataset.
+        :return: A dictionary containing the calculated blind spot metrics.
+        """
         payload_dict = {}
         image_ids = self.true.index
 

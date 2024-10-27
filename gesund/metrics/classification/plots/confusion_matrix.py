@@ -9,6 +9,12 @@ from gesund.utils.validation_data_utils import ValidationUtils, Statistics
 
 class PlotConfusionMatrix:
     def __init__(self, meta_pred_true, class_mappings):
+        """
+        Initialize the PlotConfusionMatrix class with metadata, true labels, and class mappings.
+
+        :param meta_pred_true: (pd.DataFrame) A DataFrame containing the true labels and predicted labels.
+        :param class_mappings: (dict) Mapping of class indices to class names.
+        """
         self.class_mappings = class_mappings
         self.class_order = [int(i) for i in list(class_mappings.keys())]
 
@@ -18,10 +24,20 @@ class PlotConfusionMatrix:
 
     def confusion_matrix_(self, target_attribute_dict=None):
         """
-        Calculates confusion matrix given true/predicted labels.
-        :param true: True labels for samples
-        :param pred_categorical: Prediction for samples
-        :return:
+        Calculate the confusion matrix based on true and predicted labels.
+
+        This function filters the metadata according to the specified attributes, computes the confusion matrix,
+        and formats the results to include class names and their corresponding values.
+
+        :param target_attribute_dict: (dict, optional) A dictionary of attributes used to filter the samples.
+            If provided, only the samples matching these attributes will be considered for the confusion matrix.
+
+        :return: A dictionary containing the confusion matrix and additional information, including:
+            - 'type' (str): Type of the metric, which is "confusion".
+            - 'data' (dict): Contains:
+                - 'Validation' (list): A list of dictionaries with actual class names, predicted class names,
+                  and corresponding values.
+                - 'class_order' (dict): The class mappings used in the confusion matrix.
         """
         filtered_meta_pred_true = self.validation_utils.filter_attribute_by_dict(
             target_attribute_dict

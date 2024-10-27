@@ -10,6 +10,15 @@ from .auc import AUC
 
 class ThresholdMetrics:
     def __init__(self, true, pred_logits, class_mappings):
+        """
+        Initialize the ThresholdMetrics class.
+
+        This constructor initializes the class with the true labels, predicted logits, and class mappings.
+
+        :param true: Array-like of true labels for the samples.
+        :param pred_logits: Array-like of predicted logits for the samples.
+        :param class_mappings: A dictionary mapping class indices to class names.
+        """
         self.pred_logits = pred_logits
         self.true = true
         self.class_mappings = class_mappings
@@ -18,11 +27,21 @@ class ThresholdMetrics:
 
     def calculate_statistics_per_class(self, true, pred_categorical):
         """
-        Calculates class wise stats for the given class.
-        :param target_class: Class to calculate metrics.
-        :param true: True labels for samples
-        :param pred_categorical: Prediction for samples
-        :return: payload_dict
+        Calculates class-wise statistics for the given class.
+
+        This function computes various metrics such as F1 score, sensitivity, specificity, 
+        precision, and others for a specified class based on true labels and predicted categorical values.
+
+        :param true: Array-like of true labels for samples.
+        :param pred_categorical: Array-like of predicted categorical labels for samples.
+        
+        :return: A dictionary containing:
+            - 'type' (str): Type of graph to be generated, currently set to "bar".
+            - 'data' (dict): Contains metrics for two graphs:
+                - 'graph_1' (dict): Metrics including F1, Sensitivity, Specificity, Precision, 
+                                   Matthew's Classwise C C, FPR, FNR.
+                - 'graph_2' (dict): Counts of True Positives (TP), True Negatives (TN), 
+                                   False Positives (FP), and False Negatives (FN).
         """
         sense_spec_dict = self.auc.calculate_sense_spec(true, pred_categorical)
 

@@ -13,6 +13,16 @@ from gesund.utils.validation_data_utils import ValidationUtils, Statistics
 
 class PlotAUC:
     def __init__(self, pred_logits, meta_pred_true, class_mappings):
+        """
+        Initialize the PlotAUC class.
+
+        This constructor initializes the class with predicted logits, metadata of predicted and true labels, 
+        and class mappings necessary for calculating and plotting AUC and related statistics.
+
+        :param pred_logits: DataFrame containing predicted logits for each sample.
+        :param meta_pred_true: DataFrame containing metadata with predicted and true classes.
+        :param class_mappings: Dictionary mapping class indices to class labels.
+        """
         self.pred_logits = pred_logits
         self.class_mappings = class_mappings
         self.meta_pred_true = meta_pred_true
@@ -22,12 +32,15 @@ class PlotAUC:
 
     def precision_recall_multiclass_statistics(self, target_attribute_dict=None):
         """
-        Plots ROC Curve for target_class.
-        References:
-        https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html
-        https://plotly.com/python/roc-and-pr-curves/
-        :param target_class: target class to produce ROC plot
-        :return: payload_dict
+        Calculate and plot precision-recall statistics for multiclass classification.
+
+        This method filters the metadata based on the specified target attributes and calculates 
+        precision-recall statistics using the predicted logits. The results are returned in a 
+        dictionary format for further use or plotting.
+
+        :param target_attribute_dict: (dict, optional) A dictionary to filter the metadata based on specific attributes.
+        
+        :return: A dictionary containing the precision-recall data, including points and AUC values.
         """
         filtered_meta_pred_true = self.validation_utils.filter_attribute_by_dict(
             target_attribute_dict
@@ -45,14 +58,14 @@ class PlotAUC:
 
     def roc_multiclass_statistics(self, target_attribute_dict=None):
         """
-        Plots ROC Curve for target_class, returns either plotly or matplotlib object.
-        References:
-        https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html
-        https://plotly.com/python/roc-and-pr-curves/
-        :param target_class: target class to produce ROC plot
-        :param true: True labels.
-        :param pred_logits: prediction logits.
-        :return: matplotlib or plotly fig object
+        Calculate and plot ROC statistics for multiclass classification.
+
+        This method filters the metadata based on the specified target attributes and calculates 
+        ROC statistics using the predicted logits. The results can be used to create ROC plots.
+
+        :param target_attribute_dict: (dict, optional) A dictionary to filter the metadata based on specific attributes.
+        
+        :return: A dictionary containing the ROC data, including points and AUC values.
         """
         filtered_meta_pred_true = self.validation_utils.filter_attribute_by_dict(
             target_attribute_dict
@@ -72,8 +85,22 @@ class PlotAUC:
     def confidence_histogram_scatter_distribution(
         self, predicted_class="overall", n_samples=300, randomize_x=True, n_bins=25
     ):
-        # Plot Scatters
+        """
+        Generate a confidence histogram and scatter distribution for predictions.
 
+        This method plots a scatter distribution of predicted probabilities against true labels, 
+        optionally randomizing the x-values. It also calculates a histogram of predicted probabilities.
+
+        :param predicted_class: (str, optional) The class for which to plot the distribution. 
+                               Default is "overall", which includes all classes.
+        :param n_samples: (int, optional) The number of samples to include in the scatter plot. 
+                          Default is 300.
+        :param randomize_x: (bool, optional) If True, randomizes the x-values in the scatter plot. 
+                            Default is True.
+        :param n_bins: (int, optional) The number of bins to use for the histogram. Default is 25.
+        
+        :return: A dictionary containing the scatter points and histogram data.
+        """
         # Filtering data
         pred_true = self.meta_pred_true[["pred_categorical", "true"]].copy()
 

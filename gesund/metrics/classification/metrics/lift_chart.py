@@ -6,6 +6,11 @@ import sklearn
 
 class LiftChart:
     def __init__(self, class_mappings):
+        """
+        Initialize the LiftChart instance with class mappings.
+
+        :param class_mappings: A dictionary mapping class labels to class names.
+        """
         self.class_mappings = class_mappings
         self.class_order = [int(i) for i in list(class_mappings.keys())]
 
@@ -18,13 +23,22 @@ class LiftChart:
         labels=True,
         round_decimal=3,
     ):
-        """Generates the Decile Table from labels and probabilities
+        """
+        Generates the Decile Table from labels and probabilities.
 
-        The Decile Table is creared by first sorting the customers by their predicted
-        probabilities, in decreasing order from highest (closest to one) to
-        lowest (closest to zero). Splitting the customers into equally sized segments,
-        we create groups containing the same numbers of customers, for example, 10 decile
+        The Decile Table is created by first sorting the customers by their predicted
+        probabilities in decreasing order. It splits the customers into equally sized segments,
+        creating groups that contain the same number of customers, for example, 10 decile
         groups each containing 10% of the customer base.
+
+        :param true: A list or array of true labels for the customers.
+        :param pred_logits: A DataFrame containing predicted logits for each class.
+        :param predicted_class: The class for which the decile table is generated (default is 0).
+        :param change_deciles: The number of decile groups to create (default is 20).
+        :param labels: Whether to include labels in the output (default is True).
+        :param round_decimal: Number of decimal places to round the output metrics (default is 3).
+        
+        :return: A DataFrame containing the decile table with calculated metrics.
         """
         df = pd.DataFrame([true, pred_logits.loc[predicted_class].T]).T
         df = df.rename(columns={predicted_class: "pred_logits"})
@@ -115,7 +129,23 @@ class LiftChart:
         labels=True,
         round_decimal=3,
     ):
+        """
+        Calculate lift curve points for the given true labels and predicted logits.
 
+        This function generates lift curve points based on the decile table, either for a specific 
+        predicted class or for all classes. The results are returned as a dictionary mapping 
+        class names to their respective lift curve points.
+
+        :param true: A list or array of true labels for the customers.
+        :param pred_logits: A DataFrame containing predicted logits for each class.
+        :param predicted_class: The class for which to calculate lift points (default is None for all classes).
+        :param change_deciles: The number of decile groups to create (default is 20).
+        :param labels: Whether to include labels in the output (default is True).
+        :param round_decimal: Number of decimal places to round the output metrics (default is 3).
+        
+        :return: A dictionary mapping class names to their respective lift curve points, where each 
+                 point is a dictionary with 'x' and 'y' coordinates.
+        """
         class_lift_dict = dict()
         if predicted_class in [None, "all", "overall"]:
             for class_ in list(self.class_mappings.keys()):

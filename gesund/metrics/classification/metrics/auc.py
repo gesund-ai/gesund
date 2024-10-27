@@ -13,6 +13,14 @@ from .accuracy import Accuracy
 
 class AUC:
     def __init__(self, class_mappings):
+        """
+        Initialize the AUC class with class mappings.
+
+        This constructor sets up the AUC class with the provided class mappings and initializes
+        confusion matrix and accuracy calculations.
+
+        :param class_mappings: A dictionary mapping class indices to class names.
+        """
         self.class_mappings = class_mappings
         self.class_order = [int(i) for i in list(class_mappings.keys())]
 
@@ -21,8 +29,16 @@ class AUC:
 
     def calculate_sense_spec(self, true, pred_categorical):
         """
-        Calculate statistics for each class
-        :return: statistics dict
+        Calculate sensitivity and specificity statistics for each class.
+
+        This method computes various statistical metrics including True Positive Rate (TPR),
+        True Negative Rate (TNR), Precision, Recall, F1 score, and Matthews correlation
+        coefficient for the given true and predicted categorical labels.
+
+        :param true: Array-like of shape (n_samples,) containing true class labels.
+        :param pred_categorical: Array-like of shape (n_samples,) containing predicted class labels.
+
+        :return: A dictionary containing various performance metrics for each class and overall statistics.
         """
         # TO DO: Completely replace with scikit functions
         class_order = self.class_order.copy()
@@ -150,6 +166,21 @@ class AUC:
         return sense_spec_dict
 
     def _create_precision_recall_points(self, prec, rec, threshold):
+        """
+        Create precision-recall points for plotting.
+
+        This helper method generates a list of points representing the precision-recall curve
+        based on provided precision, recall, and threshold values.
+
+        :param prec: Array-like of precision values.
+        :param rec: Array-like of recall values.
+        :param threshold: Array-like of threshold values.
+
+        :return: A tuple containing:
+            - points_list (list): A list of dictionaries with precision-recall points.
+            - auc_value (float): The area under the precision-recall curve.
+        """
+
         points_list = []
         auc_value = auc(rec, prec)
 
@@ -169,6 +200,18 @@ class AUC:
         return points_list, auc_value
 
     def calculate_matthews_corr_coef(self, true, pred_categorical, target_class=None):
+        """
+        Calculate the Matthews correlation coefficient.
+
+        This method computes the Matthews correlation coefficient (MCC) for the given true
+        and predicted class labels, which is a measure of the quality of binary classifications.
+
+        :param true: Array-like of shape (n_samples,) containing true class labels.
+        :param pred_categorical: Array-like of shape (n_samples,) containing predicted class labels.
+        :param target_class: (str, optional) The target class to calculate MCC for. If None, calculates for overall.
+
+        :return: The MCC value or a dictionary of MCC values for each class if target_class is "all".
+        """
         if target_class == "overall" or target_class is None:
             return matthews_corrcoef(true, pred_categorical)
 
@@ -193,9 +236,17 @@ class AUC:
 
     def calculate_multiclass_precision_recall_statistics(self, true, pred_logits):
         """
-        Calculates multiclass precision-recall curve statistics for precision-recall plots. May be renamed if it's suitable for binary cases.
-        Reference : https://scikit-learn.org/stable/auto_examples/model_selection/plot_precision_recall.html#sphx-glr-auto-examples-model-selection-plot-precision-recall-py
-        :return:
+        Calculate multiclass precision-recall statistics.
+
+        This method computes the precision-recall curve statistics for multiclass predictions,
+        enabling evaluation of model performance through precision-recall plots.
+
+        :param true: Array-like of shape (n_samples,) containing true class labels.
+        :param pred_logits: DataFrame or array-like containing predicted class probabilities.
+
+        :return: A tuple containing:
+            - points (dict): A dictionary with precision-recall points for each class.
+            - aucs (dict): A dictionary with AUC values for each class.
         """
         y = true
         # Binarize the output
@@ -255,6 +306,19 @@ class AUC:
         return points, aucs
 
     def _create_roc_points(self, fpr, tpr, threshold):
+        """
+        Create ROC points for plotting.
+
+        This helper method generates a list of points representing the Receiver Operating
+        Characteristic (ROC) curve based on provided false positive rates, true positive rates,
+        and threshold values.
+
+        :param fpr: Array-like of false positive rates.
+        :param tpr: Array-like of true positive rates.
+        :param threshold: Array-like of threshold values.
+
+        :return: A list of dictionaries with ROC points.
+        """
         points_list = []
         for i in range(len(fpr) - len(threshold)):
             threshold = np.append(threshold, threshold[-1])
@@ -274,9 +338,18 @@ class AUC:
         self, true, pred_logits, return_points=False, use_class_name=True
     ):
         """
-        Calculates multiclass ROC curve statistics for ROC plots. May be renamed if it's suitable for binary cases.
-        Reference : https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html
-        :return:
+        Calculate multiclass ROC statistics.
+
+        This method computes the Receiver Operating Characteristic (ROC) statistics for multiclass
+        predictions, including true positive rates and false positive rates, and optionally
+        returns the ROC curve points for visualization.
+
+        :param true: Array-like of shape (n_samples,) containing true class labels.
+        :param pred_logits: DataFrame or array-like containing predicted class probabilities.
+        :param return_points: (bool, optional) Whether to return the ROC points for plotting.
+        :param use_class_name: (bool, optional) Whether to use class names instead of indices in the output.
+
+        :return: Depending on `return_points`, either a dictionary with ROC metrics or a tuple of points and AUC values.
         """
         y = true
         # Binarize the output
