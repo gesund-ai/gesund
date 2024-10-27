@@ -11,6 +11,12 @@ from pycocotools.cocoeval import COCOeval
 
 class AveragePrecision:
     def __init__(self, class_mappings, coco_):
+        """
+        Initialize the AveragePrecision class with class mappings and COCO data.
+
+        :param class_mappings: A dictionary mapping class IDs to class names.
+        :param coco_: A tuple containing predicted and ground truth COCO.
+        """
         self.class_mappings = class_mappings
         self.class_idxs = [int(i) for i in list(class_mappings.keys())]
         self.coco_ = coco_
@@ -26,6 +32,26 @@ class AveragePrecision:
         top_losses=False,
         idxs=None,
     ):
+        """
+        Calculate COCO metrics for the predictions against ground truth.
+
+        This function evaluates the predictions using the COCO evaluation metrics, 
+        including mean Average Precision (mAP) and other statistics. It can also 
+        return specific metrics such as confidence distribution, precision-recall 
+        points, or class-wise metrics.
+
+        :param pred_coco: COCO dict containing predictions.
+        :param gt_coco:  COCO dict ground truth annotations.
+        :param return_class_metrics: Whether to return metrics for each class.
+        :param return_points: Whether to return precision-recall points.
+        :param return_conf_dist: Whether to return the confidence distribution.
+        :param threshold: IoU threshold for calculating metrics.
+        :param top_losses: Whether to return images with the highest losses.
+        :param idxs: List of image IDs to filter metrics.
+        
+        :return: A dictionary containing the calculated COCO metrics or relevant data 
+                 based on the flags provided.
+        """
         annType = ["segm", "bbox", "keypoints"]
         annType = annType[1]  # specify type here
 
@@ -121,7 +147,16 @@ class AveragePrecision:
         return metrics_final
 
     def calculate_highlighted_overall_metrics(self, threshold):
+        """
+        Calculate overall metrics for highlighted predictions at a specified IoU threshold.
 
+        This function uses the provided threshold to compute overall metrics for 
+        the predictions against ground truth annotations.
+
+        :param threshold: IoU threshold to apply during evaluation.
+        
+        :return: The calculated COCO metrics for the specified threshold.
+        """
         pred_coco = self.coco_[0]
         gt_coco = self.coco_[1]
 
@@ -130,6 +165,19 @@ class AveragePrecision:
     def calculate_ap_metrics(
         self, threshold=None, idxs=None, return_map=False, return_class_metrics=True
     ):
+        """
+        Calculate average precision (AP) metrics based on the predictions and ground truth.
+
+        This function computes class-based average precision metrics for the predictions 
+        against ground truth annotations, optionally returning the mean Average Precision (mAP).
+
+        :param threshold: IoU threshold for calculating metrics.
+        :param idxs: List of image IDs to filter metrics.
+        :param return_map: Whether to return the mean Average Precision.
+        :param return_class_metrics: Whether to return class-specific metrics.
+        
+        :return: A dictionary containing class-based average precision metrics.
+        """
         pred_coco = self.coco_[0]
         gt_coco = self.coco_[1]
 
@@ -144,7 +192,17 @@ class AveragePrecision:
         return class_based_coco_metrics
 
     def calculate_iou_threshold_graph(self, threshold, return_points=True):
+        """
+        Calculate and return precision-recall points for a specified IoU threshold.
 
+        This function evaluates the predictions and returns the precision-recall 
+        points for the given IoU threshold.
+
+        :param threshold: IoU threshold for calculating metrics.
+        :param return_points: Whether to return precision-recall points.
+        
+        :return: A dictionary containing precision-recall points for the specified threshold.
+        """
         pred_coco = self.coco_[0]
         gt_coco = self.coco_[1]
 
@@ -155,6 +213,18 @@ class AveragePrecision:
     def calculate_confidence_distribution(
         self, threshold, predicted_class=None, return_conf_dist=True
     ):
+        """
+        Calculate the distribution of confidence scores for predictions.
+
+        This function returns the average confidence scores for each predicted class 
+        across the evaluated images, filtering by an optional specified class.
+
+        :param threshold: IoU threshold for evaluating predictions.
+        :param predicted_class: Optional class ID to filter predictions.
+        :param return_conf_dist: Whether to return the confidence distribution.
+        
+        :return: A dictionary mapping image IDs to their average confidence scores.
+        """
         pred_coco = self.coco_[0]
         gt_coco = self.coco_[1]
         eval_imgs = self.calculate_coco_metrics(
@@ -178,7 +248,16 @@ class AveragePrecision:
         return image_id_scores
 
     def plot_top_losses(self, top_losses=True):
+        """
+        Plot and return images with the highest losses based on predictions.
 
+        This function evaluates the predictions and returns a list of images that 
+        exhibit the highest mean Intersection over Union (mIoU) losses.
+
+        :param top_losses: Whether to return the top loss images.
+        
+        :return: A list of dictionaries containing image IDs and their respective mIoU scores.
+        """
         pred_coco = self.coco_[0]
         gt_coco = self.coco_[1]
 

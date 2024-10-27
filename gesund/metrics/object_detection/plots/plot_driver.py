@@ -21,6 +21,18 @@ class ObjectDetectionPlotDriver:
         loss_dict=None,
         filtering_meta=None,
     ):
+        """
+        Initialize the ObjectDetectionPlotDriver with required data for plotting.
+
+        :param coco_: COCO formatted data used for validation.
+        :param class_mappings: A dictionary mapping class IDs to class names.
+        :param ground_truth_dict: Dictionary containing ground truth data.
+        :param prediction_dict: Dictionary containing prediction data.
+        :param batch_job_id: Unique identifier for the batch job.
+        :param meta_data_dict: (optional) Metadata associated with the data, if available.
+        :param loss_dict: (optional) Dictionary of loss metrics, if available.
+        :param filtering_meta: (optional) Metadata used for filtering results, if any.
+        """
         # Create validation variables
         self.true = ground_truth_dict
         self.pred = prediction_dict

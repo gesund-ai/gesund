@@ -1,7 +1,6 @@
 import pandas as pd
 import numpy as np
 
-
 from ..metrics.average_precision import AveragePrecision
 from gesund.utils.validation_data_utils import ValidationUtils
 
@@ -12,6 +11,13 @@ class PlotAveragePrecision:
         coco_,
         meta_data_dict=None,
     ):
+        """
+        Initialize the PlotAveragePrecision class with class mappings, COCO data, and optional metadata.
+
+        :param class_mappings: Dictionary mapping class IDs to class names.
+        :param coco_: COCO dataset object containing annotations and predictions.
+        :param meta_data_dict: (optional) Dictionary containing metadata information.
+        """
         self.class_mappings = class_mappings
         self.coco_ = coco_
 
@@ -21,7 +27,17 @@ class PlotAveragePrecision:
             self.validation_utils = ValidationUtils(meta_df)
 
     def _plot_performance_by_iou_threshold(self, threshold, return_points=False):
+        """
+        Plot performance metrics based on the specified IoU threshold.
 
+        This function calculates the average precision metrics and IoU threshold graph for the provided
+        threshold and returns the results in a structured format.
+
+        :param threshold: Float representing the Intersection over Union (IoU) threshold.
+        :param return_points: Boolean indicating whether to return detailed metric points.
+        
+        :return: Dictionary containing metrics or overall metrics based on the return_points flag.
+        """
         payload_dict = dict()
         payload_dict["type"] = "mixed"
 
@@ -47,7 +63,16 @@ class PlotAveragePrecision:
         return payload_dict
 
     def _plot_highlighted_overall_metrics(self, threshold):
+        """
+        Plot highlighted overall metrics at the specified IoU threshold.
 
+        This function renames the metrics for better readability and returns the overall validation
+        metrics in a structured format.
+
+        :param threshold: Float representing the Intersection over Union (IoU) threshold.
+        
+        :return: Dictionary containing renamed overall metrics.
+        """
         rename_dict = {
             f"map{int(threshold*100)}": f"mAP@{int(threshold*100)}",
             f"map{int(threshold*100)}_11": f"mAP11@{int(threshold*100)}",
@@ -76,6 +101,16 @@ class PlotAveragePrecision:
         return payload_dict
 
     def _filter_ap_metrics(self, target_attribute_dict):
+        """
+        Filter average precision metrics based on the target attribute dictionary.
+
+        This function extracts the indices of the metrics to be filtered based on the provided
+        target attributes.
+
+        :param target_attribute_dict: Dictionary of target attributes used for filtering.
+        
+        :return: List of indices corresponding to the filtered metrics.
+        """
         if target_attribute_dict:
             idxs = self.validation_utils.filter_attribute_by_dict(
                 target_attribute_dict
@@ -86,7 +121,17 @@ class PlotAveragePrecision:
     def _plot_statistics_classbased_table(
         self, threshold=None, target_attribute_dict=None
     ):
+        """
+        Plot a statistics table for average precision metrics based on class.
 
+        This function calculates the class-wise average precision metrics and returns them in
+        a structured format.
+
+        :param threshold: (optional) Float representing the IoU threshold for metrics calculation.
+        :param target_attribute_dict: (optional) Dictionary of target attributes for filtering metrics.
+        
+        :return: Dictionary containing average precision metrics by class.
+        """
         average_precision = AveragePrecision(
             class_mappings=self.class_mappings,
             coco_=self.coco_,
@@ -121,7 +166,14 @@ class PlotAveragePrecision:
         return payload_dict
 
     def _plot_training_validation_comparison_classbased_table(self):
+        """
+        Plot a comparison table of training and validation average precision metrics by class.
 
+        This function retrieves the overall metrics and filters them to include only relevant
+        metrics for comparison between training and validation.
+
+        :return: Dictionary containing filtered training and validation comparison metrics.
+        """
         threshold = 0.1
         payload_dict = self._plot_highlighted_overall_metrics(threshold)
 
@@ -135,6 +187,16 @@ class PlotAveragePrecision:
         return payload_dict
 
     def _main_metric(self, threshold):
+        """
+        Calculate and return the main average precision metric at the specified threshold.
+
+        This function computes the mean average precision given a threshold and returns it in
+        a structured format.
+
+        :param threshold: Float representing the Intersection over Union (IoU) threshold.
+        
+        :return: Dictionary containing the mean average precision metric.
+        """
         average_precision = AveragePrecision(
             class_mappings=self.class_mappings,
             coco_=self.coco_,
@@ -147,12 +209,15 @@ class PlotAveragePrecision:
 
     def blind_spot_metrics(self, target_attribute_dict, threshold):
         """
-        Plots ROC Curve for target_class.
-        References:
-        https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html
-        https://plotly.com/python/roc-and-pr-curves/
-        :param target_class: target class to produce ROC plot
-        :return: payload_dict
+        Calculate and return blind spot metrics for the specified target attributes.
+
+        This function computes average precision metrics and overall metrics for the specified
+        target attributes, returning them in a structured format.
+
+        :param target_attribute_dict: Dictionary of target attributes for filtering metrics.
+        :param threshold: Float representing the Intersection over Union (IoU) threshold.
+        
+        :return: Dictionary containing average precision metrics for each class and overall metrics.
         """
         average_precision = AveragePrecision(
             class_mappings=self.class_mappings,

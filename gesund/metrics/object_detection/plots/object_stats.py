@@ -9,6 +9,17 @@ from gesund.utils.validation_data_utils import ValidationUtils, Statistics
 
 class PlotObjectStats:
     def __init__(self, coco_, class_mappings, meta_data_dict=None):
+        """
+        Initialize the PlotObjectStats class.
+
+        This class is responsible for plotting statistics related to object detection using COCO format data.
+        It initializes with class mappings and optional metadata to assist in validation and visualization.
+
+        :param coco_: A list containing COCO formatted data where the first element is predictions 
+                      and the second element contains annotations.
+        :param class_mappings: A dictionary mapping class names or IDs to their corresponding indexes.
+        :param meta_data_dict: A dictionary containing metadata for validation or training, if available.
+        """
         self.is_meta_exists = False
         self.coco_ = coco_
 
@@ -20,6 +31,20 @@ class PlotObjectStats:
         self.class_idxs = [int(i) for i in list(class_mappings.keys())]
 
     def _plot_object_counts(self, confidence=0, target_attribute_dict=None):
+        """
+        Plot object counts for ground truth and predictions.
+
+        This method filters the dataset based on the specified target attributes, counts the occurrences 
+        of each class in the ground truth and predicted annotations, and formats the result for visualization.
+
+        :param confidence: A float representing the confidence threshold for including predictions.
+        :param target_attribute_dict: A dictionary for filtering attributes (optional).
+        
+        :return: A dictionary formatted for bar chart visualization containing class occurrence counts.
+            - 'type' (str): The type of plot (e.g., 'bar').
+            - 'data' (dict): A dictionary with class names as keys and counts of predicted and ground truth 
+              occurrences as values.
+        """
         # Filter wrt target attribute dict
         idxs = self.validation_utils.filter_attribute_by_dict(
             target_attribute_dict
@@ -76,6 +101,18 @@ class PlotObjectStats:
         return payload_dict
 
     def _plot_prediction_distribution(self, target_attribute_dict=None):
+        """
+        Plot the distribution of predictions across classes.
+
+        This method filters the dataset based on the specified target attributes, counts the occurrences 
+        of each predicted class, and formats the result for pie chart visualization.
+
+        :param target_attribute_dict: A dictionary for filtering attributes (optional).
+
+        :return: A dictionary formatted for pie chart visualization containing class occurrence counts.
+            - 'type' (str): The type of plot (e.g., 'pie').
+            - 'data' (dict): A dictionary with class names as keys and counts of predicted occurrences as values.
+        """
         idxs = self.validation_utils.filter_attribute_by_dict(
             target_attribute_dict
         ).index.tolist()
