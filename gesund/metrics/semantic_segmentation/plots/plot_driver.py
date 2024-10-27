@@ -22,6 +22,21 @@ class SemanticSegmentationPlotDriver:
         study_list=None,
         filtering_meta=None,
     ):
+        """
+        Initialize the SemanticSegmentationPlotDriver class.
+
+        This class is responsible for managing and plotting various metrics related to semantic segmentation.
+        It sets up the necessary data and plots based on the provided ground truth and predictions.
+
+        :param class_mappings: A dictionary mapping class indices to class names.
+        :param ground_truth_dict: A dictionary containing ground truth data.
+        :param prediction_dict: A dictionary containing prediction data.
+        :param batch_job_id: A unique identifier for the batch job.
+        :param meta_data_dict: (optional) A dictionary containing metadata information.
+        :param loss_dict: (optional) A dictionary containing loss values (not used in this snippet).
+        :param study_list: (optional) A list of studies associated with the data.
+        :param filtering_meta: (optional) Metadata used for filtering.
+        """
 
         # Create validation variables
         self.true = ground_truth_dict

@@ -6,10 +6,29 @@ import sklearn
 from gesund.utils.validation_data_utils import ValidationUtils, Statistics
 
 class PlotDatasetStats:
-    def __init__(self,meta):
+    def __init__(self, meta):
+        """
+        Initialize the PlotDatasetStats object with metadata.
+
+        This constructor takes in the metadata DataFrame which contains the data 
+        needed for plotting and calculating statistics.
+
+        :param meta: (pd.DataFrame) A DataFrame containing the metadata for the dataset.
+        """
         self.meta = meta 
 
     def meta_distributions(self):
+        """
+        Generate metadata distributions for validation data.
+
+        This function calculates the distributions of metadata and prepares the 
+        data for visualization. It returns a dictionary structured for a bar chart.
+
+        :return: (dict) A dictionary containing the validation metadata distributions, 
+        formatted for plotting with keys:
+            - 'type' (str): The type of chart ('bar').
+            - 'data' (dict): A dictionary containing validation counts.
+        """
         meta_counts = self._calculate_meta_distributions(self.meta)
         data_dict = {}
         data_dict["Validation"] = meta_counts
@@ -22,11 +41,17 @@ class PlotDatasetStats:
 
     def _calculate_meta_distributions(self, meta):
         """
-        Calculates statistics on meta data.
-        :param true: true labels as a list = [1,0,3,4] for 4 sample dataset
-        :param pred_categorical: categorical predictions as a list = [1,0,3,4] for 4 sample dataset
-        :param labels: order of classes inside list
-        :return: dict that contains class dist. for validation/train dataset.
+        Calculate statistics on metadata.
+
+        This helper function computes both histogram statistics for numerical columns 
+        and value counts for categorical columns in the provided metadata DataFrame.
+
+        :param meta: (pd.DataFrame) The metadata DataFrame to calculate distributions from.
+
+        :return: (dict) A dictionary containing:
+            - 'bar' (dict): Value counts for categorical columns.
+            - 'histogram' (dict): Histograms for numerical columns, where keys are 
+              column names and values are histogram data.
         """
         # Histogram charts for numerical values
         numerical_columns = [

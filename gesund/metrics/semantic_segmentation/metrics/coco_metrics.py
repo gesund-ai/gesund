@@ -20,10 +20,24 @@ class COCOMetrics:
                                    "calc_ConfusionMatrix", "calc_CrossEntropy"]
 
     def __init__(self, class_mappings, study_list=None):
+        """
+        Initialize COCOMetrics with class mappings and an optional study list.
+
+        :param class_mappings: A dictionary mapping class IDs to class names.
+        :param study_list: Optional list of studies to include in the calculations.
+        """
         self.class_mappings = class_mappings
         self.study_list = study_list
 
     def calculate_iou(self, gt_mask, pred_mask, threshold=0.5):
+        """
+        Calculate Intersection over Union (IoU) between ground truth and predicted masks.
+
+        :param gt_mask: Ground truth mask (binary array).
+        :param pred_mask: Predicted mask (binary array).
+        :param threshold: Threshold to binarize the predicted mask.
+        :return: IoU value as a float.
+        """
         if threshold:
             pred_mask = (pred_mask > threshold) * 1
 
@@ -40,17 +54,41 @@ class COCOMetrics:
             return iou
 
     def calculate_accuracy(self, gt_mask, pred_mask, threshold=0.5):
+        """
+        Calculate the accuracy of predicted mask against the ground truth mask.
+
+        :param gt_mask: Ground truth mask (binary array).
+        :param pred_mask: Predicted mask (binary array).
+        :param threshold: Threshold to binarize the predicted mask.
+        :return: Accuracy value as a float.
+        """
         if threshold:
             pred_mask = (pred_mask > threshold) * 1
         return np.sum(pred_mask == gt_mask) / gt_mask.size
 
     def calculate_fwiou(self, gt_mask, pred_mask, frequency_rate, threshold=0.5):
+        """
+        Calculate Frequency Weighted IoU (FWIoU) for a given mask.
+
+        :param gt_mask: Ground truth mask (binary array).
+        :param pred_mask: Predicted mask (binary array).
+        :param frequency_rate: Frequency of the class in the ground truth.
+        :param threshold: Threshold to binarize the predicted mask.
+        :return: FWIoU value as a float.
+        """
         if threshold:
             pred_mask = (pred_mask > threshold) * 1
         return frequency_rate*np.sum(pred_mask == gt_mask) / gt_mask.size
 
 
     def calculate_dataset_pixel_accuracy(self, gt, pred):
+        """
+        Calculate pixel accuracy for a dataset of ground truth and predicted masks.
+
+        :param gt: Dictionary of ground truth masks indexed by image ID.
+        :param pred: Dictionary of predicted masks indexed by image ID.
+        :return: Dictionary containing image-wise accuracy and overall pixel accuracy.
+        """
         image_ids = list(gt.keys())
         accs = {}  
     
@@ -63,6 +101,13 @@ class COCOMetrics:
 
 
     def calculate_dataset_fwiou(self, gt, pred):
+        """
+        Calculate FWIoU for a dataset of ground truth and predicted masks.
+
+        :param gt: Dictionary of ground truth masks indexed by image ID.
+        :param pred: Dictionary of predicted masks indexed by image ID.
+        :return: Dictionary containing image-wise FWIoU and overall FWIoU.
+        """
         image_ids = list(gt.keys())
         fwious = {}  
     
@@ -73,8 +118,14 @@ class COCOMetrics:
         acc_results = {"imagewise_fwiou": fwious, "fwiou":np.sum(list(fwious.values()))}
         return acc_results
 
-    def calculate_miseval_metrics(self, gt,pred):
-        # Imagewise metrics, and datasetwise metrics
+    def calculate_miseval_metrics(self, gt, pred):
+        """
+        Calculate various metrics using the miseval library for ground truth and predicted masks.
+
+        :param gt: Dictionary of ground truth masks indexed by image ID.
+        :param pred: Dictionary of predicted masks indexed by image ID.
+        :return: Dictionary containing image-wise and dataset-wise metrics.
+        """
         miseval_metrics = dict()
         imagewise_metrics = dict()
 
@@ -106,6 +157,14 @@ class COCOMetrics:
 
 
     def calculate_dice(self, gt_mask, pred_mask, threshold=0.5):
+        """
+        Calculate the Dice coefficient between ground truth and predicted masks.
+
+        :param gt_mask: Ground truth mask (binary array).
+        :param pred_mask: Predicted mask (binary array).
+        :param threshold: Threshold to binarize the predicted mask.
+        :return: Dice coefficient value as a float.
+        """
         pred_mask_threshold = (pred_mask > threshold) * 1
         dice = (
             np.sum(pred_mask_threshold[gt_mask == 1])
@@ -115,7 +174,14 @@ class COCOMetrics:
         return dice
 
 
-    def calculate_dataset_iou(self, gt,pred):
+    def calculate_dataset_iou(self, gt, pred):
+        """
+        Calculate IoU for a dataset of ground truth and predicted masks.
+
+        :param gt: Dictionary of ground truth masks indexed by image ID.
+        :param pred: Dictionary of predicted masks indexed by image ID.
+        :return: Dictionary containing image-wise IoU and overall mean IoU.
+        """
         image_ids = list(gt.keys())
         ious = {}  
     
@@ -126,13 +192,36 @@ class COCOMetrics:
         iou_results = {"imagewise_iou": ious, "mean IoU":np.mean(list(ious.values()))}
         return iou_results
 
-    def calculate_frequency(self,gt):
+    def calculate_frequency(self, gt):
+        """
+        Calculate the frequency of the classes in the ground truth masks.
+
+        :param gt: Dictionary of ground truth masks indexed by image ID.
+        :return: Updated dictionary with frequencies for each image.
+        """
         for image_id in gt:
             mask_ = gt[image_id]["mask"]
             gt[image_id]["frequency"] = mask_.sum()/mask_.size
         return gt
 
-    def calculate_metrics(self,gt, pred):
+    def calculate_metrics(self, gt, pred):
+        """
+        Calculate various metrics for evaluating model performance based on ground truth and predicted data.
+
+        This function processes the ground truth and prediction data by converting them into mask format. It then
+        calculates metrics such as Intersection over Union (IoU), pixel accuracy, frequency-weighted IoU, and 
+        other evaluation metrics relevant to the dataset.
+
+        :param gt: A dictionary representing ground truth data, with image identifiers as keys and their corresponding
+            mask data as values.
+        :param pred: A dictionary representing predicted data, structured similarly to ground truth data.
+
+        :return: A dictionary containing calculated metrics, including:
+            - 'iou': The Intersection over Union metric.
+            - 'pAccs': Pixel accuracy metric.
+            - 'fwiou': Frequency-weighted Intersection over Union.
+            - 'misevals': Additional evaluation metrics.
+        """
         # Convert to mask from given annotation type
         gt_mask_dict = self._convert_dict_to_mask(gt)
         pred_mask_dict = self._convert_dict_to_mask(pred)
@@ -148,6 +237,21 @@ class COCOMetrics:
         
 
     def calculate_APD(self, gt, pred):
+        """
+        Calculate Average Perpendicular Distance (APD) metrics between ground truth and predicted contours.
+
+        This function identifies contours from the ground truth and prediction data and computes the APD, which
+        measures the average distance between the predicted contours and the ground truth contours. It also
+        calculates the percentage of "Good Contours" based on a specified distance threshold.
+
+        :param gt: A dictionary representing ground truth data, structured with image identifiers as keys.
+        :param pred: A dictionary representing predicted data, structured similarly to ground truth data.
+
+        :return: A dictionary containing the following metrics:
+            - 'mean_APD': The mean Average Perpendicular Distance across all images.
+            - 'std_APD': The standard deviation of the APD values.
+            - 'perc_good_contours': The percentage of contours classified as "Good Contours".
+        """
 
         num_good_contours = 0
         num_total_contours = 0
@@ -214,6 +318,27 @@ class COCOMetrics:
         
     # https://github.com/google-deepmind/surface-distance/tree/master
     def calculate_volumetric_metrics(self, gt_mask_series, pred_mask_series):
+        """
+        Compute volumetric metrics for evaluating segmentation quality between ground truth and predicted volumes.
+
+        This function calculates metrics such as Mean Surface Distance (MSD), Symmetric Surface Overlap, 
+        Volume Dice coefficient, and others for volumetric data. It requires ground truth and predicted mask 
+        series, ensuring the evaluation is based on valid volumes.
+
+        :param gt_mask_series: A dictionary representing ground truth mask series, with identifiers as keys.
+        :param pred_mask_series: A dictionary representing predicted mask series, structured similarly to ground truth.
+
+        :return: A dictionary containing various volumetric metrics, including:
+            - 'mean_surface_distance': Mean Surface Distance between ground truth and predictions.
+            - 'average_symmetric_surface_distance': Average symmetric surface distance.
+            - 'maximum_surface_distance': Maximum surface distance observed.
+            - 'symmetric_surface_overlap': Symmetric surface overlap metric.
+            - 'surface_dice': Surface Dice coefficient.
+            - 'volumetric_dice': Volumetric Dice coefficient.
+            - 'volume_overlap_error': Volume overlap error metric.
+            - 'relative_volume_difference': Relative difference in volume between ground truth and prediction.
+            - 'robust_hausdorff_distance': Robust Hausdorff Distance at the 95th percentile.
+        """
         
         image_ids = set(gt_mask_series.keys()).intersection(set(pred_mask_series.keys()))        
         spacing_mm = next(iter(gt_mask_series.values()))['spacing_mm']
@@ -297,6 +422,28 @@ class COCOMetrics:
         }
 
     def calculate_highlighted_overall_metrics(self, gt, pred):
+        """
+        Calculate overall highlighted metrics for segmented volumes based on ground truth and predicted data.
+
+        This function aggregates various volumetric and pixel-based metrics across multiple studies. It evaluates
+        the performance by utilizing individual study metrics calculated from the provided ground truth and 
+        predicted data.
+
+        :param gt: A dictionary representing ground truth data, with image identifiers as keys.
+        :param pred: A dictionary representing predicted data, structured similarly to ground truth data.
+
+        :return: A dictionary containing overall metrics across studies, including:
+            - 'Vol.DSC': Volume Dice coefficient for the segmented volumes.
+            - 'Vol.OE': Volume overlap error.
+            - 'mSD': Mean Surface Distance.
+            - 'Avg.SSD': Average Symmetric Surface Distance.
+            - 'MSD': Maximum Surface Distance.
+            - 'SSO': Symmetric Surface Overlap.
+            - 'SDSC': Surface Dice coefficient.
+            - 'RVD': Relative Volume Difference.
+            - 'RHD': Robust Hausdorff Distance.
+            - Other volumetric and evaluation metrics aggregated over studies.
+        """
         # Convert to mask from given annotation type
         gt_mask_dict = self._convert_dict_to_mask(gt)
         pred_mask_dict = self._convert_dict_to_mask(pred)
@@ -386,6 +533,22 @@ class COCOMetrics:
             }
 
     def calculate_statistics_classbased_table(self, gt, pred, target_attribute_dict=None):
+        """
+        Calculate statistics based on ground truth and prediction data for each class.
+
+        This function filters ground truth and predicted masks by class and computes various volumetric metrics 
+        such as Dice Similarity Coefficient (DSC), Volume Overlap Error (Vol.OE), and others for each class in 
+        the predictions. The results are aggregated and returned as a dictionary.
+
+        :param gt: A dictionary containing the ground truth masks with image identifiers as keys.
+        :param pred: A dictionary containing the predicted masks with image identifiers as keys.
+        :param target_attribute_dict: (dict, optional) A dictionary containing target attributes for filtering 
+                                    the study ID. If provided, only the masks corresponding to this study ID 
+                                    will be processed.
+        
+        :return: A dictionary containing the calculated metrics for each class. Each key is the class mapping 
+                and the value is another dictionary of metrics.
+        """
         metrics_dict = dict()
         if target_attribute_dict:
             if target_attribute_dict.get("study_id"):
@@ -510,6 +673,16 @@ class COCOMetrics:
 
 
     def _detect_annotation_type(self, dict_):
+        """
+        Detect the type of annotations present in the given dictionary.
+
+        This function identifies the annotation type from a dictionary containing various annotation formats. 
+        It returns the first found type that matches the supported annotation types.
+
+        :param dict_: A dictionary containing annotations where keys are image identifiers.
+
+        :return: The detected annotation type as a string if found; otherwise, None.
+        """
         random_image_id = list(dict_.keys())[0]
         dict_annotation_types = list(dict_[random_image_id].keys())
         intersection_annotation_types = list(set(dict_annotation_types) & set(self.SUPPORTED_ANNOTATION_TYPES))
@@ -519,6 +692,17 @@ class COCOMetrics:
                 return annotation_type
 
     def _convert_dict_to_mask(self, dict_):
+        """
+        Convert a dictionary of annotations to a mask representation.
+
+        This function processes the input dictionary, detecting the annotation type and converting relevant 
+        data into a mask format. The output is a new dictionary with masks.
+
+        :param dict_: A dictionary containing annotations to be converted.
+
+        :return: A dictionary where keys are image identifiers and values are dictionaries containing masks and 
+                corresponding class labels.
+        """
         new_dict = dict()
         annotation_type =self._detect_annotation_type(dict_)
 
@@ -532,6 +716,18 @@ class COCOMetrics:
         return new_dict
     
     def _convert_dict_to_study_dicts(self, gt, pred):
+        """
+        Convert ground truth and prediction dictionaries into study-based dictionaries.
+
+        This function organizes the ground truth and prediction data into dictionaries keyed by study ID. 
+        Each study ID contains a further dictionary mapping image identifiers to their corresponding mask data.
+
+        :param gt: A dictionary containing ground truth data with image identifiers as keys.
+        :param pred: A dictionary containing predicted data with image identifiers as keys.
+
+        :return: Two dictionaries: one for ground truth data and one for predicted data, both organized by 
+                study ID.
+        """
         gt_dict_of_dicts = {}
         pred_dict_of_dicts = {}
 
@@ -568,6 +764,19 @@ class COCOMetrics:
         return gt_dict_of_dicts, pred_dict_of_dicts
 
     def create_artifacts(self, gt, pred, artifacts_path=None):
+        """
+        Create artifacts from the ground truth and prediction masks.
+
+        This function generates various metrics such as IoU, pixel accuracy, and others by processing ground 
+        truth and prediction data. The results are aggregated and can be saved to a specified artifacts path.
+
+        :param gt: A dictionary containing the ground truth masks.
+        :param pred: A dictionary containing the predicted masks.
+        :param artifacts_path: (str, optional) Path where artifacts should be saved. If None, artifacts are 
+                            not saved.
+        
+        :return: A dictionary containing combined metrics and information about the generated artifacts.
+        """
         
         if self.study_list:
             gt_mask_dict = self._convert_dict_to_mask(gt)
