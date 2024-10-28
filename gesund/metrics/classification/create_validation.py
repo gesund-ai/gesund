@@ -148,7 +148,11 @@ class ValidationCreation:
             'roc': ('roc_statistics_path', 'plot_{}_multiclass_statistics.json'),
             'precision_recall': ('precision_recall_statistics_path', 'plot_{}_multiclass_statistics.json'),
             'confidence_histogram': ('confidence_histogram_path', 'plot_{}_scatter_distribution.json'),
-            'overall_metrics': ('overall_json_path', 'plot_highlighted_{}.json')
+            'overall_metrics': ('overall_json_path', 'plot_highlighted_{}.json'),
+            'confusion_matrix': ('confusion_matrix_path', 'plot_tp_tn_fp_fn.json'),
+            'prediction_dataset_distribution': ('prediction_dataset_distribution_path', 'plot_{}.json'),
+            'most_confused_bar': ('most_confused_bar_path', 'plot_{}.json'),
+            'confidence_histogram_scatter_distribution': ('confidence_histogram_scatter_distribution_path', 'plot_{}.json'),
         }
 
         draw_params = {
@@ -158,7 +162,12 @@ class ValidationCreation:
             'roc': lambda c: {'roc_class': c.get('roc_class')},
             'precision_recall': lambda c: {'pr_class': c.get('pr_class')},
             'confidence_histogram': lambda c: {'metrics': c.get('metrics'), 'threshold': c.get('threshold')},
-            'overall_metrics': lambda c: {'metrics': c.get('metrics')}
+            'overall_metrics': lambda c: {'metrics': c.get('metrics')},
+            'confusion_matrix': lambda c : {},
+            'prediction_dataset_distribution': lambda c : {},
+            'most_confused_bar': lambda c : {},
+            'confidence_histogram_scatter_distribution': lambda c: {},
+
         }
 
         for draw_type, config in plot_configs.items():
