@@ -17,13 +17,18 @@ class Classification_Plot:
     :param confidence_histogram_path: (str, optional) Path to the confidence histogram JSON file.
     :param overall_json_path: (str, optional) Path to the overall metrics JSON file.
     :param mixed_json_path: (str, optional) Path to the mixed metrics JSON file.
+    :param confusion_matrix_path: (str, optional) Path to the confusion matrix JSON file.
+    :param prediction_dataset_distribution_path: (str, optional) Path to the prediction dataset distribution JSON file.
+    :param most_confused_bar_path: (str, optional) Path to the most confused bar JSON file.
+    :param confidence_histogram_scatter_distribution_path: (str, optional) Path to the confidence histogram scatter distribution JSON file.
     :param output_dir: (str, optional) Directory path for saving output plots.
     """
 
     def __init__(self, blind_spot_path=None, performance_threshold_path=None, class_distributions_path=None, 
                 roc_statistics_path=None, precision_recall_statistics_path=None,
                 confidence_histogram_path=None, overall_json_path=None, mixed_json_path=None,
-
+                confusion_matrix_path=None, prediction_dataset_distribution_path=None, most_confused_bar_path=None,    
+                confidence_histogram_scatter_distribution_path=None,
                 output_dir=None):
         
         self.output_dir = output_dir
@@ -43,8 +48,14 @@ class Classification_Plot:
             self.overall_json_data = self._load_json(overall_json_path)
         if mixed_json_path:
             self.mixed_json_data = self._load_json(mixed_json_path)
-
-
+        if confusion_matrix_path:
+            self.confusion_matrix_data = self._load_json(confusion_matrix_path)
+        if prediction_dataset_distribution_path:
+            self.prediction_dataset_distribution_data = self._load_json(prediction_dataset_distribution_path)
+        if most_confused_bar_path:
+            self.most_confused_bar_data = self._load_json(most_confused_bar_path)
+        if confidence_histogram_scatter_distribution_path:
+            self.confidence_histogram_scatter_distribution_data = self._load_json(confidence_histogram_scatter_distribution_path)
 
     def _load_json(self, json_path):
         """
@@ -78,6 +89,7 @@ class Classification_Plot:
         :param mixed_args: (dict, optional) Arguments for 'mixed_plot'.
         :param save_path: (str, optional) Path to save the generated plot.
 
+        
         :raises ValueError: If an unsupported plot type is specified.
         """
 
@@ -97,6 +109,14 @@ class Classification_Plot:
             self._plot_overall_metrics(overall_args, save_path)
         elif plot_type == 'mixed_plot':
             self._plot_mixed_metrics(mixed_args, save_path)
+        elif plot_type == 'confusion_matrix':
+            self._plot_confusion_matrix(save_path)
+        elif plot_type == 'prediction_dataset_distribution':
+            self._plot_prediction_dataset_distribution(save_path)
+        elif plot_type == 'most_confused_bar':
+            self._plot_most_confused_bar(save_path)
+        elif plot_type == 'confidence_histogram_scatter_distribution':
+            self._plot_confidence_histogram_scatter_distribution(save_path)
         else:
             raise ValueError(f"Unsupported plot type: {plot_type}")
         
@@ -447,4 +467,156 @@ class Classification_Plot:
 
         if save_path:
             plt.savefig(save_path)
+        plt.close()
+
+
+    def _plot_confusion_matrix(self, save_path=None):
+        """ 
+        Create a confusion matrix visualization using TP, TN, FP, FN values.
+
+        :param save_path: (str, optional) Path where the plot should be saved.
+                        If None, saves as 'confusion_matrix.png'.
+
+        :return: None
+        :raises AttributeError: If no valid confusion matrix data is loaded.
+        """
+        if not hasattr(self, 'confusion_matrix_data') or self.confusion_matrix_data.get('type') != 'square':
+            print("No valid 'square' data found in the JSON.")
+            return
+
+        data = self.confusion_matrix_data.get('data', {})
+        matrix = [
+            [data.get('TP', 0), data.get('FP', 0)],
+            [data.get('FN', 0), data.get('TN', 0)]
+        ]
+        labels = ['TP', 'FP', 'FN', 'TN']
+        df = pd.DataFrame(matrix, index=['Actual Positive', 'Actual Negative'], columns=['Predicted Positive', 'Predicted Negative'])
+
+        plt.figure(figsize=(8, 6))
+        sns.heatmap(df, annot=True, fmt='g', cmap='Blues', cbar=False, annot_kws={"size": 16})
+        plt.title('Confusion Matrix', fontsize=18, weight='bold')
+        plt.xlabel('Predicted', fontsize=14)
+        plt.ylabel('Actual', fontsize=14)
+        plt.tight_layout()
+
+        if save_path:
+            plt.savefig(save_path, bbox_inches='tight', dpi=300)
+        else:
+            plt.savefig('confusion_matrix.png', bbox_inches='tight', dpi=300)
+        plt.show()
+        plt.close()
+
+
+    def _plot_prediction_dataset_distribution(self, save_path=None):
+        """
+        Create a bar plot visualization for prediction and annotation distributions.
+
+        :param save_path: (str, optional) Path where the plot should be saved.
+                        If None, saves as 'prediction_dataset_distribution.png'.
+
+        :return: None
+        :raises AttributeError: If no valid prediction dataset distribution data is loaded.
+        """
+        if not hasattr(self, 'prediction_dataset_distribution_data') or self.prediction_dataset_distribution_data.get('type') != 'square':
+            print("No valid 'square' data found in the JSON.")
+            return
+
+        data = self.prediction_dataset_distribution_data.get('data', {})
+        annotation_data = data.get('Annotation', {})
+        prediction_data = data.get('Prediction', {})
+        df = pd.DataFrame({
+            'Annotation': annotation_data,
+            'Prediction': prediction_data
+        })
+        df.plot(kind='bar', figsize=(10, 6))
+        plt.title('Prediction Distribution', fontsize=18, weight='bold')
+        plt.xlabel('Class', fontsize=14)
+        plt.ylabel('Count', fontsize=14)
+        plt.xticks(rotation=0)
+        plt.tight_layout()
+
+        if save_path:
+            plt.savefig(save_path, bbox_inches='tight', dpi=300)
+        else:
+            plt.savefig('prediction_dataset_distribution.png', bbox_inches='tight', dpi=300)
+        plt.show()
+        plt.close()
+
+
+
+    def _plot_most_confused_bar(self, save_path=None):
+        """
+        Create a bar plot visualization for the most confused classes.
+
+        :param save_path: (str, optional) Path where the plot should be saved.
+                        If None, saves as 'most_confused_classes.png'.
+
+        :return: None
+        :raises AttributeError: If no valid most confused bar data is loaded.
+        """
+
+        if not hasattr(self, 'most_confused_bar_data') or self.most_confused_bar_data.get('type') != 'bar':
+            print("No valid 'bar' data found in the JSON.")
+            return
+
+        data = self.most_confused_bar_data.get('data', [])
+        df = pd.DataFrame(data, columns=['True', 'Prediction', 'count'])
+        df = df.sort_values(by='count', ascending=False)
+        colors = sns.color_palette("pastel", n_colors=len(df))
+        plt.figure(figsize=(12, 8))
+        bar_plot = plt.bar(df['True'], df['count'], color=colors, edgecolor='black')
+        plt.title('Most Confused Classes', fontsize=20, weight='bold')
+        plt.xlabel('True Class', fontsize=16, weight='bold')
+        plt.ylabel('Count of Confusion', fontsize=16, weight='bold')
+        
+        for bar, count in zip(bar_plot, df['count']):
+            y_position = bar.get_height() + 0.2 if bar.get_height() > 0 else bar.get_height() - 0.5
+            plt.text(bar.get_x() + bar.get_width() / 2, y_position,
+                    f'{count}', ha='center', va='bottom', fontsize=12, color='black')
+
+        plt.xticks(rotation=45, ha='right', fontsize=12)
+        plt.yticks(fontsize=12)
+        plt.tight_layout()
+
+        if save_path:
+            plt.savefig(save_path, bbox_inches='tight', dpi=300)
+        else:
+            plt.savefig('most_confused_classes.png', bbox_inches='tight', dpi=300)
+        plt.show()
+        plt.close()
+
+
+    def _plot_confidence_histogram_scatter_distribution(self, save_path=None):
+        """
+        Create a scatter plot visualization for confidence histogram scatter distribution data.
+
+        :param save_path: (str, optional) Path where the plot should be saved.
+                        If None, saves as 'scatter_plot_points.png'.
+
+        :return: None
+        :raises AttributeError: If no valid confidence histogram scatter distribution data is loaded.
+        """
+
+        if not hasattr(self, 'confidence_histogram_scatter_distribution_data') or self.confidence_histogram_scatter_distribution_data.get('type') != 'mixed':
+            print("No valid 'mixed' data found in the JSON.")
+            return
+
+        data = self.confidence_histogram_scatter_distribution_data.get('data', {})
+        points_data = data.get('points', [])
+        points_df = pd.DataFrame(points_data)
+
+        plt.figure(figsize=(12, 8))
+        sns.scatterplot(x='x', y='y', hue='labels', data=points_df, palette='pastel', s=100, alpha=0.8, edgecolor='k')
+        plt.title('Scatter Plot of Points', fontsize=18, weight='bold')
+        plt.xlabel('X', fontsize=14)
+        plt.ylabel('Y', fontsize=14)
+        plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+        plt.legend(title='Labels', fontsize=12, title_fontsize=14, loc='upper right', frameon=True)
+
+        if save_path:
+            plt.savefig(save_path, bbox_inches='tight', dpi=300)
+        else:
+            plt.savefig('scatter_plot_points.png', bbox_inches='tight', dpi=300)
+        
+        plt.show()
         plt.close()
