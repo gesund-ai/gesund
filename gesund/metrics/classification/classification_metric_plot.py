@@ -21,6 +21,7 @@ class Classification_Plot:
     :param prediction_dataset_distribution_path: (str, optional) Path to the prediction dataset distribution JSON file.
     :param most_confused_bar_path: (str, optional) Path to the most confused bar JSON file.
     :param confidence_histogram_scatter_distribution_path: (str, optional) Path to the confidence histogram scatter distribution JSON file.
+    :param lift_chart_path: (str, optional) Path to the lift chart JSON file.
     :param output_dir: (str, optional) Directory path for saving output plots.
     """
 
@@ -28,7 +29,7 @@ class Classification_Plot:
                 roc_statistics_path=None, precision_recall_statistics_path=None,
                 confidence_histogram_path=None, overall_json_path=None, mixed_json_path=None,
                 confusion_matrix_path=None, prediction_dataset_distribution_path=None, most_confused_bar_path=None,    
-                confidence_histogram_scatter_distribution_path=None,
+                confidence_histogram_scatter_distribution_path=None, lift_chart_path=None,
                 output_dir=None):
         
         self.output_dir = output_dir
@@ -56,6 +57,8 @@ class Classification_Plot:
             self.most_confused_bar_data = self._load_json(most_confused_bar_path)
         if confidence_histogram_scatter_distribution_path:
             self.confidence_histogram_scatter_distribution_data = self._load_json(confidence_histogram_scatter_distribution_path)
+        if lift_chart_path:
+            self.lift_chart_data = self._load_json(lift_chart_path)
 
     def _load_json(self, json_path):
         """
@@ -117,6 +120,8 @@ class Classification_Plot:
             self._plot_most_confused_bar(save_path)
         elif plot_type == 'confidence_histogram_scatter_distribution':
             self._plot_confidence_histogram_scatter_distribution(save_path)
+        elif plot_type == 'lift_chart':
+            self._plot_lift_chart(save_path)
         else:
             raise ValueError(f"Unsupported plot type: {plot_type}")
         
@@ -620,3 +625,45 @@ class Classification_Plot:
         
         plt.show()
         plt.close()
+    
+
+    def _plot_lift_chart(self, save_path=None):
+        """
+        Create a lift chart visualization.
+
+        :param save_path: (str, optional) Path where the plot should be saved.
+                          If None, saves as 'lift_chart.png'.
+
+        :return: None
+        :raises AttributeError: If no valid lift chart data is loaded.
+        """
+        if not hasattr(self, 'lift_chart_data') or self.lift_chart_data.get('type') != 'lift':
+            print("No valid 'lift' data found in the JSON.")
+            return
+
+        data = self.lift_chart_data.get('data', {})
+        points_data = data.get('points', {})
+        class_order = data.get('class_order', {})
+
+        plt.figure(figsize=(12, 8))
+        sns.set(style="whitegrid")
+
+        for class_key, class_name in class_order.items():
+            class_points = points_data.get(class_name, [])
+            df = pd.DataFrame(class_points)
+            plt.plot(df['x'], df['y'], marker='o', linestyle='-', label=class_name, lw=2)
+
+        plt.title('Lift Chart', fontsize=18, weight='bold')
+        plt.xlabel('X', fontsize=14)
+        plt.ylabel('Y', fontsize=14)
+        plt.legend(title='Class', fontsize=12, title_fontsize=14, loc='upper right', frameon=True)
+        plt.grid(True, which='both', linestyle='--', linewidth=0.5)
+
+        if save_path:
+            plt.savefig(save_path, bbox_inches='tight', dpi=300)
+        else:
+            plt.savefig('lift_chart.png', bbox_inches='tight', dpi=300)
+        
+        plt.show()
+        plt.close()
+        
