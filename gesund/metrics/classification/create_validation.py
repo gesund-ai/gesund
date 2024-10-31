@@ -153,6 +153,7 @@ class ValidationCreation:
             'prediction_dataset_distribution': ('prediction_dataset_distribution_path', 'plot_{}.json'),
             'most_confused_bar': ('most_confused_bar_path', 'plot_{}.json'),
             'confidence_histogram_scatter_distribution': ('confidence_histogram_scatter_distribution_path', 'plot_{}.json'),
+            'lift_chart': ('lift_chart_path', 'plot_{}.json'),  
         }
 
         draw_params = {
@@ -167,7 +168,7 @@ class ValidationCreation:
             'prediction_dataset_distribution': lambda c : {},
             'most_confused_bar': lambda c : {},
             'confidence_histogram_scatter_distribution': lambda c: {},
-
+            'lift_chart': lambda c: {'metrics': c.get('metrics')},  
         }
 
         for draw_type, config in plot_configs.items():
@@ -234,4 +235,3 @@ class ValidationCreation:
         data["loss"] = loss_dict
 
         return data
-    
