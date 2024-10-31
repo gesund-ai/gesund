@@ -131,10 +131,9 @@ def plotting_metrics(metrics, args, filtering_meta=None):
         
         filtered_plot_outputs_dir = os.path.join(output_dir, "filtered_plots")
         Path(filtered_plot_outputs_dir).mkdir(parents=True, exist_ok=True)
-        validation.plot_metrics(meta_filtered_metrics, filtered_jsons_outputs_dir, filtered_plot_outputs_dir, args.get('plot_configs', {}))
+        validation.plot_metrics(meta_filtered_metrics, filtered_jsons_outputs_dir, filtered_plot_outputs_dir, args['plot_configs'])
 
     else:
         plot_outputs_dir = os.path.join(output_dir, "plots")
         Path(plot_outputs_dir).mkdir(parents=True, exist_ok=True)
-        validation.plot_metrics(metrics, json_outputs_dir, plot_outputs_dir, args.get('plot_configs', {}))
-        
+        validation.plot_metrics(metrics, json_outputs_dir, plot_outputs_dir, args['plot_configs'])
