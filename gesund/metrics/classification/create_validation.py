@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from typing import Any, Dict, Tuple, Callable
 
 from .plots.plot_driver import ClassificationPlotDriver
 from gesund.metrics.classification.classification_metric_plot import Classification_Plot
@@ -127,21 +128,21 @@ class ValidationCreation:
         
         return overall_metrics
     
-    def plot_metrics(self, metrics, json_outputs_dir, plot_outputs_dir, plot_configs):
+    def plot_metrics(self, metrics: Dict[str, Any], json_outputs_dir: str, plot_outputs_dir: str, plot_configs: Dict[str, Dict[str, Any]]) -> None:
         """
         Generate and save various types of plots based on the provided metrics and configurations.
 
         This function creates different types of plots (e.g., class_distributions, blind_spot, performance_by_threshold, etc.)
         and saves them to the specified output directories.
 
-        :param metrics: Dictionary containing the computed metrics (dict).
-        :param json_output_dir: Directory path where JSON files for the plots will be saved (str).
-        :param plot_outputs_dir: Directory path where the generated plot images will be saved (str).
-        :param plot_configs: Configuration dictionary specifying the types of plots to generate and their parameters (dict).
+        :param metrics: Dictionary containing the computed metrics.
+        :param json_outputs_dir: Directory path where JSON files for the plots will be saved.
+        :param plot_outputs_dir: Directory path where the generated plot images will be saved.
+        :param plot_configs: Configuration dictionary specifying the types of plots to generate and their parameters.
 
         :return: None
         """
-        file_name_patterns = {
+        file_name_patterns: Dict[str, Tuple[str, str]] = {
             'class_distributions': ('class_distributions_path', 'plot_{}.json'),
             'blind_spot': ('blind_spot_path', 'plot_{}_metrics.json'),
             'performance_by_threshold': ('performance_threshold_path', 'plot_class_{}.json'),
@@ -153,22 +154,26 @@ class ValidationCreation:
             'prediction_dataset_distribution': ('prediction_dataset_distribution_path', 'plot_{}.json'),
             'most_confused_bar': ('most_confused_bar_path', 'plot_{}.json'),
             'confidence_histogram_scatter_distribution': ('confidence_histogram_scatter_distribution_path', 'plot_{}.json'),
-            'lift_chart': ('lift_chart_path', 'plot_{}.json'),  
+            'lift_chart': ('lift_chart_path', 'plot_{}.json'),
         }
 
-        draw_params = {
+        draw_params: Dict[str, Callable[[Dict[str, Any]], Dict[str, Any]]] = {
             'class_distributions': lambda c: {'metrics': c.get('metrics'), 'threshold': c.get('threshold')},
             'blind_spot': lambda c: {'class_type': c.get('class_type')},
-            'performance_by_threshold': lambda c: {'graph_type': c.get('graph_type'), 'metrics': c.get('metrics'), 'threshold': c.get('threshold')},
+            'performance_by_threshold': lambda c: {
+                'graph_type': c.get('graph_type'),
+                'metrics': c.get('metrics'),
+                'threshold': c.get('threshold')
+            },
             'roc': lambda c: {'roc_class': c.get('roc_class')},
             'precision_recall': lambda c: {'pr_class': c.get('pr_class')},
             'confidence_histogram': lambda c: {'metrics': c.get('metrics'), 'threshold': c.get('threshold')},
             'overall_metrics': lambda c: {'metrics': c.get('metrics')},
-            'confusion_matrix': lambda c : {},
-            'prediction_dataset_distribution': lambda c : {},
-            'most_confused_bar': lambda c : {},
+            'confusion_matrix': lambda c: {},
+            'prediction_dataset_distribution': lambda c: {},
+            'most_confused_bar': lambda c: {},
             'confidence_histogram_scatter_distribution': lambda c: {},
-            'lift_chart': lambda c: {'metrics': c.get('metrics')},  
+            'lift_chart': lambda c: {'metrics': c.get('metrics')},
         }
 
         for draw_type, config in plot_configs.items():
@@ -177,12 +182,12 @@ class ValidationCreation:
                 print(f"Warning: Unknown draw type '{draw_type}'. Skipping.")
                 continue
 
-            file_name = file_pattern.format(draw_type)
-            file_path = os.path.join(json_outputs_dir, file_name)
+            file_name: str = file_pattern.format(draw_type)
+            file_path: str = os.path.join(json_outputs_dir, file_name)
             plot = Classification_Plot(**{arg_name: file_path})
-            save_path = os.path.join(plot_outputs_dir, f'{draw_type}.png')
+            save_path: str = os.path.join(plot_outputs_dir, f'{draw_type}.png')
 
-            params = draw_params.get(draw_type, lambda _: {})(config)
+            params: Dict[str, Any] = draw_params.get(draw_type, lambda _: {})(config)
             plot.draw(draw_type, save_path=save_path, **params)
 
 
