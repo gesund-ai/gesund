@@ -115,37 +115,49 @@ class ValidationCreation:
         
         return overall_metrics
 
-    def plot_metrics(self, metrics, jsons_dir, plot_dir):
+    def plot_metrics(self, metrics, json_output_dir,plot_outputs_dir, plot_configs):
         """
-        Plot the specified metrics and save them to a given directory.
+        Generate and save various types of plots based on the provided metrics and configurations.
 
-        :param metrics: (dict) Dictionary containing the metrics to be plotted.
-        :param jsons_dir: (str) Path to the directory containing JSON files with plot data.
-        :param plot_dir: (str) Path to the directory where plots will be saved.
+        This function creates different types of plots (e.g., violin graphs, plots by metadata, overall metrics, etc.)
+        and saves them to the specified output directories.
+
+        :param metrics: (dict) Dictionary containing the computed metrics.
+        :param json_output_dir: (str) Directory path where JSON files for the plots will be saved.
+        :param plot_outputs_dir: (str) Directory path where the generated plot images will be saved.
+        :param plot_configs: (dict) Configuration dictionary specifying the types of plots to generate and their parameters.
 
         :return: None
         """
-        
-        draw_type = 'violin_graph'
-        plot = Semantic_Segmentation_Plot(violin_path=os.path.join(jsons_dir, f'plot_{draw_type}.json'))
-        plot.draw('violin_graph', metrics=['Acc', 'Spec'], threshold=0.5, save_path=os.path.join(plot_dir, f'{draw_type}.png'))
+        file_name_patterns = {
+            'violin_graph': ('violin_path', 'plot_{}.json'),
+            'plot_by_meta_data': ('plot_by_meta_data', 'plot_metrics_by_meta_data.json'),
+            'overall_metrics': ('overall_data', 'plot_highlighted_{}.json'),
+            'classbased_table': ('classed_table', 'plot_statistics_{}.json'),
+            'blind_spot': ('blind_spot', 'plot_{}_metrics.json')
+        }
 
-        draw_type = 'metrics_by_meta_data'
-        plot = Semantic_Segmentation_Plot(plot_by_meta_data=os.path.join(jsons_dir, f'plot_{draw_type}.json'))
-        plot.draw('plot_by_meta_data', meta_data_args=['TruePositive', 'TrueNegative'], save_path=os.path.join(plot_dir, f'{draw_type}.png'))
+        draw_params = {
+            'violin_graph': lambda c: {'metrics': c.get('metrics'), 'threshold': c.get('threshold')},
+            'plot_by_meta_data': lambda c: {'meta_data_args': c.get('meta_data_args')},
+            'overall_metrics': lambda c: {'overall_args': c.get('overall_args')},
+            'classbased_table': lambda c: {'classbased_table_args': c.get('classbased_table_args')},
+            'blind_spot': lambda c: {'blind_spot_args': c.get('blind_spot_args')}
+        }
 
-        draw_type = 'overall_metrics'
-        plot = Semantic_Segmentation_Plot(overall_data=os.path.join(jsons_dir, f'plot_highlighted_{draw_type}.json'))
-        plot.draw('overall_metrics', overall_args=['mean AUC', 'fwIoU'], save_path=os.path.join(plot_dir, f'{draw_type}.png'))
+        for draw_type, config in plot_configs.items():
+            arg_name, file_pattern = file_name_patterns.get(draw_type, (None, 'plot_{}.json'))
+            if arg_name is None:
+                print(f"Warning: Unknown draw type '{draw_type}'. Skipping.")
+                continue
 
-        draw_type = 'classbased_table'
-        plot = Semantic_Segmentation_Plot(classed_table=os.path.join(jsons_dir, f'plot_statistics_{draw_type}.json'))
-        plot.draw('classbased_table', classbased_table_args=0.5, save_path=os.path.join(plot_dir, f'{draw_type}.png'))
+            file_name = file_pattern.format(draw_type)
+            file_path = os.path.join(json_output_dir, file_name)
+            plot = Semantic_Segmentation_Plot(**{arg_name: file_path})
+            save_path = os.path.join(plot_outputs_dir, f'{draw_type}.png')
 
-        draw_type = 'blind_spot'
-        plot = Semantic_Segmentation_Plot(blind_spot=os.path.join(jsons_dir, f'plot_{draw_type}_metrics.json'))
-        plot.draw('blind_spot', blind_spot_args=['fwIoU'], save_path=os.path.join(plot_dir, f'{draw_type}.png'))
-
+            params = draw_params.get(draw_type, lambda _: {})(config)
+            plot.draw(draw_type, save_path=save_path, **params)
 
     def _load_plotting_data(
         self, validation_collection_data=None, generate_metrics=True, study_list=None,
