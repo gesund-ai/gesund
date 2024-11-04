@@ -4,7 +4,7 @@
 
 This library provides tools for calculating validation metrics for predictions and annotations in machine learning workflows. It includes a command-line tool for computing and displaying validation metrics.
 
-## Documentation could be found here https://gesund-ai.github.io/
+**Documentation could be found here https://gesund-ai.github.io/**
 
 
 ## Installation
