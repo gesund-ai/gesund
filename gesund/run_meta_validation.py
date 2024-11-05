@@ -1,6 +1,6 @@
 import argparse
 import json
-from gesund.validation import plotting_metrics, run_metrics
+from gesund.core.validation import plotting_metrics, run_metrics
 from gesund.utils.io_utils import read_json
 
 

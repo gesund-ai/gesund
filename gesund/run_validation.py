@@ -1,5 +1,5 @@
 import argparse
-from gesund.validation import run_metrics
+from gesund.core.validation import run_metrics
 
 def main():
     """

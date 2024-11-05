@@ -3,9 +3,9 @@ import json
 import bson
 import os
 from gesund.utils.io_utils import read_json, save_plot_metrics_as_json, format_metrics
-from gesund.utils.yolo_converter import YOLOConverter
-from gesund.utils.coco_converter import COCOConverter
-from gesund.scripts.problem_type_factory import get_validation_creation
+from gesund.core._converters.yolo_converter import YOLOConverter
+from gesund.core._converters.coco_converter import COCOConverter
+from gesund.core.problem_type_factory import get_validation_creation
 
 def main():
     parser = argparse.ArgumentParser(description='Run validation metrics calculation.')
