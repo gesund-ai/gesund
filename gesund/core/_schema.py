@@ -11,17 +11,12 @@ class InputParams(BaseModel):
     problem_type: str
     json_structure_type: str
     data_format: str
+    allowed_values: dict
     metadata_path: Optional[str] = None
     return_dict: Optional[bool] = False
     store_json: Optional[bool] = False
     display_plots: Optional[bool] = False
     store_plots: Optional[bool] = False
-
-    allowed_values: ClassVar[dict] = {
-        "problem_type": ["classification", "object_detection", "semantic_segmentation"],
-        "json_structure_type": ["gesund", "coco", "yolo"],
-        "data_format": ["json"]
-    }
 
     @field_validator("annotations_path")
     def validate_annotations_path(cls, annotations_path):
@@ -73,3 +68,5 @@ class Data(BaseModel):
     prediction: Union[List[Dict], Dict]
     annotation: Union[List[Dict], Dict]
     class_mapping: Dict
+    converted_prediction: Optional[Union[List[Dict], Dict]]
+    converted_annotation: Optional[Union[List[Dict], Dict]]

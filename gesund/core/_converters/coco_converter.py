@@ -5,7 +5,7 @@ import pycocotools.mask as mask_utils
 
 from gesund.utils.validation_data_utils import ValidationUtils
 
-class COCOConverter:
+class COCOToGesund:
     """
     A class to convert annotations and predictions between COCO format and custom format
     for various problem types such as classification, object detection, and segmentation.

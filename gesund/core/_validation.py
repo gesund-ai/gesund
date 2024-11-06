@@ -1,10 +1,18 @@
 from typing import Optional
 
+from ._converters import ConverterFactory
 from ._data_loaders import DataLoader
 from ._schema import InputParams, Data
 
 
 class Validation:
+
+    ALLOWED_VALUES = {
+        "problem_type": ["classification", "object_detection", "semantic_segmentation"],
+        "json_structure_type": ["gesund", "coco", "yolo"],
+        "data_format": ["json"]
+    }
+
     def __init__(
             self,
             annotations_path: str,
@@ -59,6 +67,7 @@ class Validation:
 
         :return: None
         """
+        # set up user parameters
         params = {
             "annotations_path": annotations_path,
             "predictions_path": predictions_path,
@@ -68,13 +77,21 @@ class Validation:
             "return_dict": return_dict,
             "store_json": store_json,
             "display_plots": display_plots,
-            "store_plots": store_plots
+            "store_plots": store_plots,
+            "allowed_values": self.ALLOWED_VALUES
         }
+        self.user_params = InputParams(**params)
 
-        self.params = InputParams(**params)
-        self.data = Data(
-            **self.load_data(self.params))
+        # set up source data for processing 
         self.data_loader = DataLoader(data_format)
+        data = self.load_data(self.params, self.data_loader)
+        self.data = Data(**data)
+
+        # setup data converter
+        self.data_converter = ConverterFactory().get_converter(json_structure_type)
+
+        # set up validation handlers
+        
     
     @staticmethod
     def load_data(
@@ -94,6 +111,52 @@ class Validation:
         }
         if user_params.metadata_path:
             data["metadata"] = data_loader.load(user_params.metadata_path)
+        
+        return data
+    
+    def convert_data(self):
+        """
+        A function to convert the data from the respective structure to the gesund format
 
+        :param: None
+
+        :return: None
+        """
+        # convert annotation data
+        self.data.converted_annotation = self.data_converter.convert_annotation(
+            self.data.annotation)
+
+        # convert prediction data
+        self.data.converted_prediction = self.data_converter.convert_prediction(
+            self.data.prediction)
+
+    
+    def run(self):
+        """
+        A function to run the validation pipeline
+
+        :param: 
+        :type:
+
+        :return:
+        :rtype: 
+        """
+        results = {}
+
+        # run the converters
+        self.convert_data()
+
+        # run the validation
+
+        # store the results
+        if self.user_params.store_json:
+            self.save_json()
+        
+        if self.user_params.store_plots:
+            self.save_plots()
+
+        # return the results
+        if self.user_params.return_dict:
+            return results
 
 

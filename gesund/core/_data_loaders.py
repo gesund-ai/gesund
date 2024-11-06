@@ -1,5 +1,7 @@
+import json
 import pandas as pd
 
+from ._exceptions import DataLoadError
 
 class DataLoader:
     def __init__(self):
@@ -21,7 +23,13 @@ class DataLoader:
         :return: loaded data
         :rtype: list
         """
-        pass
+        try:
+            with open(src_path, "r") as f:
+                data = json.load(f)
+                return data
+        except Exception as e:
+            print(e)
+            raise DataLoadError("Could not load JSON file !")
 
     @staticmethod
     def _csv_loader(src_path: str) -> pd.DataFrame:
@@ -36,6 +44,7 @@ class DataLoader:
         """
         pass
 
+
     def load(self, src_path: str, data_format: str) -> dict:
         """
         A function to load the data
@@ -48,7 +57,7 @@ class DataLoader:
         :return: None
         """
         data_loaders = {
-            "csv_loader": self._csv_loader,
-            "json_loader": self._json_loader
+            "csv": self._csv_loader,
+            "json": self._json_loader
         }
         return data_loaders[data_format](src_path)
