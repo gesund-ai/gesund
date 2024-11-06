@@ -1,8 +1,36 @@
-from typing import Optional
+from typing import Optional, Union
+import bson
 
 from ._converters import ConverterFactory
 from ._data_loaders import DataLoader
-from ._schema import InputParams, Data
+from ._schema import InputParams, Data, ResultData
+from ._plot import PlotData
+from ._exceptions import MetricCalculationError
+
+
+class ValidationProblemTypeFactory:
+    
+    def get_problem_type_factory(self, problem_type:str):
+        """
+        A function to return the class as per the problem_type
+
+        :param problem_type: problem type identifying the validation
+        :type problem_type: str
+
+        :return: class as per the problem type
+        :rtype: class
+        """
+        if problem_type == "classification":
+            from ._metrics.classification.create_validation import ValidationCreation
+            return ValidationCreation
+        elif problem_type == "semantic_segmentation":
+            from ._metrics.semantic_segmentation.create_validation import ValidationCreation
+            return ValidationCreation
+        elif problem_type == "object_detection":
+            from ._metrics.object_detection.create_validation import ValidationCreation
+            return ValidationCreation
+        else:
+            raise ValueError(f"Unknow problem type : {problem_type}")
 
 
 class Validation:
@@ -84,17 +112,16 @@ class Validation:
 
         # set up source data for processing 
         self.data_loader = DataLoader(data_format)
-        data = self.load_data(self.params, self.data_loader)
+        data = self._load_data(self.params, self.data_loader)
         self.data = Data(**data)
 
-        # setup data converter
-        self.data_converter = ConverterFactory().get_converter(json_structure_type)
+        # set up batch job id
+        self.batch_job_id = str(bson.ObjectId())
+        self.output_dir = f"outputs/{self.batch_job_id}"
 
-        # set up validation handlers
-        
     
     @staticmethod
-    def load_data(
+    def _load_data(
         user_params: InputParams, data_loader: DataLoader) -> dict:
         """
         A Function to load the JSON files
@@ -114,7 +141,7 @@ class Validation:
         
         return data
     
-    def convert_data(self):
+    def _convert_data(self):
         """
         A function to convert the data from the respective structure to the gesund format
 
@@ -122,16 +149,69 @@ class Validation:
 
         :return: None
         """
-        # convert annotation data
-        self.data.converted_annotation = self.data_converter.convert_annotation(
-            self.data.annotation)
+        # setup data converter
+        data_converter = ConverterFactory().get_converter(self.user_params.json_structure_type)
 
-        # convert prediction data
-        self.data.converted_prediction = self.data_converter.convert_prediction(
-            self.data.prediction)
+        # set up validation handlers
+        self.data.converted_annotation, self.data.converted_prediction = data_converter.convert(
+            annotation=self.data.annotation,
+            prediction=self.data.prediction,
+            problem_type=self.user_params.problem_type
+        )
 
+        self.data.was_converted = True
     
-    def run(self):
+    def _run_validation(self) -> dict:
+        """
+        A function to run the validation 
+
+        :param: None
+
+        :return: result dictionary
+        :rtype: dict
+        """
+        _validation_class = ValidationProblemTypeFactory().get_problem_type_factory(
+            self.user_params.problem_type)
+        
+        _metric_validation_executor = _validation_class(self.batch_job_id)
+
+        try:
+            if self.data.was_converted:
+                prediction = self.data.converted_prediction
+                annotation = self.data.converted_annotation
+            else:
+                prediction = self.data.prediction
+                annotation = self.data.annotation
+            validation_data = _metric_validation_executor.create_validation_collection_data(
+                prediction, annotation, self.user_params.json_structure_type)
+            
+            metrics  = _metric_validation_executor.load(
+                validation_data, self.data.class_mapping
+            )
+            return metrics
+        except Exception as e:
+            print(e)
+            raise MetricCalculationError("Error in calculating metrics!")
+        
+    
+    def _plot_metrics(self, results: dict) -> None:
+        """
+        A function to plot the metrics
+
+        :param results: a dictionary containing the validation metrics
+        :type results: dict
+
+        :return: None
+        """
+        plot_data_executor = PlotData(
+            metrics_result=results,
+            save_plots=self.user_params.store_plots,
+            user_params=self.user_params
+        )
+        plot_data_executor.plot()
+
+
+    def run(self) -> Union[None, ResultData]:
         """
         A function to run the validation pipeline
 
@@ -144,19 +224,22 @@ class Validation:
         results = {}
 
         # run the converters
-        self.convert_data()
+        self._convert_data()
 
         # run the validation
+        results = self._run_validation()
 
         # store the results
         if self.user_params.store_json:
-            self.save_json()
+            self._save_json(results)
         
-        if self.user_params.store_plots:
-            self.save_plots()
 
+        # plot the metrics
+        self._plot_metrics(results)
+        
         # return the results
         if self.user_params.return_dict:
+            results = ResultData(**results)
             return results
 
 

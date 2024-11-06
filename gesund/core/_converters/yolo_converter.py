@@ -1,4 +1,4 @@
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Optional
 import numpy as np
 
 
@@ -94,18 +94,27 @@ class ClassificationConverter:
                     }
         return custom_json
 
-
-
 class ObjectDetectionConverter:
-    def __init__(self, annotations: list, predictions: list, image_width: int = 512, image_height: int = 512):
+    def __init__(
+            self, 
+            annotations: Union[list, dict], 
+            predictions: Union[list, dict], 
+            image_width: int, 
+            image_height: int
+        ):
         """
         The initialization function of the class
 
         
-        :param annotations: list: a list of annotation in the yolo format to convert to gesund format
-        :param predictions: list: a list of predictions in the yolo format to convert into the gesund format
-        :parma image_width: int: The width of the image
-        :param image_height: int: The height of the image
+        :param annotations: a list of annotation in the yolo format to convert to gesund format
+        :type annotations: list
+        :param predictions: a list of predictions in the yolo format to convert into the gesund format
+        :type predictions: list
+        :param image_width: The width of the image
+        :type image_width: int
+        :param image_height: The height of the image
+        :type image_height: int
+
         :return: None
         """
         self.annotation = annotations
@@ -118,6 +127,7 @@ class ObjectDetectionConverter:
         A function to convert the yolo predictions to gesund predictions format
 
         :return: a dictionary of predictions in the gesund predictions format
+        :rtype: dict
         """
         custom_json = {}
 
@@ -165,6 +175,7 @@ class ObjectDetectionConverter:
         A function to convert the yolo predictions to gesund predictions format
 
         :return: a dictionary of predictions in the gesund predictions format
+        :rtype: dict
         """
         custom_json = {}
 
@@ -203,14 +214,23 @@ class ObjectDetectionConverter:
         return custom_json
 
 class SemanticSegmentationConverter:
-    def __init__(self, annotations: list, predictions: list, image_width: int = 512, image_height: int = 512):
+    def __init__(
+            self, 
+            annotations: Union[list, dict], 
+            predictions: Union[list, dict], 
+            image_width: int, 
+            image_height: int):
         """
         the initialization function of the class
 
-        :param annotations: list: a list of annotation in the yolo format to convert to gesund format
-        :param predictions: list: a list of predictions in the yolo format to convert into the gesund format
-        :param image_width: int: The width of the image
-        :param image_height: int: The height of the image
+        :param annotations: a list of annotation in the yolo format to convert to gesund format
+        :type annotations: Union[list, dict]
+        :param predictions: a list of predictions in the yolo format to convert into the gesund format
+        :type predictions: Union[list, dict]
+        :param image_width: The width of the image
+        :type image_width: int
+        :param image_height: The height of the image
+        :type image_height: int
         
         :return: None
         """
@@ -224,6 +244,7 @@ class SemanticSegmentationConverter:
         A function to convert the yolo predictions to gesund predictions format
 
         :return: a list of objects in the gesund predictions format
+        :rtype: dict
         """
         custom_json = {}
 
@@ -271,6 +292,7 @@ class SemanticSegmentationConverter:
         A function to convert the yolo annotations to gesund predictions format
         
         :return: a list of objects in the gesund predictions format
+        :rtype: dict
         """
         custom_json = {}
 
@@ -324,15 +346,24 @@ class SemanticSegmentationConverter:
         return custom_json
 
 class InstanceSegmentationConverter:
-    def __init__(self, annotations: list, predictions: list, image_width: int = 512, image_height: int = 512):
+    def __init__(
+            self, 
+            annotations: Union[list, dict], 
+            predictions: Union[list, dict], 
+            image_width: int, 
+            image_height: int):
         """
         The initialization function of the class
 
         
-        :param annotations: list: a list of annotation in the yolo format to convert to gesund format
-        :param predictions: list: a list of predictions in the yolo format to convert into the gesund format
-        :param image_width: int: The width of the image
-        :param image_height: int: The height of the image
+        :param annotations: a list of annotation in the yolo format to convert to gesund format
+        :type annotations: Union[list, dict]
+        :param predictions: a list of predictions in the yolo format to convert into the gesund format
+        :type predictions: Union[list, dict]
+        :param image_width: The width of the image
+        :type image_width: int
+        :param image_height: The height of the image
+        :type image_height: int
         
         :return: None
         """
@@ -345,7 +376,8 @@ class InstanceSegmentationConverter:
         """
         A function to convert the yolo predictions to gesund predictions format
 
-        :return: a list of objects in the gesund predictions format
+        :return: a dict of objects in the gesund predictions format
+        :rtype: dict
         """
         pass
 
@@ -353,73 +385,67 @@ class InstanceSegmentationConverter:
         """
         A function to convert the yolo predictions to gesund predictions format
 
-        :return: a list of objects in the gesund predictions format
+        :return: a dict of objects in the gesund predictions format
+        :rtype: dict
         """
         pass
 
 
+class YoloProblemTypeFactory:
+
+    def get_yolo_converter(self, problem_type: str):
+        """
+        A factory method to get the yolo converter
+
+        :param problem_type: type of the problem
+        :type problem_type: str
+
+        :return: class of the converter
+        :rtype: class
+        """
+        if problem_type == "object_detection":
+            return ObjectDetectionConverter
+        elif problem_type == "semantic_segmentation":
+            return SemanticSegmentationConverter
+        elif problem_type == "classification":
+            return ClassificationConverter
+        else:
+            raise NotImplementedError
 
 class YoloToGesund:
-    def __init__(self, annotations: list, predictions: list, image_width: int = 512, image_height: int = 512):
-        """
-        The initialization function of the class
 
-        
-        :param annotations: list: a list of annotation in the yolo format to convert to gesund format
-        :param predictions: list: a list of predictions in the yolo format to convert into the gesund format
-        :param image_width: int: The width of the image
-        :param image_height: int: The height of the image
-        
-        :return: None
+    def convert(
+            self,
+            annotation: Union[List[Dict], Dict],
+            prediction: Union[List[Dict], Dict],
+            problem_type: str,
+            image_width: Optional[int] = 512, 
+            image_height: Optional[int] = 512
+            ) -> Dict:
         """
-        self.annotation = annotations
-        self.predictions = predictions
-        self.image_width = image_width
-        self.image_height = image_height
-        self.classification_converter = ClassificationConverter(
-            annotations=annotations,
-            predictions=predictions,
-            image_width=image_width,
-            image_height=image_height
-        )
-        self.obj_converter = ObjectDetectionConverter(
-            annotations=annotations,
-            predictions=predictions,
-            image_width=image_width,
-            image_height=image_height
-        )
-        self.semantic_segmentation_converter = SemanticSegmentationConverter(
-            annotations=annotations,
-            predictions=predictions,
-            image_width=image_width,
-            image_height=image_height
-        )
-        self.instance_segmentation_converter = InstanceSegmentationConverter(
-            annotations=annotations,
-            predictions=predictions,
-            image_width=image_width,
-            image_height=image_height
-        )
+        A run method to execute the pipeline and convert the given format to gesund format 
 
-    def run(self, problem_type: str= "object_detection", input_type: str="prediction") -> Dict:
-        """
-        A run method to execute the pipeline and convert the jsons
+        :param annotation: the annotations data
+        :type annotation: Union[List[Dict], Dict]
+        :param prediction: the prediction data
+        :type prediction: Union[List[Dict], Dict]
+        :param problem_type: problem type could be classification | object detection | segmentation
+        :type problem_type: str
+        :param image_width: width of the image
+        :type image_width: int
+        :param image_height: height of the image
+        :type image_height: int
 
-        
-        :param problem_type: str: object detection 
-        :param input_type: str: to indicate if the input is prediction or annotation
-        
         :return: dictionary of converted format
+        :rtype: dict
         """
-        _class_problems = {
-            "classification": self.classification_converter,
-            "object_detection": self.obj_converter,
-            "semantic_segmentation": self.semantic_segmentation_converter,
-            "instance_segmentation": self.instance_segmentation_converter
-        }
-        _func = {
-            "prediction": _class_problems[problem_type]._convert_predictions, 
-            "annotation": _class_problems[problem_type]._convert_annotations
-        }
-        return _func[input_type]()
+        _converter_cls = YoloProblemTypeFactory().get_yolo_converter(
+            problem_type=problem_type)
+        _converter = _converter_cls(
+            annotations=annotation,
+            predictions=prediction,
+            image_width=image_width,
+            image_height=image_height
+        )
+        return _converter._convert_annotations(), _converter._convert_predictions()
     

@@ -70,3 +70,8 @@ class Data(BaseModel):
     class_mapping: Dict
     converted_prediction: Optional[Union[List[Dict], Dict]]
     converted_annotation: Optional[Union[List[Dict], Dict]]
+    was_converted: bool = False
+
+
+class ResultData(BaseModel):
+    pass
