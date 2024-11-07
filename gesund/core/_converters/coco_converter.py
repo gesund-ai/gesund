@@ -3,7 +3,7 @@ import uuid
 from collections import defaultdict
 import pycocotools.mask as mask_utils
 
-from gesund.utils.validation_data_utils import ValidationUtils
+from gesund.core._utils import ValidationUtils
 
 class COCOToGesund:
     """

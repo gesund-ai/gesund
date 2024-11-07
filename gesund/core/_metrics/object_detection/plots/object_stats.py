@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from gesund.utils.validation_data_utils import ValidationUtils, Statistics
+from gesund.core._utils import ValidationUtils, Statistics
 
 
 class PlotObjectStats:

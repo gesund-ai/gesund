@@ -6,7 +6,7 @@ from sklearn.metrics import roc_auc_score
 
 from gesund.metrics.classification.metrics.auc import AUC
 from gesund.metrics.classification.metrics.stats_tables import StatsTables
-from gesund.utils.validation_data_utils import ValidationUtils
+from gesund.core._utils import ValidationUtils
 
 
 class PlotStatsTables:

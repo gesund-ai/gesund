@@ -52,31 +52,6 @@ def save_plot_metrics_as_json(overall_metrics, output_dir):
             print(f"Could not save metrics for {plot_name} because: {e}")
             
             
-def format_metrics(metrics):
-    """
-    Format and print the overall metrics in a readable format.
-    
-    This function takes in the metrics data, formats it, and prints out the 
-    highlighted overall metrics, including confidence intervals when applicable.
-    It also prints a message indicating that all graphs and plot metrics have been saved.
-
-    :param metrics: (dict) A dictionary containing the metrics, expected to have 
-                    a 'plot_highlighted_overall_metrics' key with the metrics data.
-
-    :return: None
-    """
-
-    print("\nOverall Highlighted Metrics:\n" + "-"*40)
-    for metric, values in metrics['plot_highlighted_overall_metrics']['data'].items():
-        print(f"{metric}:")
-        for key, value in values.items():
-            if isinstance(value, list):  # If it's a confidence interval
-                value_str = f"{value[0]:.4f} to {value[1]:.4f}"
-            else:
-                value_str = f"{value:.4f}"
-            print(f"    {key}: {value_str}")
-        print("-"*40)
-    print("All Graphs and Plots Metrics saved in JSONs.\n" + "-"*40)
 
 
 

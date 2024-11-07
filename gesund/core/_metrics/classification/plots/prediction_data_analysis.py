@@ -3,7 +3,7 @@ import pandas as pd
 
 from ..metrics.auc import AUC
 from ..metrics.dataset_stats import DatasetStats
-from gesund.utils.validation_data_utils import ValidationUtils, Statistics
+from gesund.core._utils import ValidationUtils, Statistics
 
 
 class PlotPredictionDataAnalysis:

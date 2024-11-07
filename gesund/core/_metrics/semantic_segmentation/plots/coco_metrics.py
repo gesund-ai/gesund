@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 
 from ..metrics.coco_metrics import COCOMetrics
-from gesund.utils.validation_data_utils import ValidationUtils, Statistics
+from gesund.core._utils import ValidationUtils, Statistics
 
 
 

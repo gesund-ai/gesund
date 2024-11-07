@@ -5,7 +5,7 @@ import pandas as pd
 import random
 
 from ..metrics.average_precision import AveragePrecision
-from gesund.utils.validation_data_utils import ValidationUtils, Statistics
+from gesund.core._utils import ValidationUtils, Statistics
 
 class PlotConfidenceGraphs:
     def __init__(self, class_mappings, coco_, meta_data_dict=None):

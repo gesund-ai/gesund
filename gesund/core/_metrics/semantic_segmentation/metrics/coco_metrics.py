@@ -10,7 +10,7 @@ from skimage import measure
 from scipy import ndimage
 import math
 
-from gesund.utils.validation_data_utils import ValidationUtils, Statistics
+from gesund.core._utils import ValidationUtils, Statistics
 from .distance_metrics import *
 
 

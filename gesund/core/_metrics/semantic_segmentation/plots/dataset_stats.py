@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.metrics import auc
 import sklearn
 
-from gesund.utils.validation_data_utils import ValidationUtils, Statistics
+from gesund.core._utils import ValidationUtils, Statistics
 
 class PlotDatasetStats:
     def __init__(self,meta):

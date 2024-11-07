@@ -3,7 +3,7 @@ import numpy as np
 
 
 from ..metrics.average_precision import AveragePrecision
-from gesund.utils.validation_data_utils import ValidationUtils
+from gesund.core._utils import ValidationUtils
 
 class PlotAveragePrecision:
     def __init__(

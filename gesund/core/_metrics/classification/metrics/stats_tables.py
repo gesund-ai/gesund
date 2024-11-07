@@ -9,7 +9,7 @@ from .accuracy import Accuracy
 from .auc import AUC
 from .most_confused import MostConfused
 from .dataset_stats import DatasetStats
-from gesund.utils.validation_data_utils import Statistics
+from gesund.core._utils import Statistics
 
 
 class StatsTables:
