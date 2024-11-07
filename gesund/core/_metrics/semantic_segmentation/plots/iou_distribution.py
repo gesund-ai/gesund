@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 
 from ..metrics.coco_metrics import COCOMetrics
-from gesund.utils.validation_data_utils import ValidationUtils, Statistics
+from gesund.core._utills import ValidationUtils, Statistics
 
 class PlotIoUDistribution:
     def __init__(self, class_mappings, ground_truth_dict=None, prediction_dict=None, artifacts_path=None, study_list=None):
