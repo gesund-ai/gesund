@@ -66,21 +66,24 @@ class Object_Detection_Plot:
 
         :raises ValueError: If an unsupported plot type is specified.
         """
-        if plot_type == 'blind_spot':
-            self._plot_blind_spot(blind_spot_args, save_path)
-        elif plot_type == 'top_misses':
-            self._plot_top_misses(top_misses_args, save_path)
-        elif plot_type == 'classbased_table':
-            self._plot_classbased_table_metrics(classbased_table_args, save_path)
-        elif plot_type == 'mixed_plot':
-            self._plot_mixed_metrics(mixed_args, save_path)        
-        elif plot_type == 'overall_metrics':
-            self._plot_overall_metrics(overall_args, save_path)
-        elif plot_type == 'confidence_histogram':
-           self._plot_confidence_histogram(confidence_histogram_args, save_path)
-        else:
-            raise ValueError(f"Unsupported plot type: {plot_type}")
-    
+        try:
+            if plot_type == 'blind_spot':
+                self._plot_blind_spot(blind_spot_args, save_path)
+            elif plot_type == 'top_misses':
+                self._plot_top_misses(top_misses_args, save_path)
+            elif plot_type == 'classbased_table':
+                self._plot_classbased_table_metrics(classbased_table_args if isinstance(classbased_table_args, list) else [classbased_table_args], save_path)
+            elif plot_type == 'mixed_plot':
+                self._plot_mixed_metrics(mixed_args, save_path)        
+            elif plot_type == 'overall_metrics':
+                self._plot_overall_metrics(overall_args, save_path)
+            elif plot_type == 'confidence_histogram':
+                self._plot_confidence_histogram(confidence_histogram_args, save_path)
+            else:
+                raise ValueError(f"Unsupported plot type: {plot_type}")
+        except Exception as e:
+            print(f"Error generating plot: {e}")
+
     def _plot_blind_spot(self, blind_spot_args, save_path=None):
         """
         Create a bar plot visualization for blind spot analysis metrics.

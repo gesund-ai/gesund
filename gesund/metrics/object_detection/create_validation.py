@@ -210,6 +210,19 @@ class ValidationCreation:
 
         :return: None
         """
+        os.makedirs(json_output_dir, exist_ok=True)
+        os.makedirs(plot_outputs_dir, exist_ok=True)  
+
+        # Deafulat values for the plot_configs
+        DEFAULT_PLOT_CONFIGS = {
+            'mixed_plot': {'mixed_plot': ['map10', 'map50', 'map75'], 'threshold': 0.5},
+            'top_misses': {'min_miou': 0.70, 'top_n': 10},
+            'confidence_histogram': {'confidence_histogram_labels': ['TP', 'FP']},
+            'classbased_table': {'classbased_table_metrics': ['precision', 'recall', 'f1'], 'threshold': 0.2},
+            'overall_metrics': {'overall_metrics_metrics': ['map', 'mar'], 'threshold': 0.5},
+            'blind_spot': {'blind_spot_Average': ['mAP@50', 'mAP@10','mAR@max=10','mAR@max=100'],'threshold': 0.5}
+        }
+
         file_name_patterns = {
             'mixed_plot': ('mixed_json_path', 'plot_performance_by_iou_threshold.json'),
             'top_misses': ('top_misses_path', 'plot_{}.json'),
@@ -227,6 +240,12 @@ class ValidationCreation:
             'overall_metrics': lambda c: {'overall_args': c},
             'blind_spot': lambda c: {'blind_spot_args': c}
         }
+        if not plot_configs:
+            plot_configs = DEFAULT_PLOT_CONFIGS.copy()
+            available_classes = metrics.get('classes', [])
+            if available_classes:
+                plot_configs['classbased_table']['classbased_table_metrics'] = available_classes
+                
 
         for draw_type, config in plot_configs.items():
             arg_name, file_pattern = file_name_patterns.get(draw_type, (None, 'plot_{}.json'))
