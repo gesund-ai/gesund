@@ -128,20 +128,41 @@ class ValidationCreation:
         
         return overall_metrics
     
-    def plot_metrics(self, metrics: Dict[str, Any], json_outputs_dir: str, plot_outputs_dir: str, plot_configs: Dict[str, Dict[str, Any]]) -> None:
+    def plot_metrics(self, metrics: Dict[str, Any], json_outputs_dir: str, plot_outputs_dir: str, plot_configs: Dict[str, Dict[str, Any]] = None) -> None:
         """
         Generate and save various types of plots based on the provided metrics and configurations.
 
-        This function creates different types of plots (e.g., class_distributions, blind_spot, performance_by_threshold, etc.)
-        and saves them to the specified output directories.
-
-        :param metrics: Dictionary containing the computed metrics.
-        :param json_outputs_dir: Directory path where JSON files for the plots will be saved.
-        :param plot_outputs_dir: Directory path where the generated plot images will be saved.
-        :param plot_configs: Configuration dictionary specifying the types of plots to generate and their parameters.
-
+        :param metrics: Dictionary containing the computed metrics
+        :param json_outputs_dir: Directory path where JSON files for the plots will be saved
+        :param plot_outputs_dir: Directory path where the generated plot images will be saved
+        :param plot_configs: Optional; Configuration dictionary for plots. If None, all plots will be generated 
+                            with default configurations
         :return: None
         """
+        os.makedirs(json_outputs_dir, exist_ok=True)
+        os.makedirs(plot_outputs_dir, exist_ok=True)
+
+        # Default configurations 
+        DEFAULT_PLOT_CONFIGS = {
+            'class_distributions': {'metrics': ['normal','pneumonia'], 'threshold': 10}, 
+            'blind_spot': {'class_type': ['Average','1','0']}, 
+            'performance_by_threshold': {
+                'graph_type': 'graph_1', 
+                'metrics': ['F1', 'Sensitivity', 'Specificity', 'Precision','FPR', 'FNR'], 
+                'threshold': 0.2
+            }, 
+            'roc': {'roc_class': ['normal', 'pneumonia']}, 
+            'precision_recall': {'pr_class': ['normal','pneumonia']}, 
+            'confidence_histogram': {'metrics': ['TP', 'FP'], 'threshold': 0.5}, 
+            'overall_metrics': {'metrics': ['AUC','Precision'], 'threshold': 0.2}, 
+            'confusion_matrix': {},
+            'prediction_dataset_distribution': {},
+            'most_confused_bar': {},
+            'confidence_histogram_scatter_distribution': {},
+            'lift_chart': {},
+        }
+
+
         file_name_patterns: Dict[str, Tuple[str, str]] = {
             'class_distributions': ('class_distributions_path', 'plot_{}.json'),
             'blind_spot': ('blind_spot_path', 'plot_{}_metrics.json'),
@@ -175,6 +196,15 @@ class ValidationCreation:
             'confidence_histogram_scatter_distribution': lambda c: {},
             'lift_chart': lambda c: {'metrics': c.get('metrics')},
         }
+
+        if not plot_configs:
+            plot_configs = DEFAULT_PLOT_CONFIGS.copy()
+            available_classes = metrics.get('classes', [])
+            if available_classes:
+                plot_configs['roc']['roc_class'] = available_classes
+                plot_configs['precision_recall']['pr_class'] = available_classes
+                plot_configs['class_distributions']['metrics'] = available_classes
+
 
         for draw_type, config in plot_configs.items():
             arg_name, file_pattern = file_name_patterns.get(draw_type, (None, 'plot_{}.json'))

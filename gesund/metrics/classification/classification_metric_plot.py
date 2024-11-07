@@ -96,34 +96,37 @@ class Classification_Plot:
         :raises ValueError: If an unsupported plot type is specified.
         """
 
-        if plot_type == 'class_distributions':
-            self._plot_class_distributions(metrics, threshold, save_path)
-        elif plot_type == 'blind_spot':
-            self._plot_blind_spot(class_type, save_path)
-        elif plot_type == 'performance_by_threshold':
-            self._plot_class_performance_by_threshold(graph_type, metrics, threshold, save_path)
-        elif plot_type == 'roc':
-            self._plot_roc_statistics(roc_class, save_path)
-        elif plot_type == 'precision_recall':
-            self._plot_precision_recall_statistics(pr_class, save_path)
-        elif plot_type == 'confidence_histogram':
-            self._plot_confidence_histogram(confidence_histogram_args, save_path)
-        elif plot_type == 'overall_metrics':
-            self._plot_overall_metrics(overall_args, save_path)
-        elif plot_type == 'mixed_plot':
-            self._plot_mixed_metrics(mixed_args, save_path)
-        elif plot_type == 'confusion_matrix':
-            self._plot_confusion_matrix(save_path)
-        elif plot_type == 'prediction_dataset_distribution':
-            self._plot_prediction_dataset_distribution(save_path)
-        elif plot_type == 'most_confused_bar':
-            self._plot_most_confused_bar(save_path)
-        elif plot_type == 'confidence_histogram_scatter_distribution':
-            self._plot_confidence_histogram_scatter_distribution(save_path)
-        elif plot_type == 'lift_chart':
-            self._plot_lift_chart(save_path)
-        else:
-            raise ValueError(f"Unsupported plot type: {plot_type}")
+        try:
+            if plot_type == 'class_distributions':
+                self._plot_class_distributions(metrics, threshold, save_path)
+            elif plot_type == 'blind_spot':
+                self._plot_blind_spot(class_type if isinstance(class_type, list) else [class_type], save_path)
+            elif plot_type == 'performance_by_threshold':
+                self._plot_class_performance_by_threshold(graph_type, metrics, threshold, save_path)
+            elif plot_type == 'roc':
+                self._plot_roc_statistics(roc_class if isinstance(roc_class, list) else [roc_class], save_path)
+            elif plot_type == 'precision_recall':
+                self._plot_precision_recall_statistics(pr_class if isinstance(pr_class, list) else [pr_class], save_path)
+            elif plot_type == 'confidence_histogram':
+                self._plot_confidence_histogram({'labels': metrics} if metrics else None, save_path)
+            elif plot_type == 'overall_metrics':
+                self._plot_overall_metrics({'metrics': metrics, 'threshold': threshold} if metrics or threshold else None, save_path)
+            elif plot_type == 'mixed_plot':
+                self._plot_mixed_metrics(mixed_args, save_path)
+            elif plot_type == 'confusion_matrix':
+                self._plot_confusion_matrix(save_path)
+            elif plot_type == 'prediction_dataset_distribution':
+                self._plot_prediction_dataset_distribution(save_path)
+            elif plot_type == 'most_confused_bar':
+                self._plot_most_confused_bar(save_path)
+            elif plot_type == 'confidence_histogram_scatter_distribution':
+                self._plot_confidence_histogram_scatter_distribution(save_path)
+            elif plot_type == 'lift_chart':
+                self._plot_lift_chart(save_path)
+            else:
+                raise ValueError(f"Unsupported plot type: {plot_type}")
+        except Exception as e:
+            print(f"Error plotting {plot_type}: {str(e)}")
         
 
 
