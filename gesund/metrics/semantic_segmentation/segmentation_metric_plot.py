@@ -61,18 +61,21 @@ class Semantic_Segmentation_Plot:
         
         :raises ValueError: If an unsupported plot type is specified.
         """
-        if plot_type == 'violin_graph':
-            self._plot_violin_graph(metrics, threshold, save_path)
-        elif plot_type == 'classbased_table':
-            self._plot_classbased_table(classbased_table_args, save_path)
-        elif plot_type == 'overall_metrics':
-            self._plot_overall_data(overall_args, save_path)
-        elif plot_type == 'blind_spot':
-            self._plot_blind_spot(blind_spot_args, save_path)
-        elif plot_type == 'plot_by_meta_data':
-            self._plot_by_meta_data(meta_data_args, save_path)
-        else:
-            raise ValueError(f"Unsupported plot type: {plot_type}")
+        try:
+            if plot_type == 'violin_graph':
+                self._plot_violin_graph(metrics, threshold, save_path)
+            elif plot_type == 'classbased_table':
+                self._plot_classbased_table(classbased_table_args if isinstance(classbased_table_args, list) else [classbased_table_args], save_path)
+            elif plot_type == 'overall_metrics':
+                self._plot_overall_data(overall_args, save_path)
+            elif plot_type == 'blind_spot':
+                self._plot_blind_spot(blind_spot_args, save_path)
+            elif plot_type == 'plot_by_meta_data':
+                self._plot_by_meta_data(meta_data_args, save_path)
+            else:
+                raise ValueError(f"Unsupported plot type: {plot_type}")
+        except AttributeError as e:
+            print(f"Error: {e}")
         
     def _plot_violin_graph(self, metrics=None, threshold=None, save_path=None):
         """

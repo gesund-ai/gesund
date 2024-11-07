@@ -129,6 +129,18 @@ class ValidationCreation:
 
         :return: None
         """
+        os.makedirs(json_output_dir, exist_ok=True)
+        os.makedirs(plot_outputs_dir, exist_ok=True)
+
+        # Default configurations for different types of plots
+        DEFAULT_PLOT_CONFIGS = {
+            'violin_graph': {'metrics': ['Acc', 'Spec', 'AUC'], 'threshold': 0.5},
+            'plot_by_meta_data': {'meta_data_args': ['FalsePositive', 'Dice Score', 'mean Sensitivity', 'mean AUC', 'Precision', 'AverageHausdorffDistance', 'SimpleHausdorffDistance']},
+            'overall_metrics': {'overall_args': ['mean AUC', 'fwIoU', 'mean Sensitivity']},
+            'classbased_table': {'classbased_table_args': 0.5},
+            'blind_spot': {'blind_spot_args': ['fwIoU', 'mean IoU', 'mean Sensitivity', 'mean Specificity', 'mean Kappa', 'mean AUC', '']}
+        }
+
         file_name_patterns = {
             'violin_graph': ('violin_path', 'plot_{}.json'),
             'plot_by_meta_data': ('plot_by_meta_data', 'plot_metrics_by_meta_data.json'),
@@ -144,6 +156,13 @@ class ValidationCreation:
             'classbased_table': lambda c: {'classbased_table_args': c.get('classbased_table_args')},
             'blind_spot': lambda c: {'blind_spot_args': c.get('blind_spot_args')}
         }
+
+        if not plot_configs:
+            plot_configs = DEFAULT_PLOT_CONFIGS.copy()
+            available_classes = metrics.get('classes', [])
+            if available_classes:
+                plot_configs['classbased_table']['classbased_table_args'] = available_classes
+
 
         for draw_type, config in plot_configs.items():
             arg_name, file_pattern = file_name_patterns.get(draw_type, (None, 'plot_{}.json'))
