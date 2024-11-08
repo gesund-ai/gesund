@@ -1,11 +1,11 @@
 from typing import Optional, Union
 import bson
 
-from ._converters import ConverterFactory
-from ._data_loaders import DataLoader
-from ._schema import InputParams, Data, ResultData
-from ._plot import PlotData
-from ._exceptions import MetricCalculationError
+from gesund.core._converters import ConverterFactory
+from gesund.core._data_loaders import DataLoader
+from gesund.core._schema import UserInputParams, UserInputData, ResultData
+from gesund.core._plot import PlotData
+from gesund.core._exceptions import MetricCalculationError
 
 
 class ValidationProblemTypeFactory:
@@ -21,13 +21,13 @@ class ValidationProblemTypeFactory:
         :rtype: class
         """
         if problem_type == "classification":
-            from ._metrics.classification.create_validation import ValidationCreation
+            from ..core._metrics.classification.create_validation import ValidationCreation
             return ValidationCreation
         elif problem_type == "semantic_segmentation":
-            from ._metrics.semantic_segmentation.create_validation import ValidationCreation
+            from ..core._metrics.semantic_segmentation.create_validation import ValidationCreation
             return ValidationCreation
         elif problem_type == "object_detection":
-            from ._metrics.object_detection.create_validation import ValidationCreation
+            from ..core._metrics.object_detection.create_validation import ValidationCreation
             return ValidationCreation
         else:
             raise ValueError(f"Unknow problem type : {problem_type}")
@@ -108,12 +108,12 @@ class Validation:
             "store_plots": store_plots,
             "allowed_values": self.ALLOWED_VALUES
         }
-        self.user_params = InputParams(**params)
+        self.user_params = UserInputParams(**params)
 
         # set up source data for processing 
         self.data_loader = DataLoader(data_format)
         data = self._load_data(self.params, self.data_loader)
-        self.data = Data(**data)
+        self.data = UserInputData(**data)
 
         # set up batch job id
         self.batch_job_id = str(bson.ObjectId())
@@ -122,7 +122,7 @@ class Validation:
     
     @staticmethod
     def _load_data(
-        user_params: InputParams, data_loader: DataLoader) -> dict:
+        user_params: UserInputParams, data_loader: DataLoader) -> dict:
         """
         A Function to load the JSON files
 
@@ -232,7 +232,6 @@ class Validation:
         """
         plot_data_executor = PlotData(
             metrics_result=results,
-            save_plots=self.user_params.store_plots,
             user_params=self.user_params
         )
         plot_data_executor.plot()
@@ -257,7 +256,7 @@ class Validation:
         results = self._run_validation()
 
         # format the results
-        results = self._format_results(results)
+        # results = self._format_results(results)
 
         # store the results
         if self.user_params.store_json:

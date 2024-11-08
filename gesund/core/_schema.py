@@ -2,10 +2,10 @@ import os
 from pydantic import BaseModel, field_validator
 from typing import List, Dict, Union, Optional, ClassVar
 
-from _exceptions import InputError
+from ._exceptions import InputError
 
 
-class InputParams(BaseModel):
+class UserInputParams(BaseModel):
     annotations_path: str
     predictions_path: str
     problem_type: str
@@ -64,7 +64,7 @@ class InputParams(BaseModel):
             print("Data format validated!")
 
 
-class Data(BaseModel):
+class UserInputData(BaseModel):
     prediction: Union[List[Dict], Dict]
     annotation: Union[List[Dict], Dict]
     class_mapping: Dict

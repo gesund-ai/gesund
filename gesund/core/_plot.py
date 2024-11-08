@@ -1,6 +1,6 @@
 
-from ._exceptions import PlotError
-from ._validation import ValidationProblemTypeFactory
+from ._exceptions import PlotError, MetricCalculationError
+from gesund.validation import ValidationProblemTypeFactory
 from ._schema import InputParams
 
 
@@ -10,7 +10,6 @@ class PlotData:
     def __init__(
             self, 
             metrics_result: dict, 
-            save_plots: bool, 
             user_params: InputParams
     ):
         """
@@ -18,8 +17,6 @@ class PlotData:
 
         :param metrics_results: dictionary containing the result
         :type metrics_results: dict
-        :param save_plots: flag for saving the plot if True save the plot
-        :type save_plots: bool
         :param user_params: parameters received from the user
         :type user_params: object
 
@@ -27,7 +24,6 @@ class PlotData:
         """
 
         self.metrics_results = metrics_result
-        self.save_plots = save_plots
         self.user_params = user_params
     
     def _get_metric_plotter(
@@ -61,11 +57,14 @@ class PlotData:
         :type metric_validation_executor: object
         :return: None
         """
-        if self.user_params.apply_metadata:
+        try:
+            metric_validation_executor.plot_metrics(self.metrics_results)
+        except Exception as e:
+            print(e)
+            raise MetricCalculationError("Could not run the validation executor !")
+        
+        if self.user_params.store_plots:
             pass
-        else:
-            metric_validation_executor.plot_metrics(
-                self.metrics_results)
 
     def write_plots(self):
         pass
