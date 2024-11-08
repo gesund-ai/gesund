@@ -1,8 +1,45 @@
+from typing import Union
+
 
 from ._exceptions import PlotError, MetricCalculationError
 from gesund.validation import ValidationProblemTypeFactory
 from ._schema import InputParams
+from gesund.core._metrics.classification.classification_metric_plot import Classification_Plot
 
+
+class CommonPlots:
+    def _class_distribution(
+            self, 
+            metrics: Union[dict, list], 
+            threshold: float,
+            save_path: Union[str, None]):
+        """
+        A function to plot class distribution
+
+        :param metrics: The metrics to be plotted
+        :type metrics: Union[dict, list]
+        :param threshold: the value to be applied as threshold
+        :type threshold: float
+        :param save_path: The path to be saved the plot in
+        :type save_path: The path to be saved
+
+        :return: None 
+        """
+        self.cls_driver._plot_class_distributions(metrics, threshold, save_path)
+        
+
+
+
+class ClassificationPlots(CommonPlots):
+    def __init__(self):
+        self.cls_driver = Classification_Plot()
+
+
+class ObjectDetectionPlots(CommonPlots):
+    pass
+
+class SegmentationPlots(CommonPlots):
+    pass
 
 
 class PlotData:
@@ -25,29 +62,41 @@ class PlotData:
 
         self.metrics_results = metrics_result
         self.user_params = user_params
+        self.plot_save_dir = "outputs/plots"
+
+        # set up plotters
+        self.classification_plotter = ClassificationPlots()
+        self.object_detection_plotter = ObjectDetectionPlots()
+        self.segmentation_plotter = SegmentationPlots()
     
-    def _get_metric_plotter(
+    def _plot_single_metric(
             self, 
             metric_name: str, 
-            metric_executor: str
         ):
         """
         A function to return plotting function specific to metric
 
         :param metric_name: name of the metric
         :type metric_name: str
-        :param metric_executor: executor for  
-        :type metric_executor: function
 
-        :return: function to plot the metric
-        :rtype: object
+        :return: None
         """
-        fxn_plot_map = {}
+        fxn_plot_map = {
+            "classification": {
+                "class_distribution": self.classification_plotter._class_distribution
+            }
+            
+        }
         if metric_name not in fxn_plot_map:
             raise ModuleNotFoundError(f"{metric_name} plotting function")
         
-        return fxn_plot_map[metric_name](metric_executor)
-
+        _plotter_fxn = fxn_plot_map[self.user_params.problem_type][metric_name]
+        _plotter_fxn(
+            metrics=self.metrics_results,
+            threshold=self.user_params.threshold,
+            save_path=self.plot_save_dir if self.user_params.save_plots else None
+        )
+        
     
     def _plot_all(self, metric_validation_executor):
         """
@@ -55,6 +104,7 @@ class PlotData:
 
         :param metric_validation_executor: metric validation executor
         :type metric_validation_executor: object
+
         :return: None
         """
         try:
@@ -72,12 +122,14 @@ class PlotData:
     def apply_filters(self):
         pass
 
-    def plot(self, metric_name: str = "all"):
+    def plot(self, metric_name: str = "all", threshold: float = 0.0):
         """
         A function to plot the data from the results
 
         :param metric_name: name of the metric to plot
         :type metric_name: str
+        :param threshold: float value indicating the threshold
+        :type threshold: float
 
         :return: None
         """
@@ -93,6 +145,4 @@ class PlotData:
                 print(e)
                 raise PlotError("Could not plot the metrics!")
         else:
-            _metric_plotter = self._get_metric_plotter(
-                metric_name, _metric_validation_executor)
-            _metric_plotter.plot()
+            self._plot_single_metric(metric_name, threshold)

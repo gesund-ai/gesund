@@ -8,6 +8,7 @@ from gesund.core._plot import PlotData
 from gesund.core._exceptions import MetricCalculationError
 
 
+
 class ValidationProblemTypeFactory:
     
     def get_problem_type_factory(self, problem_type:str):
@@ -21,13 +22,13 @@ class ValidationProblemTypeFactory:
         :rtype: class
         """
         if problem_type == "classification":
-            from ..core._metrics.classification.create_validation import ValidationCreation
+            from gesund.core._metrics.classification.create_validation import ValidationCreation
             return ValidationCreation
         elif problem_type == "semantic_segmentation":
-            from ..core._metrics.semantic_segmentation.create_validation import ValidationCreation
+            from gesund.core._metrics.semantic_segmentation.create_validation import ValidationCreation
             return ValidationCreation
         elif problem_type == "object_detection":
-            from ..core._metrics.object_detection.create_validation import ValidationCreation
+            from gesund.core._metrics.object_detection.create_validation import ValidationCreation
             return ValidationCreation
         else:
             raise ValueError(f"Unknow problem type : {problem_type}")
