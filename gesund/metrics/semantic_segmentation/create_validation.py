@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from typing import Dict, Any
 from .plots.plot_driver import SemanticSegmentationPlotDriver
 from gesund.metrics.semantic_segmentation.segmentation_metric_plot import Semantic_Segmentation_Plot
 
@@ -115,33 +116,32 @@ class ValidationCreation:
         
         return overall_metrics
 
-    def plot_metrics(self, metrics, json_output_dir,plot_outputs_dir, plot_configs):
+    def plot_metrics(self, metrics: Dict[str, Any], json_output_dir: str, plot_outputs_dir: str, plot_configs: Dict[str, Any]) -> None:
         """
         Generate and save various types of plots based on the provided metrics and configurations.
 
         This function creates different types of plots (e.g., violin graphs, plots by metadata, overall metrics, etc.)
         and saves them to the specified output directories.
 
-        :param metrics: (dict) Dictionary containing the computed metrics.
-        :param json_output_dir: (str) Directory path where JSON files for the plots will be saved.
-        :param plot_outputs_dir: (str) Directory path where the generated plot images will be saved.
-        :param plot_configs: (dict) Configuration dictionary specifying the types of plots to generate and their parameters.
+        :param metrics: Dictionary containing the computed metrics (dict).
+        :param json_output_dir: Directory path where JSON files for the plots will be saved (str).
+        :param plot_outputs_dir: Directory path where the generated plot images will be saved (str).
+        :param plot_configs: Configuration dictionary specifying the types of plots to generate and their parameters (dict).
 
         :return: None
         """
         os.makedirs(json_output_dir, exist_ok=True)
         os.makedirs(plot_outputs_dir, exist_ok=True)
 
-        # Default configurations for different types of plots
-        DEFAULT_PLOT_CONFIGS = {
+        DEFAULT_PLOT_CONFIGS: Dict[str, Dict[str, Any]] = {
             'violin_graph': {'metrics': ['Acc', 'Spec', 'AUC'], 'threshold': 0.5},
             'plot_by_meta_data': {'meta_data_args': ['FalsePositive', 'Dice Score', 'mean Sensitivity', 'mean AUC', 'Precision', 'AverageHausdorffDistance', 'SimpleHausdorffDistance']},
             'overall_metrics': {'overall_args': ['mean AUC', 'fwIoU', 'mean Sensitivity']},
             'classbased_table': {'classbased_table_args': 0.5},
-            'blind_spot': {'blind_spot_args': ['fwIoU', 'mean IoU', 'mean Sensitivity', 'mean Specificity', 'mean Kappa', 'mean AUC', '']}
+            'blind_spot': {'blind_spot_args': ['fwIoU', 'mean IoU', 'mean Sensitivity', 'mean Specificity', 'mean Kappa', 'mean AUC']}
         }
 
-        file_name_patterns = {
+        file_name_patterns: Dict[str, tuple] = {
             'violin_graph': ('violin_path', 'plot_{}.json'),
             'plot_by_meta_data': ('plot_by_meta_data', 'plot_metrics_by_meta_data.json'),
             'overall_metrics': ('overall_data', 'plot_highlighted_{}.json'),
@@ -149,7 +149,7 @@ class ValidationCreation:
             'blind_spot': ('blind_spot', 'plot_{}_metrics.json')
         }
 
-        draw_params = {
+        draw_params: Dict[str, callable] = {
             'violin_graph': lambda c: {'metrics': c.get('metrics'), 'threshold': c.get('threshold')},
             'plot_by_meta_data': lambda c: {'meta_data_args': c.get('meta_data_args')},
             'overall_metrics': lambda c: {'overall_args': c.get('overall_args')},
@@ -163,7 +163,6 @@ class ValidationCreation:
             if available_classes:
                 plot_configs['classbased_table']['classbased_table_args'] = available_classes
 
-
         for draw_type, config in plot_configs.items():
             arg_name, file_pattern = file_name_patterns.get(draw_type, (None, 'plot_{}.json'))
             if arg_name is None:
@@ -175,8 +174,11 @@ class ValidationCreation:
             plot = Semantic_Segmentation_Plot(**{arg_name: file_path})
             save_path = os.path.join(plot_outputs_dir, f'{draw_type}.png')
 
-            params = draw_params.get(draw_type, lambda _: {})(config)
-            plot.draw(draw_type, save_path=save_path, **params)
+            try:
+                params = draw_params.get(draw_type, lambda _: {})(config)
+                plot.draw(draw_type, save_path=save_path, **params)
+            except Exception as e:
+                print(f"Error creating {draw_type}: {e}")
 
     def _load_plotting_data(
         self, validation_collection_data=None, generate_metrics=True, study_list=None,

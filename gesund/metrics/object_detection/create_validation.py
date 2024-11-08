@@ -5,6 +5,7 @@ import json
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+from typing import Dict, Any
 
 from .plots.plot_driver import ObjectDetectionPlotDriver
 from gesund.metrics.object_detection.object_detection_metric_plot import Object_Detection_Plot
@@ -196,7 +197,7 @@ class ValidationCreation:
                 
         return overall_metrics
 
-    def plot_metrics(self, metrics, json_output_dir, plot_outputs_dir, plot_configs):
+    def plot_metrics(self, metrics: Dict[str, Any], json_output_dir: str, plot_outputs_dir: str, plot_configs: Dict[str, Any]) -> None:
         """
         Generate and save various types of plots based on the provided metrics and configurations.
 
@@ -211,10 +212,9 @@ class ValidationCreation:
         :return: None
         """
         os.makedirs(json_output_dir, exist_ok=True)
-        os.makedirs(plot_outputs_dir, exist_ok=True)  
+        os.makedirs(plot_outputs_dir, exist_ok=True)
 
-        # Deafulat values for the plot_configs
-        DEFAULT_PLOT_CONFIGS = {
+        DEFAULT_PLOT_CONFIGS: Dict[str, Dict[str, Any]] = {
             'mixed_plot': {'mixed_plot': ['map10', 'map50', 'map75'], 'threshold': 0.5},
             'top_misses': {'min_miou': 0.70, 'top_n': 10},
             'confidence_histogram': {'confidence_histogram_labels': ['TP', 'FP']},
@@ -223,7 +223,7 @@ class ValidationCreation:
             'blind_spot': {'blind_spot_Average': ['mAP@50', 'mAP@10','mAR@max=10','mAR@max=100'],'threshold': 0.5}
         }
 
-        file_name_patterns = {
+        file_name_patterns: Dict[str, tuple] = {
             'mixed_plot': ('mixed_json_path', 'plot_performance_by_iou_threshold.json'),
             'top_misses': ('top_misses_path', 'plot_{}.json'),
             'confidence_histogram': ('confidence_histogram_path', 'plot_{}_scatter_distribution.json'),
@@ -232,7 +232,7 @@ class ValidationCreation:
             'blind_spot': ('blind_spot_path', 'plot_{}_metrics.json')
         }
 
-        draw_params = {
+        draw_params: Dict[str, callable] = {
             'mixed_plot': lambda c: {'mixed_args': c},
             'top_misses': lambda c: {'top_misses_args': c},
             'confidence_histogram': lambda c: {'confidence_histogram_args': c},
@@ -240,12 +240,12 @@ class ValidationCreation:
             'overall_metrics': lambda c: {'overall_args': c},
             'blind_spot': lambda c: {'blind_spot_args': c}
         }
+
         if not plot_configs:
             plot_configs = DEFAULT_PLOT_CONFIGS.copy()
             available_classes = metrics.get('classes', [])
             if available_classes:
                 plot_configs['classbased_table']['classbased_table_metrics'] = available_classes
-                
 
         for draw_type, config in plot_configs.items():
             arg_name, file_pattern = file_name_patterns.get(draw_type, (None, 'plot_{}.json'))
