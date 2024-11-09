@@ -6,7 +6,7 @@ import os
 from typing import Any, Dict, Tuple, Callable
 
 from .plots.plot_driver import ClassificationPlotDriver
-from gesund.metrics.classification.classification_metric_plot import Classification_Plot
+from gesund.core._metrics.classification.classification_metric_plot import Classification_Plot
 
 class ValidationCreation:
     """
