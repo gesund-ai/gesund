@@ -27,7 +27,24 @@ class CommonPlots:
         """
         self.cls_driver._plot_class_distributions(metrics, threshold, save_path)
         
+    def _blind_spot(self,
+                    metrics: Union[dict, list],
+                    class_types: list,
+                    save_path: Union[str, None]):
+        """
+        A function to plot blind spot metrics
 
+        :param metrics: The metrics to be plotted
+        :type metrics: Union[dict, list]
+        :param class_types: List of class types to include
+        :type class_types: list 
+        :param save_path: The path to be saved the plot in
+        :type save_path: Union[str, None]
+
+        :return: None 
+        """
+        self.cls_driver._plot_blind_spot(metrics, class_types, save_path)
+           
 
 
 class ClassificationPlots(CommonPlots):
@@ -83,7 +100,8 @@ class PlotData:
         """
         fxn_plot_map = {
             "classification": {
-                "class_distribution": self.classification_plotter._class_distribution
+                "class_distribution": self.classification_plotter._class_distribution,
+                "blind_spot": self.classification_plotter._blind_spot
             }
             
         }
