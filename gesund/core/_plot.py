@@ -200,6 +200,187 @@ class CommonPlots:
         """
         self.cls_driver._plot_lift_chart(save_path)
 
+    def _blind_spot(
+            self,
+            blind_spot_args: list,
+            save_path: Union[str, None]):
+        """
+        A function to plot blind spot
+
+        :param blind_spot_args: List of arguments for blind spot
+        :type blind_spot_args: list
+        :param save_path: The path to be saved the plot in
+        :type save_path: Union[str, None]
+
+        :return: None
+        """
+        self.obj_driver._plot_blind_spot(blind_spot_args, save_path)
+
+    
+    def _overall_metrics(
+            self,
+            overall_metrics_args: list,
+            save_path: Union[str, None]):
+        """
+        A function to plot overall metrics
+
+        :param overall_metrics_args: List of arguments for overall metrics
+        :type overall_metrics_args: list
+        :param save_path: The path to be saved the plot in
+        :type save_path: Union[str, None]
+
+        :return: None
+        """
+        self.obj_driver._plot_overall_metrics(overall_metrics_args, save_path)
+
+    def _top_misses(
+            self,
+            top_misses_args: list,
+            save_path: Union[str, None]):
+        """
+        A function to plot top misses
+
+        :param top_misses_args: List of arguments for top misses
+        :type top_misses_args: list
+        :param save_path: The path to be saved the plot in
+        :type save_path: Union[str, None]
+
+        :return: None
+        """
+        self.obj_driver._plot_top_misses(top_misses_args, save_path)
+
+    def _classbased_table_metrics(
+            self,
+            classbased_table_args: list,
+            save_path: Union[str, None]):
+        """
+        A function to plot class based table metrics
+
+        :param classbased_table_args: List of arguments for class based table
+        :type classbased_table_args: list
+        :param save_path: The path to be saved the plot in
+        :type save_path: Union[str, None]
+
+        :return: None
+        """
+        self.obj_driver._plot_classbased_table_metrics(classbased_table_args, save_path)
+
+    def _mixed_metrics(
+            self,
+            mixed_metrics_args: list,
+            save_path: Union[str, None]):
+        """
+        A function to plot mixed metrics
+
+        :param mixed_metrics_args: List of arguments for mixed metrics
+        :type mixed_metrics_args: list
+        :param save_path: The path to be saved the plot in
+        :type save_path: Union[str, None]
+
+        :return: None
+        """
+        self.obj_driver._plot_mixed_metrics(mixed_metrics_args, save_path)
+
+    def _confidence_histogram(
+            self,
+            confidence_histogram_args: list,
+            save_path: Union[str, None]):
+        """
+        A function to plot confidence histogram
+
+        :param confidence_histogram_args: List of arguments for confidence histogram
+        :type confidence_histogram_args: list
+        :param save_path: The path to be saved the plot in
+        :type save_path: Union[str, None]
+
+        :return: None
+        """
+        self.obj_driver._plot_confidence_histogram(confidence_histogram_args, save_path)
+
+
+    def _classbased_table(
+            self,
+            classbased_table_args: list,
+            save_path: Union[str, None]):
+        """
+        A function to plot class based table
+
+        :param classbased_table_args: List of arguments for class based table
+        :type classbased_table_args: list
+        :param save_path: The path to be saved the plot in
+        :type save_path: Union[str, None]
+
+        :return: None
+        """
+        self.seg_driver._plot_classbased_table(classbased_table_args, save_path)
+
+    def _overall_data(
+            self,
+            overall_args: list,
+            save_path: Union[str, None]):
+        """
+        A function to plot overall data
+
+        :param overall_args: List of arguments for overall data
+        :type overall_args: list
+        :param save_path: The path to be saved the plot in
+        :type save_path: Union[str, None]
+
+        :return: None
+        """
+        self.seg_driver._plot_overall_data(overall_args, save_path)
+
+    def _blind_spot(
+            self,
+            blind_spot_args: list,
+            save_path: Union[str, None]):
+        """
+        A function to plot blind spot
+
+        :param blind_spot_args: List of arguments for blind spot
+        :type blind_spot_args: list
+        :param save_path: The path to be saved the plot in
+        :type save_path: Union[str, None]
+
+        :return: None
+        """
+        self.seg_driver._plot_blind_spot(blind_spot_args, save_path)
+
+    def _by_meta_data(
+            self,
+            meta_data_args: list,
+            save_path: Union[str, None]):
+        """
+        A function to plot by meta data
+
+        :param meta_data_args: List of arguments for meta data
+        :type meta_data_args: list
+        :param save_path: The path to be saved the plot in
+        :type save_path: Union[str, None]
+
+        :return: None
+        """
+        self.seg_driver._plot_by_meta_data(meta_data_args, save_path)
+
+
+    def _violin_graph(
+            self,
+            metrics: Union[dict, list], 
+            threshold: float,
+            save_path: Union[str, None]):
+        """
+        A function to plot violin graph
+
+        :param metrics: The metrics to be plotted
+        :type metrics: Union[dict, list]
+        :param threshold: the value to be applied as threshold
+        :type threshold: float
+        :param save_path: The path to be saved the plot in
+        :type save_path: Union[str, None]
+
+        :return: None
+        """
+        self.seg_driver._plot_violin_graph(metrics, threshold, save_path)
 
 class ClassificationPlots(CommonPlots):
     def __init__(self):
@@ -207,10 +388,12 @@ class ClassificationPlots(CommonPlots):
 
 
 class ObjectDetectionPlots(CommonPlots):
-    pass
+    def __init__(self):
+        self.obj_driver = ObjectDetectionPlots()
 
 class SegmentationPlots(CommonPlots):
-    pass
+    def __init__(self):
+        self.seg_driver = SegmentationPlots()
 
 
 class PlotData:
@@ -271,16 +454,16 @@ class PlotData:
                 "lift_chart": self.classification_plotter._lift_chart
             },
             "object_detection": {
-                "mixed_plot": self.object_detection_plotter._mixed_plot,
+                "mixed_metrics": self.object_detection_plotter._mixed_metrics,
                 "top_misses": self.object_detection_plotter._top_misses,
                 "confidence_histogram": self.object_detection_plotter._confidence_histogram,
-                "classbased_table": self.object_detection_plotter._classbased_table,
+                "classbased_table_metrics": self.object_detection_plotter._classbased_table_metrics,
                 "overall_metrics": self.object_detection_plotter._overall_metrics,
                 "blind_spot": self.object_detection_plotter._blind_spot
             },
             "segmentation": {
                 "violin_graph": self.segmentation_plotter._violin_graph,
-                "plot_by_meta_data": self.segmentation_plotter._plot_by_meta_data,
+                "by_meta_data": self.segmentation_plotter._by_meta_data,
                 "overall_metrics": self.segmentation_plotter._overall_metrics,
                 "classbased_table": self.segmentation_plotter._classbased_table,
                 "blind_spot": self.segmentation_plotter._blind_spot
