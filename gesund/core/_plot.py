@@ -29,12 +29,12 @@ class CommonPlots:
         """
         self.cls_driver._plot_class_distributions(metrics, threshold, save_path)
         
-    def _blind_spot(self,
+    def _classification_blind_spot(self,
                     metrics: Union[dict, list],
                     class_types: list,
                     save_path: Union[str, None]):
         """
-        A function to plot blind spot metrics
+        A function to plot classification blind spot metrics
 
         :param metrics: The metrics to be plotted
         :type metrics: Union[dict, list]
@@ -121,12 +121,12 @@ class CommonPlots:
         """
         self.cls_driver._plot_confidence_histogram(confidence_histogram_args, save_path)
         
-    def _overall_metrics(
+    def _classification_overall_metrics(
             self,
             overall_metrics_args: list,
             save_path: Union[str, None]):
         """
-        A function to plot overall metrics
+        A function to plot classification overall metrics
 
         :param overall_metrics_args: List of arguments for overall metrics
         :type overall_metrics_args: list
@@ -202,12 +202,11 @@ class CommonPlots:
         """
         self.cls_driver._plot_lift_chart(save_path)
 
-    def _blind_spot(
-            self,
+    def _object_detection_blind_spot(self,
             blind_spot_args: list,
             save_path: Union[str, None]):
         """
-        A function to plot blind spot
+        A function to plot object detection blind spot
 
         :param blind_spot_args: List of arguments for blind spot
         :type blind_spot_args: list
@@ -219,12 +218,12 @@ class CommonPlots:
         self.obj_driver._plot_blind_spot(blind_spot_args, save_path)
 
     
-    def _overall_metrics(
+    def _object_detection_overall_metrics(
             self,
             overall_metrics_args: list,
             save_path: Union[str, None]):
         """
-        A function to plot overall metrics
+        A function to plot object detection overall metrics
 
         :param overall_metrics_args: List of arguments for overall metrics
         :type overall_metrics_args: list
@@ -316,7 +315,7 @@ class CommonPlots:
         """
         self.seg_driver._plot_classbased_table(classbased_table_args, save_path)
 
-    def _overall_data(
+    def _segmentation_overall_metrics(
             self,
             overall_args: list,
             save_path: Union[str, None]):
@@ -332,12 +331,11 @@ class CommonPlots:
         """
         self.seg_driver._plot_overall_data(overall_args, save_path)
 
-    def _blind_spot(
-            self,
+    def _segmentation_blind_spot(self,
             blind_spot_args: list,
             save_path: Union[str, None]):
         """
-        A function to plot blind spot
+        A function to plot segmentation blind spot
 
         :param blind_spot_args: List of arguments for blind spot
         :type blind_spot_args: list
@@ -443,12 +441,12 @@ class PlotData:
         fxn_plot_map = {
             "classification": {
                 "class_distribution": self.classification_plotter._class_distribution,
-                "blind_spot": self.classification_plotter._blind_spot,
+                "blind_spot": self.classification_plotter._classification_blind_spot,
                 "class_performance_by_threshold": self.classification_plotter._class_performance_by_threshold,
                 "roc_statistics": self.classification_plotter._roc_statistics,
                 "precision_recall_statistics": self.classification_plotter._precision_recall_statistics,
                 "confidence_histogram": self.classification_plotter._confidence_histogram,
-                "overall_metrics": self.classification_plotter._overall_metrics,
+                "overall_metrics": self.classification_plotter._classification_overall_metrics,
                 "confusion_matrix": self.classification_plotter._confusion_matrix,
                 "prediction_dataset_distribution": self.classification_plotter._prediction_dataset_distribution,
                 "most_confused_bar": self.classification_plotter._most_confused_bar,
@@ -460,15 +458,15 @@ class PlotData:
                 "top_misses": self.object_detection_plotter._top_misses,
                 "confidence_histogram": self.object_detection_plotter._confidence_histogram,
                 "classbased_table_metrics": self.object_detection_plotter._classbased_table_metrics,
-                "overall_metrics": self.object_detection_plotter._overall_metrics,
-                "blind_spot": self.object_detection_plotter._blind_spot
+                "overall_metrics": self.object_detection_plotter._object_detection_overall_metrics,
+                "blind_spot": self.object_detection_plotter._object_detection_blind_spot
             },
             "segmentation": {
                 "violin_graph": self.segmentation_plotter._violin_graph,
                 "by_meta_data": self.segmentation_plotter._by_meta_data,
-                "overall_metrics": self.segmentation_plotter._overall_metrics,
+                "overall_metrics": self.segmentation_plotter._segmentation_overall_metrics,
                 "classbased_table": self.segmentation_plotter._classbased_table,
-                "blind_spot": self.segmentation_plotter._blind_spot
+                "blind_spot": self.segmentation_plotter._segmentation_blind_spot
             }
             
         }
