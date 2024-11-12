@@ -386,15 +386,18 @@ class CommonPlots:
 
 class ClassificationPlots(CommonPlots):
     def __init__(self):
+        super().__init__()
         self.cls_driver = Classification_Plot()
 
 
 class ObjectDetectionPlots(CommonPlots):
     def __init__(self):
+        super().__init__()
         self.obj_driver = Object_Detection_Plot()
 
 class SegmentationPlots(CommonPlots):
     def __init__(self):
+        super().__init__()
         self.seg_driver = Semantic_Segmentation_Plot()
 
 
@@ -432,9 +435,9 @@ class PlotData:
     }
 
     def __init__(self,
-                metrics_result: dict,
+                metrics_result: Dict[str, Any],
                 user_params: InputParams,
-                batch_job_id: str = None):
+                batch_job_id: Optional[str] = None):
         self.metrics_results = metrics_result
         self.user_params = user_params
         self.plot_save_dir = "outputs/plots"
@@ -444,7 +447,7 @@ class PlotData:
         self.object_detection_plotter = ObjectDetectionPlots()
         self.segmentation_plotter = SegmentationPlots()
 
-    def get_supported_plots(self):
+    def get_supported_plots(self) -> List[str]:
         """
         Returns list of supported plots for the current problem type
         
@@ -456,13 +459,16 @@ class PlotData:
     def _plot_single_metric(
             self, 
             metric_name: str, 
+            threshold: float = 0.0,
             graph_type: str = 'graph_1'
-        ):
+        ) -> None:
         """
         A function to return plotting function specific to metric
 
         :param metric_name: name of the metric
         :type metric_name: str
+        :param threshold: threshold value for performance threshold plot
+        :type threshold: float
         :param graph_type: type of graph for performance threshold plot
         :type graph_type: str
 
@@ -479,11 +485,11 @@ class PlotData:
         _plotter_fxn = self.FXN_PLOT_MAP[self.user_params.problem_type][metric_name](self)
         _plotter_fxn(
             metrics=self.metrics_results,
-            threshold=self.user_params.threshold,
+            threshold=threshold,
             save_path=self.plot_save_dir if self.user_params.save_plots else None
         )
 
-    def _plot_all(self, metric_validation_executor):
+    def _plot_all(self, metric_validation_executor) -> None:
         """
         A function to plot all the metrics
 
@@ -501,13 +507,13 @@ class PlotData:
         if self.user_params.store_plots:
             pass
 
-    def write_plots(self):
+    def write_plots(self) -> None:
         pass
     
-    def apply_filters(self):
+    def apply_filters(self) -> None:
         pass
 
-    def plot(self, metric_name: str = "all", threshold: float = 0.0):
+    def plot(self, metric_name: str = "all", threshold: float = 0.0) -> None:
         """
         Plot the data from the results
 
