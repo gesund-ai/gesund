@@ -5,6 +5,8 @@ from ._exceptions import PlotError, MetricCalculationError
 from gesund.validation import ValidationProblemTypeFactory
 from ._schema import InputParams
 from gesund.core._metrics.classification.classification_metric_plot import Classification_Plot
+from gesund.core._metrics.object_detection.object_detection_metric_plot import Object_Detection_Plot
+from gesund.core._metrics.semantic_segmentation.segmentation_metric_plot import Semantic_Segmentation_Plot
 
 
 class CommonPlots:
