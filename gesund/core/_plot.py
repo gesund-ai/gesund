@@ -105,12 +105,12 @@ class CommonPlots:
         """
         self.cls_driver._plot_precision_recall_statistics(pr_class, save_path)
 
-    def _confidence_histogram(
+    def _classification_confidence_histogram(
             self,
             confidence_histogram_args: list,
             save_path: Union[str, None]):
         """
-        A function to plot confidence histogram
+        A function to plot classification confidence histogram
 
         :param confidence_histogram_args: List of arguments for confidence histogram
         :type confidence_histogram_args: list
@@ -282,12 +282,12 @@ class CommonPlots:
         """
         self.obj_driver._plot_mixed_metrics(mixed_metrics_args, save_path)
 
-    def _confidence_histogram(
+    def _object_detection_confidence_histogram(
             self,
             confidence_histogram_args: list,
             save_path: Union[str, None]):
         """
-        A function to plot confidence histogram
+        A function to plot object detection confidence histogram
 
         :param confidence_histogram_args: List of arguments for confidence histogram
         :type confidence_histogram_args: list
@@ -389,40 +389,68 @@ class ClassificationPlots(CommonPlots):
 
 class ObjectDetectionPlots(CommonPlots):
     def __init__(self):
-        self.obj_driver = ObjectDetectionPlots()
+        self.obj_driver = Object_Detection_Plot()
 
 class SegmentationPlots(CommonPlots):
     def __init__(self):
-        self.seg_driver = SegmentationPlots()
+        self.seg_driver = Semantic_Segmentation_Plot()
 
 
 class PlotData:
+    FXN_PLOT_MAP = {
+        "classification": {
+            "class_distribution": lambda self: self.classification_plotter._class_distribution,
+            "blind_spot": lambda self: self.classification_plotter._classification_blind_spot,
+            "class_performance_by_threshold": lambda self: self.classification_plotter._class_performance_by_threshold,
+            "roc_statistics": lambda self: self.classification_plotter._roc_statistics,
+            "precision_recall_statistics": lambda self: self.classification_plotter._precision_recall_statistics,
+            "confidence_histogram": lambda self: self.classification_plotter._classification_confidence_histogram,
+            "overall_metrics": lambda self: self.classification_plotter._classification_overall_metrics,
+            "confusion_matrix": lambda self: self.classification_plotter._confusion_matrix,
+            "prediction_dataset_distribution": lambda self: self.classification_plotter._prediction_dataset_distribution,
+            "most_confused_bar": lambda self: self.classification_plotter._most_confused_bar,
+            "confidence_histogram_scatter_distribution": lambda self: self.classification_plotter._confidence_histogram_scatter_distribution,
+            "lift_chart": lambda self: self.classification_plotter._lift_chart
+        },
+        "object_detection": {
+            "mixed_metrics": lambda self: self.object_detection_plotter._mixed_metrics,
+            "top_misses": lambda self: self.object_detection_plotter._top_misses, 
+            "confidence_histogram": lambda self: self.object_detection_plotter._object_detection_confidence_histogram,
+            "classbased_table_metrics": lambda self: self.object_detection_plotter._classbased_table_metrics,
+            "overall_metrics": lambda self: self.object_detection_plotter._object_detection_overall_metrics,
+            "blind_spot": lambda self: self.object_detection_plotter._object_detection_blind_spot
+        },
+        "segmentation": {
+            "violin_graph": lambda self: self.segmentation_plotter._violin_graph,
+            "by_meta_data": lambda self: self.segmentation_plotter._by_meta_data,
+            "overall_metrics": lambda self: self.segmentation_plotter._segmentation_overall_metrics,
+            "classbased_table": lambda self: self.segmentation_plotter._classbased_table,
+            "blind_spot": lambda self: self.segmentation_plotter._segmentation_blind_spot
+        }
+    }
 
-    def __init__(
-            self, 
-            metrics_result: dict, 
-            user_params: InputParams
-    ):
-        """
-        An intialization function for the plot data driver
-
-        :param metrics_results: dictionary containing the result
-        :type metrics_results: dict
-        :param user_params: parameters received from the user
-        :type user_params: object
-
-        :return: None
-        """
-
+    def __init__(self,
+                metrics_result: dict,
+                user_params: InputParams,
+                batch_job_id: str = None):
         self.metrics_results = metrics_result
         self.user_params = user_params
         self.plot_save_dir = "outputs/plots"
+        self.batch_job_id = batch_job_id
 
-        # set up plotters
         self.classification_plotter = ClassificationPlots()
         self.object_detection_plotter = ObjectDetectionPlots()
         self.segmentation_plotter = SegmentationPlots()
-    
+
+    def get_supported_plots(self):
+        """
+        Returns list of supported plots for the current problem type
+        
+        :return: List of supported plot names
+        :rtype: list
+        """
+        return list(self.FXN_PLOT_MAP.get(self.user_params.problem_type, {}).keys())
+
     def _plot_single_metric(
             self, 
             metric_name: str, 
@@ -438,48 +466,21 @@ class PlotData:
 
         :return: None
         """
-        fxn_plot_map = {
-            "classification": {
-                "class_distribution": self.classification_plotter._class_distribution,
-                "blind_spot": self.classification_plotter._classification_blind_spot,
-                "class_performance_by_threshold": self.classification_plotter._class_performance_by_threshold,
-                "roc_statistics": self.classification_plotter._roc_statistics,
-                "precision_recall_statistics": self.classification_plotter._precision_recall_statistics,
-                "confidence_histogram": self.classification_plotter._confidence_histogram,
-                "overall_metrics": self.classification_plotter._classification_overall_metrics,
-                "confusion_matrix": self.classification_plotter._confusion_matrix,
-                "prediction_dataset_distribution": self.classification_plotter._prediction_dataset_distribution,
-                "most_confused_bar": self.classification_plotter._most_confused_bar,
-                "confidence_histogram_scatter_distribution": self.classification_plotter._confidence_histogram_scatter_distribution,
-                "lift_chart": self.classification_plotter._lift_chart
-            },
-            "object_detection": {
-                "mixed_metrics": self.object_detection_plotter._mixed_metrics,
-                "top_misses": self.object_detection_plotter._top_misses,
-                "confidence_histogram": self.object_detection_plotter._confidence_histogram,
-                "classbased_table_metrics": self.object_detection_plotter._classbased_table_metrics,
-                "overall_metrics": self.object_detection_plotter._object_detection_overall_metrics,
-                "blind_spot": self.object_detection_plotter._object_detection_blind_spot
-            },
-            "segmentation": {
-                "violin_graph": self.segmentation_plotter._violin_graph,
-                "by_meta_data": self.segmentation_plotter._by_meta_data,
-                "overall_metrics": self.segmentation_plotter._segmentation_overall_metrics,
-                "classbased_table": self.segmentation_plotter._classbased_table,
-                "blind_spot": self.segmentation_plotter._segmentation_blind_spot
-            }
-            
-        }
-        if metric_name not in fxn_plot_map:
-            raise ModuleNotFoundError(f"{metric_name} plotting function")
-        
-        _plotter_fxn = fxn_plot_map[self.user_params.problem_type][metric_name]
+
+        if self.user_params.problem_type not in self.FXN_PLOT_MAP:
+            raise ModuleNotFoundError(f"Problem type {self.user_params.problem_type} not supported")
+
+        if metric_name not in self.FXN_PLOT_MAP[self.user_params.problem_type]:
+            raise ModuleNotFoundError(f"{metric_name} plotting function not found")
+
+
+        _plotter_fxn = self.FXN_PLOT_MAP[self.user_params.problem_type][metric_name](self)
         _plotter_fxn(
             metrics=self.metrics_results,
             threshold=self.user_params.threshold,
             save_path=self.plot_save_dir if self.user_params.save_plots else None
         )
-    
+
     def _plot_all(self, metric_validation_executor):
         """
         A function to plot all the metrics
@@ -506,15 +507,17 @@ class PlotData:
 
     def plot(self, metric_name: str = "all", threshold: float = 0.0):
         """
-        A function to plot the data from the results
+        Plot the data from the results
 
         :param metric_name: name of the metric to plot
         :type metric_name: str
         :param threshold: float value indicating the threshold
         :type threshold: float
-
         :return: None
         """
+        if not self.batch_job_id:
+            raise ValueError("batch_job_id is required for plotting")
+
         _validation_class = ValidationProblemTypeFactory().get_problem_type_factory(
             self.user_params.problem_type)
         
