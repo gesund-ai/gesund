@@ -1,6 +1,4 @@
-from typing import Union
-
-
+from typing import Union, Optional, List, Dict, Any
 from ._exceptions import PlotError, MetricCalculationError
 from gesund.validation import ValidationProblemTypeFactory
 from ._schema import InputParams
@@ -10,11 +8,16 @@ from gesund.core._metrics.semantic_segmentation.segmentation_metric_plot import 
 
 
 class CommonPlots:
+    def __init__(self):
+        self.cls_driver = None
+        self.obj_driver = None
+        self.seg_driver = None
+
     def _class_distribution(
             self, 
-            metrics: Union[dict, list], 
+            metrics: Union[Dict, List],
             threshold: float,
-            save_path: Union[str, None]):
+            save_path: Optional[str]):
         """
         A function to plot class distribution
 
@@ -29,10 +32,11 @@ class CommonPlots:
         """
         self.cls_driver._plot_class_distributions(metrics, threshold, save_path)
         
-    def _classification_blind_spot(self,
-                    metrics: Union[dict, list],
-                    class_types: list,
-                    save_path: Union[str, None]):
+    def _classification_blind_spot(
+            self,
+            metrics: Union[Dict, List],
+            class_types: List,
+            save_path: Optional[str]):
         """
         A function to plot classification blind spot metrics
 
@@ -41,7 +45,8 @@ class CommonPlots:
         :param class_types: List of class types to include
         :type class_types: list 
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
+
 
         :return: None 
         """
@@ -49,10 +54,10 @@ class CommonPlots:
            
     def _class_performance_by_threshold(
             self,
-            metrics: Union[dict, list],
+            metrics: Union[Dict, List],
             graph_type: str,
             threshold: float, 
-            save_path: Union[str, None]):
+            save_path: Optional[str]):
         """
         A function to plot class performance by threshold
 
@@ -63,25 +68,24 @@ class CommonPlots:
         :param threshold: the value to be applied as threshold
         :type threshold: float
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
-
+        :type save_path: Optional[str]):
         :return: None
         """
         self.cls_driver._plot_class_performance_by_threshold(graph_type, metrics, threshold, save_path)
 
     def _roc_statistics(
             self,
-            roc_class: list,
-            save_path: Union[str, None]):
+            roc_class: List,
+            save_path: Optional[str]):
         """
         A function to plot ROC statistics
 
         :param metrics: The metrics to be plotted
         :type metrics: Union[dict, list]
         :param roc_class: List of classes to plot ROC curves for
-        :type roc_class: list
+        :type roc_class: List
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
 
         :return: None
         """
@@ -89,17 +93,15 @@ class CommonPlots:
 
     def _precision_recall_statistics(
             self,
-            pr_class: list,
-            save_path: Union[str, None]):
+            pr_class: List,
+            save_path: Optional[str]):
         """
         A function to plot precision recall statistics
 
-        :param metrics: The metrics to be plotted
-        :type metrics: Union[dict, list]
         :param pr_class: List of classes to plot precision recall curves for
-        :type pr_class: list
+        :type pr_class: List
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
 
         :return: None
         """
@@ -107,15 +109,15 @@ class CommonPlots:
 
     def _classification_confidence_histogram(
             self,
-            confidence_histogram_args: list,
-            save_path: Union[str, None]):
+            confidence_histogram_args: List,
+            save_path: Optional[str]):
         """
         A function to plot classification confidence histogram
 
         :param confidence_histogram_args: List of arguments for confidence histogram
-        :type confidence_histogram_args: list
+        :type confidence_histogram_args: List
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
 
         :return: None
         """
@@ -123,15 +125,15 @@ class CommonPlots:
         
     def _classification_overall_metrics(
             self,
-            overall_metrics_args: list,
-            save_path: Union[str, None]):
+            overall_metrics_args: List,
+            save_path: Optional[str]):
         """
         A function to plot classification overall metrics
 
         :param overall_metrics_args: List of arguments for overall metrics
-        :type overall_metrics_args: list
+        :type overall_metrics_args: List
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
 
         :return: None
         """
@@ -139,12 +141,12 @@ class CommonPlots:
 
     def _confusion_matrix(
             self,
-            save_path: Union[str, None]):
+            save_path: Optional[str]):
         """
         A function to plot confusion matrix
 
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
 
         :return: None
         """
@@ -152,12 +154,12 @@ class CommonPlots:
 
     def _prediction_dataset_distribution(
             self,
-            save_path: Union[str, None]):
+            save_path: Optional[str]):
         """
         A function to plot prediction dataset distribution
 
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
 
         :return: None
         """
@@ -165,12 +167,12 @@ class CommonPlots:
 
     def _most_confused_bar(
             self,
-            save_path: Union[str, None]):
+            save_path: Optional[str]):
         """
         A function to plot most confused bar
 
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
 
         :return: None
         """
@@ -178,12 +180,12 @@ class CommonPlots:
 
     def _confidence_histogram_scatter_distribution(
             self,
-            save_path: Union[str, None]):
+            save_path: Optional[str]):
         """
         A function to plot confidence histogram scatter distribution
 
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
 
         :return: None
         """
@@ -191,27 +193,27 @@ class CommonPlots:
 
     def _lift_chart(
             self,
-            save_path: Union[str, None]):
+            save_path: Optional[str]):
         """
         A function to plot lift chart
 
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
 
         :return: None
         """
         self.cls_driver._plot_lift_chart(save_path)
 
     def _object_detection_blind_spot(self,
-            blind_spot_args: list,
-            save_path: Union[str, None]):
+            blind_spot_args: List,
+            save_path: Optional[str]):
         """
         A function to plot object detection blind spot
 
         :param blind_spot_args: List of arguments for blind spot
-        :type blind_spot_args: list
+        :type blind_spot_args: List
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
 
         :return: None
         """
@@ -220,15 +222,15 @@ class CommonPlots:
     
     def _object_detection_overall_metrics(
             self,
-            overall_metrics_args: list,
-            save_path: Union[str, None]):
+            overall_metrics_args: List,
+            save_path: Optional[str]):
         """
         A function to plot object detection overall metrics
 
         :param overall_metrics_args: List of arguments for overall metrics
-        :type overall_metrics_args: list
+        :type overall_metrics_args: List
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
 
         :return: None
         """
@@ -236,15 +238,15 @@ class CommonPlots:
 
     def _top_misses(
             self,
-            top_misses_args: list,
-            save_path: Union[str, None]):
+            top_misses_args: List,
+            save_path: Optional[str]):
         """
         A function to plot top misses
 
         :param top_misses_args: List of arguments for top misses
-        :type top_misses_args: list
+        :type top_misses_args: List
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
 
         :return: None
         """
@@ -252,15 +254,15 @@ class CommonPlots:
 
     def _classbased_table_metrics(
             self,
-            classbased_table_args: list,
-            save_path: Union[str, None]):
+            classbased_table_args: List,
+            save_path: Optional[str]):
         """
         A function to plot class based table metrics
 
         :param classbased_table_args: List of arguments for class based table
-        :type classbased_table_args: list
+        :type classbased_table_args: List
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
 
         :return: None
         """
@@ -268,15 +270,15 @@ class CommonPlots:
 
     def _mixed_metrics(
             self,
-            mixed_metrics_args: list,
-            save_path: Union[str, None]):
+            mixed_metrics_args: List,
+            save_path: Optional[str]):
         """
         A function to plot mixed metrics
 
         :param mixed_metrics_args: List of arguments for mixed metrics
-        :type mixed_metrics_args: list
+        :type mixed_metrics_args: List
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
 
         :return: None
         """
@@ -284,15 +286,15 @@ class CommonPlots:
 
     def _object_detection_confidence_histogram(
             self,
-            confidence_histogram_args: list,
-            save_path: Union[str, None]):
+            confidence_histogram_args: List,
+            save_path: Optional[str]):
         """
         A function to plot object detection confidence histogram
 
         :param confidence_histogram_args: List of arguments for confidence histogram
-        :type confidence_histogram_args: list
+        :type confidence_histogram_args: List
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
 
         :return: None
         """
@@ -301,15 +303,15 @@ class CommonPlots:
 
     def _classbased_table(
             self,
-            classbased_table_args: list,
-            save_path: Union[str, None]):
+            classbased_table_args: List,
+            save_path: Optional[str]):
         """
         A function to plot class based table
 
         :param classbased_table_args: List of arguments for class based table
-        :type classbased_table_args: list
+        :type classbased_table_args: List
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
 
         :return: None
         """
@@ -317,30 +319,30 @@ class CommonPlots:
 
     def _segmentation_overall_metrics(
             self,
-            overall_args: list,
-            save_path: Union[str, None]):
+            overall_args: List,
+            save_path: Optional[str]):
         """
         A function to plot overall data
 
         :param overall_args: List of arguments for overall data
-        :type overall_args: list
+        :type overall_args: List
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
 
         :return: None
         """
         self.seg_driver._plot_overall_data(overall_args, save_path)
 
     def _segmentation_blind_spot(self,
-            blind_spot_args: list,
-            save_path: Union[str, None]):
+            blind_spot_args: List,
+            save_path: Optional[str]):
         """
         A function to plot segmentation blind spot
 
         :param blind_spot_args: List of arguments for blind spot
-        :type blind_spot_args: list
+        :type blind_spot_args: List
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
 
         :return: None
         """
@@ -348,15 +350,15 @@ class CommonPlots:
 
     def _by_meta_data(
             self,
-            meta_data_args: list,
-            save_path: Union[str, None]):
+            meta_data_args: List,
+            save_path: Optional[str]):
         """
         A function to plot by meta data
 
         :param meta_data_args: List of arguments for meta data
-        :type meta_data_args: list
+        :type meta_data_args: List
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
 
         :return: None
         """
@@ -365,18 +367,18 @@ class CommonPlots:
 
     def _violin_graph(
             self,
-            metrics: Union[dict, list], 
+            metrics: Union[Dict, List], 
             threshold: float,
-            save_path: Union[str, None]):
+            save_path: Optional[str]):
         """
         A function to plot violin graph
 
         :param metrics: The metrics to be plotted
-        :type metrics: Union[dict, list]
+        :type metrics: Union[Dict, List]
         :param threshold: the value to be applied as threshold
         :type threshold: float
         :param save_path: The path to be saved the plot in
-        :type save_path: Union[str, None]
+        :type save_path: Optional[str]):
 
         :return: None
         """
