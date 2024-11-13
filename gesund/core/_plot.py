@@ -1,9 +1,20 @@
+<<<<<<< Updated upstream
 from typing import Union, Optional, List, Dict, Any
 from ._exceptions import PlotError, MetricCalculationError
 from ._schema import UserInputParams
 from gesund.core._metrics.classification.classification_metric_plot import Classification_Plot
 from gesund.core._metrics.object_detection.object_detection_metric_plot import Object_Detection_Plot
 from gesund.core._metrics.semantic_segmentation.segmentation_metric_plot import Semantic_Segmentation_Plot
+=======
+from typing import Union
+
+
+from gesund.core._exceptions import PlotError, MetricCalculationError
+from gesund.core._schema import UserInputParams, UserInputData
+from gesund.core._metrics.classification.classification_metric_plot import Classification_Plot
+from gesund.validation import ValidationProblemTypeFactory
+from gesund.core._data_loaders import DataLoader
+>>>>>>> Stashed changes
 
 
 class CommonPlots:
@@ -46,6 +57,7 @@ class CommonPlots:
         :param save_path: The path to be saved the plot in
         :type save_path: Optional[str]):
 
+<<<<<<< Updated upstream
 
         :return: None 
         """
@@ -383,6 +395,8 @@ class CommonPlots:
         """
         self.seg_driver._plot_violin_graph(metrics, threshold, save_path)
 
+=======
+>>>>>>> Stashed changes
 class ClassificationPlots(CommonPlots):
     def __init__(self):
         super().__init__()
@@ -433,12 +447,35 @@ class PlotData:
         }
     }
 
+<<<<<<< Updated upstream
     def __init__(self,
                 metrics_result: Dict[str, Any],
                 user_params: UserInputParams,
                 batch_job_id: Optional[str] = None):
+=======
+    def __init__(
+            self, 
+            metrics_result: dict, 
+            user_params: UserInputParams,
+            user_data: UserInputData
+    ):
+        """
+        An intialization function for the plot data driver
+
+        :param metrics_results: dictionary containing the result
+        :type metrics_results: dict
+        :param user_params: parameters received from the user
+        :type user_params: UserInputParams
+        :param user_data: prediction data and ground truth used for validation
+        :type user_data: UserInputData
+
+        :return: None
+        """
+
+>>>>>>> Stashed changes
         self.metrics_results = metrics_result
         self.user_params = user_params
+        self.user_data = user_data
         self.plot_save_dir = "outputs/plots"
         self.batch_job_id = batch_job_id
 
@@ -446,6 +483,7 @@ class PlotData:
         self.object_detection_plotter = ObjectDetectionPlots()
         self.segmentation_plotter = SegmentationPlots()
 
+<<<<<<< Updated upstream
     def get_supported_plots(self) -> List[str]:
         """
         Returns list of supported plots for the current problem type
@@ -454,13 +492,23 @@ class PlotData:
         :rtype: list
         """
         return list(self.FXN_PLOT_MAP.get(self.user_params.problem_type, {}).keys())
+=======
+        # set up data loader for loading the file
+        self.data_loader = DataLoader()
+>>>>>>> Stashed changes
 
     def _plot_single_metric(
             self, 
             metric_name: str, 
+<<<<<<< Updated upstream
             threshold: float = 0.0,
             graph_type: str = 'graph_1'
         ) -> None:
+=======
+            metric_results: dict,
+            threshold: float
+        ):
+>>>>>>> Stashed changes
         """
         A function to return plotting function specific to metric
 
@@ -483,6 +531,7 @@ class PlotData:
 
         _plotter_fxn = self.FXN_PLOT_MAP[self.user_params.problem_type][metric_name](self)
         _plotter_fxn(
+<<<<<<< Updated upstream
             metrics=self.metrics_results,
             threshold=threshold,
             save_path=self.plot_save_dir if self.user_params.save_plots else None
@@ -515,6 +564,21 @@ class PlotData:
     def plot(self, metric_name: str = "all", threshold: float = 0.0) -> None:
         # TODO: Move this import to the top, its bug righ now.
         from gesund.validation._validation import ValidationProblemTypeFactory
+=======
+            metrics=metric_results,
+            threshold=threshold,
+            save_path=self.plot_save_dir if self.user_params.save_plots else None
+        )
+        
+    
+    def plot(
+        self, 
+        metric_name: str = "all", 
+        threshold: float = 0.0,
+        metadata_filter: dict = {},
+        metadata_path: str = None,
+        metadata_file_format: str = "json"):
+>>>>>>> Stashed changes
         """
         Plot the data from the results
 
@@ -532,11 +596,36 @@ class PlotData:
         
         _metric_validation_executor = _validation_class(self.batch_job_id)
 
+        # if the metadata path is provided then the metric result needs to be recalculated as per the
+        # metadata filters of the interest
+        if metadata_path:
+            metadata = self.data_loader.load(
+                src_path=metadata_path,
+                data_format=metadata_file_format
+            )
+            validation_data = _metric_validation_executor.create_validation_collection_data(
+                self.user_data.converted_prediction,
+                self.user_data.converted_annotation,
+                self.user_params.json_structure_type,
+                metadata
+            )
+            metric_results = _metric_validation_executor.load(
+                validation_data,
+                self.user_data.class_mapping,
+                metadata_filter
+            )
+        else:
+            metric_results = self.metrics_results
+    
         if metric_name == "all":
             try:
-                self._plot_all(_metric_validation_executor)
+                _metric_validation_executor.plot_metrics(metric_results)
             except Exception as e:
                 print(e)
                 raise PlotError("Could not plot the metrics!")
         else:
+<<<<<<< Updated upstream
             self._plot_single_metric(metric_name, threshold)
+=======
+            self._plot_single_metric(metric_name, metric_results, threshold)
+>>>>>>> Stashed changes

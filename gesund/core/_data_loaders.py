@@ -4,13 +4,6 @@ import pandas as pd
 from ._exceptions import DataLoadError
 
 class DataLoader:
-    def __init__(self):
-        """
-        A initialisation function
-
-        :return: None
-        """
-        pass
 
     @staticmethod
     def _json_loader(src_path: str) -> list:
