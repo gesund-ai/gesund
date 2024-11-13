@@ -49,7 +49,7 @@ class UserInputParams(BaseModel):
         else:
             print("Problem Type validated !")
     
-    @field_validator('json_structure_type')
+    @field_validator("json_structure_type")
     def validate_json_structure_type(cls, json_structure_type):
         if json_structure_type not in cls.allowed_values["json_structure_type"]:
             raise InputError("Invalid json structure type")
