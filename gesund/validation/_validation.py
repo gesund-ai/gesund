@@ -37,12 +37,6 @@ class ValidationProblemTypeFactory:
 
 class Validation:
 
-    ALLOWED_VALUES = {
-        "problem_type": ["classification", "object_detection", "semantic_segmentation"],
-        "json_structure_type": ["gesund", "coco", "yolo"],
-        "data_format": ["json"]
-    }
-
     def __init__(
             self,
             annotations_path: str,
@@ -108,60 +102,60 @@ class Validation:
             "store_json": store_json,
             "display_plots": display_plots,
             "store_plots": store_plots,
-            "allowed_values": self.ALLOWED_VALUES
+            "data_format": data_format
         }
         self.user_params = UserInputParams(**params)
 
-        # set up source data for processing 
-        self.data_loader = DataLoader(data_format)
-        data = self._load_data(self.params, self.data_loader)
-        self.data = UserInputData(**data)
-
+        self._load_data()
+    
         # set up batch job id
         self.batch_job_id = str(bson.ObjectId())
         self.output_dir = f"outputs/{self.batch_job_id}"
 
-    
-    @staticmethod
-    def _load_data(
-        user_params: UserInputParams, data_loader: DataLoader) -> dict:
+    def _load_data(self) -> dict:
         """
         A Function to load the JSON files
 
-        :param user_params: Object data containing the input parameters from users
-        :type user_params: pydantic.BaseModel
-
-        :return: dictionary containing the loaded JSON files
-        :rtype: dict
+        :return: None
         """
+         # Load data
+        # set up source data for processing 
+        data_loader = DataLoader(self.user_params.data_format)
         data = {
-            "prediction": data_loader.load(user_params.predictions_path),
-            "annotation": data_loader.load(user_params.annotations_path)
+            "prediction": data_loader.load(self.user_params.predictions_path),
+            "annotation": data_loader.load(self.user_params.annotations_path)
         }
-        if user_params.metadata_path:
-            data["metadata"] = data_loader.load(user_params.metadata_path)
+        if self.user_params.metadata_path:
+            data["metadata"] = data_loader.load(self.user_params.metadata_path)
+
+        # run conversion
+        if self.user_params.json_structure_type != "gesund":
+            self._convert_data(data)
         
-        return data
-    
-    def _convert_data(self):
+        self.data = UserInputData(**data)
+
+    def _convert_data(self, data):
         """
         A function to convert the data from the respective structure to the gesund format
 
-        :param: None
+        :param data: dictionary containing the data
+        :type data: dict 
 
-        :return: None
+        :return: data dictionary
+        :rtype: dict
         """
         # setup data converter
         data_converter = ConverterFactory().get_converter(self.user_params.json_structure_type)
-
-        # set up validation handlers
-        self.data.converted_annotation, self.data.converted_prediction = data_converter.convert(
-            annotation=self.data.annotation,
-            prediction=self.data.prediction,
+        
+        # run the converters
+        data["converted_annotation"], data["converted_prediction"] = data_converter.convert(
+            annotation=data["annotation"],
+            prediction=data["prediction"],
             problem_type=self.user_params.problem_type
         )
+        data["was_converted"] = True
+        return data
 
-        self.data.was_converted = True
     
     def _run_validation(self) -> dict:
         """
@@ -250,9 +244,6 @@ class Validation:
         :rtype: 
         """
         results = {}
-
-        # run the converters
-        self._convert_data()
 
         # run the validation
         results = self._run_validation()

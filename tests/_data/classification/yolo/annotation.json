@@ -1,0 +1,86 @@
+[
+    {
+        "image_id": "image_1",
+        "annotations": [
+            {"class": 0, "x_center": 0.5, "y_center": 0.5, "width": 0.2, "height": 0.3, "config_id": "abcd", "loss": 0.1},
+            {"class": 1, "x_center": 0.3, "y_center": 0.7, "width": 0.1, "height": 0.2, "config_id": "xyz", "loss": 0.2}
+        ]
+    },
+    {
+        "image_id": "image_2",
+        "annotations": [
+            {"class": 0, "x_center": 0.4, "y_center": 0.4, "width": 0.3, "height": 0.4, "config_id": "efgh", "loss": 0.15},
+            {"class": 1, "x_center": 0.6, "y_center": 0.6, "width": 0.2, "height": 0.3, "config_id": "ijkl", "loss": 0.25}
+        ]
+    },
+    {
+        "image_id": "image_3",
+        "annotations": [
+            {"class": 0, "x_center": 0.5, "y_center": 0.5, "width": 0.2, "height": 0.3, "config_id": "mnop", "loss": 0.1},
+            {"class": 1, "x_center": 0.3, "y_center": 0.7, "width": 0.1, "height": 0.2, "config_id": "qrst", "loss": 0.2}
+        ]
+    },
+    {
+        "image_id": "image_4",
+        "annotations": [
+            {"class": 0, "x_center": 0.4, "y_center": 0.4, "width": 0.3, "height": 0.4, "config_id": "uvwx", "loss": 0.15},
+            {"class": 1, "x_center": 0.6, "y_center": 0.6, "width": 0.2, "height": 0.3, "config_id": "yzab", "loss": 0.25}
+        ]
+    },
+    {
+        "image_id": "image_5",
+        "annotations": [
+            {"class": 0, "x_center": 0.5, "y_center": 0.5, "width": 0.2, "height": 0.3, "config_id": "cdef", "loss": 0.1},
+            {"class": 1, "x_center": 0.3, "y_center": 0.7, "width": 0.1, "height": 0.2, "config_id": "ghij", "loss": 0.2}
+        ]
+    },
+    {
+        "image_id": "image_6",
+        "annotations": [
+            {"class": 0, "x_center": 0.4, "y_center": 0.4, "width": 0.3, "height": 0.4, "config_id": "klmn", "loss": 0.15},
+            {"class": 1, "x_center": 0.6, "y_center": 0.6, "width": 0.2, "height": 0.3, "config_id": "opqr", "loss": 0.25}
+        ]
+    },
+    {
+        "image_id": "image_7",
+        "annotations": [
+            {"class": 0, "x_center": 0.5, "y_center": 0.5, "width": 0.2, "height": 0.3, "config_id": "stuv", "loss": 0.1},
+            {"class": 1, "x_center": 0.3, "y_center": 0.7, "width": 0.1, "height": 0.2, "config_id": "wxyz", "loss": 0.2}
+        ]
+    },
+    {
+        "image_id": "image_8",
+        "annotations": [
+            {"class": 0, "x_center": 0.4, "y_center": 0.4, "width": 0.3, "height": 0.4, "config_id": "abcd", "loss": 0.15},
+            {"class": 1, "x_center": 0.6, "y_center": 0.6, "width": 0.2, "height": 0.3, "config_id": "efgh", "loss": 0.25}
+        ]
+    },
+    {
+        "image_id": "image_9",
+        "annotations": [
+            {"class": 0, "x_center": 0.5, "y_center": 0.5, "width": 0.2, "height": 0.3, "config_id": "ijkl", "loss": 0.1},
+            {"class": 1, "x_center": 0.3, "y_center": 0.7, "width": 0.1, "height": 0.2, "config_id": "mnop", "loss": 0.2}
+        ]
+    },
+    {
+        "image_id": "image_10",
+        "annotations": [
+            {"class": 0, "x_center": 0.4, "y_center": 0.4, "width": 0.3, "height": 0.4, "config_id": "qrst", "loss": 0.15},
+            {"class": 1, "x_center": 0.6, "y_center": 0.6, "width": 0.2, "height": 0.3, "config_id": "uvwx", "loss": 0.25}
+        ]
+    },
+    {
+        "image_id": "image_11",
+        "annotations": [
+            {"class": 0, "x_center": 0.5, "y_center": 0.5, "width": 0.2, "height": 0.3, "config_id": "yzab", "loss": 0.1},
+            {"class": 1, "x_center": 0.3, "y_center": 0.7, "width": 0.1, "height": 0.2, "config_id": "cdef", "loss": 0.2}
+        ]
+    },
+    {
+        "image_id": "image_12",
+        "annotations": [
+            {"class": 0, "x_center": 0.4, "y_center": 0.4, "width": 0.3, "height": 0.4, "config_id": "ghij", "loss": 0.15},
+            {"class": 1, "x_center": 0.6, "y_center": 0.6, "width": 0.2, "height": 0.3, "config_id": "klmn", "loss": 0.25}
+        ]
+    }
+]
