@@ -2,10 +2,10 @@ import json
 import bson
 import os
 from pathlib import Path
-from gesund.utils.io_utils import read_json, save_plot_metrics_as_json, format_metrics
+from gesund.core._utils import read_json, save_plot_metrics_as_json
 from gesund.core._converters.yolo_converter import YoloToGesund
-from gesund.core._converters.coco_converter import COCOConverter
-from gesund.core.problem_type_factory import get_validation_creation
+from gesund.core._converters.coco_converter import COCOToGesund
+from gesund.validation._validation import ValidationProblemTypeFactory
 
 def run_metrics(args):
     """
@@ -54,8 +54,8 @@ def run_metrics(args):
     json_outputs_dir = os.path.join(output_dir, "plot_jsons")
 
     if args['format'] == 'coco':
-        converter_annot = COCOConverter(annotations=annotation_data, problem_type=args['problem_type'])
-        converter_pred = COCOConverter(successful_batch_data=successful_batch_data, problem_type=args['problem_type'])
+        converter_annot = COCOToGesund(annotations=annotation_data, problem_type=args['problem_type'])
+        converter_pred = COCOToGesund(successful_batch_data=successful_batch_data, problem_type=args['problem_type'])
         annotation_data = converter_annot.convert_annot_if_needed()
         successful_batch_data = converter_pred.convert_pred_if_needed()
 
@@ -65,7 +65,7 @@ def run_metrics(args):
         annotation_data = yolo_converter.run(problem_type=args["problem_type"], input_type="annotation")
         successful_batch_data = yolo_converter.run(problem_type=args["problem_type"], input_type="prediction")
 
-    ValidationCreationClass = get_validation_creation(args['problem_type'])
+    ValidationCreationClass = ValidationProblemTypeFactory.get_problem_type_factory(args['problem_type'])
     validation = ValidationCreationClass(batch_job_id)
 
     try:
@@ -110,7 +110,7 @@ def plotting_metrics(metrics, args, filtering_meta=None):
     :return: None. The function generates and saves plot images and JSON files with plot data.
     """
 
-    ValidationCreationClass = get_validation_creation(metrics['problem_type'])
+    ValidationCreationClass = ValidationProblemTypeFactory.get_problem_type_factory(metrics['problem_type'])
     validation = ValidationCreationClass(metrics["batch_job_id"])
 
     output_dir = metrics["output_dir"]
