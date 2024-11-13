@@ -11,14 +11,15 @@ from gesund.core._exceptions import MetricCalculationError
 
 class ValidationProblemTypeFactory:
     
-    def get_problem_type_factory(self, problem_type:str):
+    @classmethod
+    def get_problem_type_factory(cls, problem_type: str):
         """
-        A function to return the class as per the problem_type
+        Return the validation creation class based on the problem_type.
 
-        :param problem_type: problem type identifying the validation
+        :param problem_type: Type of problem (e.g., 'classification', 'object_detection').
         :type problem_type: str
 
-        :return: class as per the problem type
+        :return: Validation creation class corresponding to the problem type.
         :rtype: class
         """
         if problem_type == "classification":
@@ -31,7 +32,7 @@ class ValidationProblemTypeFactory:
             from gesund.core._metrics.object_detection.create_validation import ValidationCreation
             return ValidationCreation
         else:
-            raise ValueError(f"Unknow problem type : {problem_type}")
+            raise ValueError(f"Unknown problem type: {problem_type}")
 
 
 class Validation:
