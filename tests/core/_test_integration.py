@@ -1,4 +1,4 @@
-# FILE: test_integration.py
+# FILE: _test_integration.py
 
 import pytest
 from gesund.core._converters.yolo_converter import ClassificationConverter, SemanticSegmentationConverter
