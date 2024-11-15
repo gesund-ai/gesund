@@ -1,3 +1,4 @@
+from typing import Dict, List, Optional, Union, TypedDict, Any
 import json
 import uuid
 from collections import defaultdict
@@ -27,7 +28,7 @@ class COCOToGesund:
         if successful_batch_data:
             self.successful_batch_data = successful_batch_data
 
-    def is_annot_coco_format(self):
+    def is_annot_coco_format(self) -> bool:
         """
         Check if the annotations are in COCO format. COCO format includes keys like
         'images', 'annotations', and 'categories'.
@@ -35,10 +36,8 @@ class COCOToGesund:
         :return: True if the annotations follow the COCO format, False otherwise.
         :rtype: bool
         """
-        return all(
-            key in self.annotations for key in ["images", "annotations", "categories"]
-        )
-
+        return all(key in self.annotations for key in ['images', 'annotations', 'categories'])
+    
     def is_pred_coco_format(self):
         """
         Check if the predictions are in COCO format. COCO predictions typically contain
@@ -57,7 +56,7 @@ class COCOToGesund:
             return all(key in self.successful_batch_data[0] for key in required_keys)
         return False
 
-    def convert_annotations(self):
+    def convert_annotations(self) -> Dict[str, Any]:
         """
         Convert annotations to the custom format based on the problem type.
 
@@ -76,7 +75,7 @@ class COCOToGesund:
         else:
             raise ValueError("Unsupported problem type.")
 
-    def convert_predictions(self):
+    def convert_predictions(self) -> Dict[str, Any]:
         """
         Convert predictions to the custom format based on the problem type.
 
@@ -95,7 +94,7 @@ class COCOToGesund:
         else:
             raise ValueError("Unsupported problem type.")
 
-    def convert_classification_annotations(self):
+    def convert_classification_annotations(self) -> Dict[str, Any]:
         """
         Convert classification annotations from COCO format to custom format.
 
@@ -115,7 +114,7 @@ class COCOToGesund:
 
         return custom_annotations
 
-    def convert_semantic_segmentation_annotations(self):
+    def convert_semantic_segmentation_annotations(self) -> Dict[str, Any]:
         """
         Convert semantic segmentation annotations from COCO format to custom format.
 
@@ -168,6 +167,7 @@ class COCOToGesund:
 
         return custom_annotations
 
+            
     def convert_object_detection_annotations(self):
         """
         Convert object detection annotations from COCO format to custom format.
@@ -228,6 +228,7 @@ class COCOToGesund:
 
         return custom_format
 
+
     def convert_instance_segmentation_annotations(self):
         """
         Convert instance segmentation annotations from COCO format to custom format.
@@ -237,7 +238,7 @@ class COCOToGesund:
         """
         pass
 
-    def convert_classification_predictions(self):
+    def convert_classification_predictions(self) -> Dict[str, Any]:
         """
         Convert classification predictions from COCO format to custom format.
 
@@ -264,7 +265,7 @@ class COCOToGesund:
             }
 
         return custom_predictions
-
+    
     def convert_semantic_segmentation_predictions(self):
         """
         Convert semantic segmentation predictions from COCO format to custom format.
@@ -316,7 +317,7 @@ class COCOToGesund:
 
         return custom_predictions
 
-    def convert_object_detection_predictions(self):
+    def convert_object_detection_predictions(self) -> Dict[str, Any]:
         """
         Convert object detection predictions from COCO format to custom format.
 
@@ -356,7 +357,7 @@ class COCOToGesund:
 
         return predictions_format
 
-    def convert_instance_segmentation_predictions(self):
+    def convert_instance_segmentation_predictions(self) -> Dict[str, Any]:
         """
         Convert instance segmentation predictions from COCO format to custom format.
 
@@ -365,7 +366,7 @@ class COCOToGesund:
         """
         pass
 
-    def convert_annot_if_needed(self):
+    def convert_annot_if_needed(self) -> Dict[str, Any]:
         """
         Convert annotations to custom format if they are in COCO format.
         If they are already in custom format, no conversion is performed.
@@ -379,7 +380,7 @@ class COCOToGesund:
         else:
             print("Annotations are already in custom format. No conversion needed.")
             return self.annotations
-
+        
     def convert_pred_if_needed(self):
         """
         Convert predictions to custom format if they are in COCO format.
