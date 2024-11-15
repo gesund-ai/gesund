@@ -1,5 +1,7 @@
 from typing import Optional, Union
 import bson
+import os
+import json
 
 from gesund.core._converters import ConverterFactory
 from gesund.core._data_loaders import DataLoader
@@ -45,11 +47,12 @@ class Validation:
             problem_type: str,
             data_format: str,
             json_structure_type: str,
+            plot_config: dict, 
             metadata_path: Optional[str] = None,
             return_dict: Optional[bool] = False,
-            store_json: Optional[bool] = False,
             display_plots: Optional[bool] = False,
-            store_plots: Optional[bool] = False
+            store_plots: Optional[bool] = False,
+            run_validation_only: Optional[bool] = False
         ):
         """
         Initialization function to handle the validation pipeline
@@ -68,6 +71,9 @@ class Validation:
         
         :param json_structure_type: Data format for the validation (e.g., 'coco', 'yolo', 'gesund').
         :type json_structure_type: str
+
+        :param plot_config: The configuration in dictionary format required for plotting
+        :type plot_config: dict
         
         :param metadata_path: Path to the metadata file (if available).
         :type metadata_path: str
@@ -76,10 +82,6 @@ class Validation:
         :param return_dict: If true then the return the result as dict 
         :type return_dict: bool
         :optional return_dict: true
-        
-        :param store_json: if true then the result is written in local as JSON file
-        :type store_json: bool
-        :optional store_json: true
 
         :param display_plots: if true then the plots are displayed
         :type display_plots: bool
@@ -88,6 +90,10 @@ class Validation:
         :param store_plots: if true then the plots are saved in local as png files
         :type store_plots: bool
         :optional store_plots: true
+
+        :param run_validation_only: by default true the plots are run
+        :type run_validation_only: bool
+        :optional run_validation_only: true
         
 
         :return: None
@@ -100,11 +106,12 @@ class Validation:
             "problem_type": problem_type,
             "json_structure_type": json_structure_type, 
             "return_dict": return_dict,
-            "store_json": store_json,
             "display_plots": display_plots,
             "store_plots": store_plots,
             "data_format": data_format,
-            "class_mapping": class_mapping
+            "class_mapping": class_mapping,
+            "plot_config": plot_config,
+            "run_validation_only": run_validation_only
         }
         self.user_params = UserInputParams(**params)
 
@@ -197,6 +204,24 @@ class Validation:
             print(e)
             raise MetricCalculationError("Error in calculating metrics!")
     
+    def _save_json(self, results) -> None:
+        """
+        A function to save the validation results
+
+        :param results: Dictionary containing the results
+        :type results: dict
+
+        :return: None
+        """
+        os.makedirs(self.output_dir)
+        for plot_name, metrics in results.items():
+            output_file = os.path.join(self.output_dir, f"{plot_name}.json")
+            try:
+                with open(output_file, 'w') as f:
+                    json.dump(metrics, f, indent=4)
+            except Exception as e:
+                print(f"Could not save metrics for {plot_name} because: {e}")
+
 
     @staticmethod
     def format_metrics(metrics: dict) -> dict:
@@ -263,11 +288,11 @@ class Validation:
         # results = self._format_results(results)
 
         # store the results
-        if self.user_params.store_json:
-            self._save_json(results)
+        self._save_json(results)
         
-        # plot the metrics
-        self._plot_metrics(results)
+        # plot the metrics only if user requires
+        if self.user_params.run_validation_only is False:
+            self._plot_metrics(results)
         
         # return the results
         if self.user_params.return_dict:

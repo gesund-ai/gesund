@@ -441,7 +441,6 @@ class PlotData:
             self,
             metrics_result: Dict[str, Any],
             user_params: UserInputParams,
-            plot_configs: dict,
             user_data: Optional[UserInputData] = None,
             batch_job_id: Optional[str] = None,
             validation_problem_type_factory: Optional[Callable] = None):
@@ -456,11 +455,11 @@ class PlotData:
             self.user_data = user_data
         
         # save the plots
-        self.plot_save_dir = "outputs/plots"
         self.batch_job_id = batch_job_id
         if not batch_job_id:
             self.batch_job_id = str(bson.ObjectId())
         self.output_dir = f"outputs/{self.batch_job_id}"
+        self.plot_save_dir = f"outputs/{self.batch_job_id}/plots"
 
         # instantiate the plotters
         self.classification_plotter = ClassificationPlots()
@@ -619,9 +618,13 @@ class PlotData:
     
         if metric_name == "all":
             try:
-                _metric_validation_executor.plot_metrics(metric_results)
+                _metric_validation_executor.plot_metrics(
+                    metric_results,
+                    self.output_dir,
+                    self.plot_save_dir,
+                    self.user_params.plot_config)
             except Exception as e:
                 print(e)
-                raise PlotError("Could not plot the metrics!")
+                # raise PlotError("Could not plot the metrics!")
         else:
             self._plot_single_metric(metric_name, metric_results, threshold)

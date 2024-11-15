@@ -1,15 +1,37 @@
-import sys
 import os
 import pytest
 
-print(os.getcwd().split("tests")[0])
-os.environ["PYTHONPATH"] = os.getcwd().split("tests")[0]
-
-
 from gesund.validation import Validation
-from gesund.core import UserInputParams, UserInputData
 
-def test_validation_initialization():
+
+@pytest.fixture
+def plot_config(request):
+    plot_configs = {
+        "classification": {
+         'class_distributions': {'metrics': ['normal','pneumonia'], 'threshold': 10}, 
+         'blind_spot': {'class_type': ['Average','1','0']}, 
+         'performance_by_threshold': {'graph_type': 'graph_1', 'metrics': ['F1', 'Sensitivity', 'Specificity', 'Precision','FPR', 'FNR'], 'threshold': 0.2}, 
+         'roc': {'roc_class': ['normal', 'pneumonia']}, 
+         'precision_recall': {'pr_class': ['normal','pneumonia']}, 
+         'confidence_histogram': {'metrics': ['TP', 'FP'], 'threshold': 0.5}, 
+         'overall_metrics': {'metrics': ['AUC','Precision'], 'threshold': 0.2},
+         'confusion_matrix': {},
+         'prediction_dataset_distribution': {},
+         'most_confused_bar': {},
+         'confidence_histogram_scatter_distribution': {},
+         'lift_chart': {}
+    }
+    }
+    return plot_configs[request.param["problem_type"]]
+
+
+@pytest.mark.parametrize(
+        "plot_config", 
+        [{"problem_type": "classification"}], 
+        indirect=True)
+def test_validation_initialization(plot_config):
+    from gesund.core import UserInputParams
+
     data_dir = "./tests/_data/classification"
     classification_validation = Validation(
         annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
@@ -18,15 +40,23 @@ def test_validation_initialization():
         data_format="json",
         json_structure_type="gesund",
         metadata_path=f"{data_dir}/test_metadata.json",
-        store_json=False,
         return_dict=False,
         display_plots=False,
-        store_plots=False
+        store_plots=False,
+        plot_config=plot_config,
+        run_validation_only=True
     )
 
     assert isinstance(classification_validation.user_params, UserInputParams)
 
-def test_validation_dataload():
+
+@pytest.mark.parametrize(
+        "plot_config", 
+        [{"problem_type": "classification"}], 
+        indirect=True)
+def test_validation_dataload(plot_config):
+    from gesund.core import UserInputData
+
     data_dir = "./tests/_data/classification"
     classification_validation = Validation(
         annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
@@ -36,15 +66,20 @@ def test_validation_dataload():
         data_format="json",
         json_structure_type="gesund",
         metadata_path=f"{data_dir}/test_metadata.json",
-        store_json=False,
         return_dict=False,
         display_plots=False,
-        store_plots=False
+        store_plots=False,
+        plot_config=plot_config,
+        run_validation_only=True
     )
     assert isinstance(classification_validation.data, UserInputData)
 
 
-def test_validation_plotmetrics():
+@pytest.mark.parametrize(
+        "plot_config", 
+        [{"problem_type": "classification"}], 
+        indirect=True)
+def test_validation_plotmetrics_classification(plot_config):
     data_dir = "./tests/_data/classification"
     classification_validation = Validation(
         annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
@@ -54,12 +89,26 @@ def test_validation_plotmetrics():
         data_format="json",
         json_structure_type="gesund",
         metadata_path=f"{data_dir}/test_metadata.json",
-        store_json=False,
         return_dict=False,
         display_plots=True,
-        store_plots=False
+        store_plots=True,
+        plot_config=plot_config,
+        run_validation_only=False
     )
     classification_validation.run()
+    
+    assert os.path.exists(classification_validation.output_dir) is True
+
+
+@pytest.mark.parametrize(
+        "plot_config",
+        [{"problem_type": "object_detection"}],
+        indirect=True)
+def test_validation_plotmetrics_object_detection(plot_config):
+    data_dir = "./tests/_data/object_detection"
+    object_detection = Validation(
+        annotations_path=f"{data_dir}/gesund_custom_format/"
+    )
 
 
 def test_validation_resultdata():

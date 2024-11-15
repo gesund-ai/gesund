@@ -12,11 +12,12 @@ class UserInputParams(BaseModel):
     problem_type: str
     json_structure_type: str
     data_format: str
+    plot_config: dict
     metadata_path: Optional[str] = None
     return_dict: Optional[bool] = False
-    store_json: Optional[bool] = False
     display_plots: Optional[bool] = False
     store_plots: Optional[bool] = False
+    run_validation_only: Optional[bool] = True
 
     allowed_values: ClassVar[dict] = {
         "problem_type": ["classification", "object_detection", "semantic_segmentation"],
