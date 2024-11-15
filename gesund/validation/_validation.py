@@ -41,6 +41,7 @@ class Validation:
             self,
             annotations_path: str,
             predictions_path: str,
+            class_mapping: Union[str, dict],
             problem_type: str,
             data_format: str,
             json_structure_type: str,
@@ -102,7 +103,8 @@ class Validation:
             "store_json": store_json,
             "display_plots": display_plots,
             "store_plots": store_plots,
-            "data_format": data_format
+            "data_format": data_format,
+            "class_mapping": class_mapping
         }
         self.user_params = UserInputParams(**params)
 
@@ -125,6 +127,11 @@ class Validation:
             "prediction": data_loader.load(self.user_params.predictions_path),
             "annotation": data_loader.load(self.user_params.annotations_path)
         }
+        if isinstance(self.user_params.class_mapping, str):
+            data["class_mapping"] = data_loader.load(self.user_params.class_mapping)
+        else:
+            data["class_mapping"] = self.user_params.class_mapping
+
         if self.user_params.metadata_path:
             data["metadata"] = data_loader.load(self.user_params.metadata_path)
 
@@ -156,7 +163,6 @@ class Validation:
         data["was_converted"] = True
         return data
 
-    
     def _run_validation(self) -> dict:
         """
         A function to run the validation 
@@ -228,9 +234,15 @@ class Validation:
         """
         plot_data_executor = PlotData(
             metrics_result=results,
-            user_params=self.user_params
+            user_params=self.user_params,
+            user_data=self.data,
+            batch_job_id=self.batch_job_id,
+            validation_problem_type_factory=ValidationProblemTypeFactory()
         )
-        plot_data_executor.plot()
+        plot_data_executor.plot(
+            metadata_path=self.user_params.metadata_path,
+            metadata_file_format=self.user_params.data_format
+        )
 
 
     def run(self) -> Union[None, ResultData]:

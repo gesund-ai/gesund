@@ -4,8 +4,8 @@ import pandas as pd
 from sklearn.metrics import auc
 from sklearn.metrics import roc_auc_score
 
-from gesund.metrics.classification.metrics.auc import AUC
-from gesund.metrics.classification.metrics.stats_tables import StatsTables
+from gesund.core._metrics.classification.metrics.auc import AUC
+from gesund.core._metrics.classification.metrics.stats_tables import StatsTables
 from gesund.core._utils import ValidationUtils
 
 

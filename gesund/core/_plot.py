@@ -1,9 +1,12 @@
-from typing import Union, Optional, List, Dict, Any
-from ._exceptions import PlotError, MetricCalculationError
-from ._schema import UserInputParams
+import bson
+
+from typing import Union, Optional, List, Dict, Any, Callable
+from gesund.core._exceptions import PlotError, MetricCalculationError
+from gesund.core._schema import UserInputParams, UserInputData
 from gesund.core._metrics.classification.classification_metric_plot import Classification_Plot
 from gesund.core._metrics.object_detection.object_detection_metric_plot import Object_Detection_Plot
 from gesund.core._metrics.semantic_segmentation.segmentation_metric_plot import Semantic_Segmentation_Plot
+
 
 
 class CommonPlots:
@@ -433,19 +436,36 @@ class PlotData:
         }
     }
 
-    def __init__(self,
-                metrics_result: Dict[str, Any],
-                user_params: UserInputParams,
-                batch_job_id: Optional[str] = None):
+    def __init__(
+            self,
+            metrics_result: Dict[str, Any],
+            user_params: UserInputParams,
+            user_data: Optional[UserInputData] = None,
+            batch_job_id: Optional[str] = None,
+            validation_problem_type_factory: Optional[Callable] = None):
         self.metrics_results = metrics_result
         self.user_params = user_params
-        self.user_data = user_data
+        
+        if not user_data:
+            self.user_data = self._load_data()
+        else:
+            self.user_data = user_data
+
         self.plot_save_dir = "outputs/plots"
         self.batch_job_id = batch_job_id
+        if not batch_job_id:
+            self.batch_job_id = str(bson.ObjectId())
+        self.output_dir = f"outputs/{self.batch_job_id}"
 
         self.classification_plotter = ClassificationPlots()
         self.object_detection_plotter = ObjectDetectionPlots()
         self.segmentation_plotter = SegmentationPlots()
+
+        if not validation_problem_type_factory:
+            from gesund.validation import ValidationProblemTypeFactory
+            self.validation_problem_type_factory = ValidationProblemTypeFactory()
+        else:
+            self.validation_problem_type_factory = validation_problem_type_factory
 
     def get_supported_plots(self) -> List[str]:
         """
@@ -511,8 +531,6 @@ class PlotData:
              metadata_path:str,
              metadata_file_format: str, 
              metric_name: str = "all", threshold: float = 0.0) -> None:
-        # TODO: Move this import to the top, its bug righ now.
-        from gesund.validation._validation import ValidationProblemTypeFactory
         """
         Plot the data from the results
 
@@ -525,7 +543,7 @@ class PlotData:
         if not self.batch_job_id:
             raise ValueError("batch_job_id is required for plotting")
 
-        _validation_class = ValidationProblemTypeFactory().get_problem_type_factory(
+        _validation_class = self.validation_problem_type_factory.get_problem_type_factory(
             self.user_params.problem_type)
         
         _metric_validation_executor = _validation_class(self.batch_job_id)
@@ -533,6 +551,8 @@ class PlotData:
         # if the metadata path is provided then the metric result needs to be recalculated as per the
         # metadata filters of the interest
         if metadata_path:
+            if self.user_data:
+                pass
             metadata = self.data_loader.load(
                 src_path=metadata_path,
                 data_format=metadata_file_format

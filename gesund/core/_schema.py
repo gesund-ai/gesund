@@ -8,6 +8,7 @@ from ._exceptions import InputError
 class UserInputParams(BaseModel):
     annotations_path: str
     predictions_path: str
+    class_mapping: Union[str, dict]
     problem_type: str
     json_structure_type: str
     data_format: str
@@ -50,6 +51,17 @@ class UserInputParams(BaseModel):
             print("No metadata path provided.")
         return metadata_path
     
+    @field_validator("class_mapping")
+    def validate_class_mapping(cls, class_mapping):
+        if isinstance(class_mapping, str):
+            if os.path.exists(class_mapping):
+                print("class mapping file validated !")
+            else:
+                raise InputError(msg="Class mapping path is invalid")
+        else:
+            print("Class mapping is dict input")
+        return class_mapping
+    
     @field_validator("problem_type")
     def validate_problem_type(cls, problem_type):
         if problem_type not in cls.allowed_values["problem_type"]:
@@ -78,7 +90,7 @@ class UserInputParams(BaseModel):
 class UserInputData(BaseModel):
     prediction: Union[List[Dict], Dict]
     annotation: Union[List[Dict], Dict]
-    class_mapping: Optional[Dict] = None 
+    class_mapping: Dict 
     converted_prediction: Optional[Union[List[Dict], Dict]] = None
     converted_annotation: Optional[Union[List[Dict], Dict]] = None
     was_converted: Optional[bool] = False
