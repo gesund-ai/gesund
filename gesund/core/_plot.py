@@ -1,12 +1,13 @@
 import bson
-
 from typing import Union, Optional, List, Dict, Any, Callable
+
+
 from gesund.core._exceptions import PlotError, MetricCalculationError
 from gesund.core._schema import UserInputParams, UserInputData
 from gesund.core._metrics.classification.classification_metric_plot import Classification_Plot
 from gesund.core._metrics.object_detection.object_detection_metric_plot import Object_Detection_Plot
 from gesund.core._metrics.semantic_segmentation.segmentation_metric_plot import Semantic_Segmentation_Plot
-
+from gesund.core._data_loaders import DataLoader
 
 
 class CommonPlots:
@@ -440,41 +441,88 @@ class PlotData:
             self,
             metrics_result: Dict[str, Any],
             user_params: UserInputParams,
+            plot_configs: dict,
             user_data: Optional[UserInputData] = None,
             batch_job_id: Optional[str] = None,
             validation_problem_type_factory: Optional[Callable] = None):
         self.metrics_results = metrics_result
         self.user_params = user_params
         
+        # set up data loading for plot if the plotData class is not part of the validation
+        # execution workflow
         if not user_data:
             self.user_data = self._load_data()
         else:
             self.user_data = user_data
-
+        
+        # save the plots
         self.plot_save_dir = "outputs/plots"
         self.batch_job_id = batch_job_id
         if not batch_job_id:
             self.batch_job_id = str(bson.ObjectId())
         self.output_dir = f"outputs/{self.batch_job_id}"
 
+        # instantiate the plotters
         self.classification_plotter = ClassificationPlots()
         self.object_detection_plotter = ObjectDetectionPlots()
         self.segmentation_plotter = SegmentationPlots()
-
+        
+        # import the validation problem type factory if plotData is not part of the validation
+        # execution flow
+        # if this class is part of the  validation execution flow, then importing the
+        # validation problem type factory leads to circular imports
         if not validation_problem_type_factory:
             from gesund.validation import ValidationProblemTypeFactory
             self.validation_problem_type_factory = ValidationProblemTypeFactory()
         else:
             self.validation_problem_type_factory = validation_problem_type_factory
+        
 
-    def get_supported_plots(self) -> List[str]:
+        # getter methods
+        self.get_supported_plots = self.__get_supported_plots(user_params)
+
+        
+    
+    def _load_data(self):
+        """
+        A function to load the JSON files
+
+        :return: None
+        """
+        # Load data
+        # set up source data for processing 
+        data_loader = DataLoader(self.user_params.data_format)
+        data = {
+            "prediction": data_loader.load(self.user_params.predictions_path),
+            "annotation": data_loader.load(self.user_params.annotations_path)
+        }
+        if isinstance(self.user_params.class_mapping, str):
+            data["class_mapping"] = data_loader.load(self.user_params.class_mapping)
+        else:
+            data["class_mapping"] = self.user_params.class_mapping
+        
+        # loading metadata
+        if self.user_params.metadata_path:
+            data["metadata"] = data_loader.load(self.user_params.metadata_path)
+
+        # run conversion
+        if self.user_params.json_structure_type != "gesund":
+            self._convert_data(data)
+        
+        self.data = UserInputData(**data)
+    
+    @classmethod
+    def __get_supported_plots(cls, user_params) -> List[str]:
         """
         Returns list of supported plots for the current problem type
+
+        :param user_params: The parameters provided by the user
+        :type user_params: UserInputParams
         
         :return: List of supported plot names
         :rtype: list
         """
-        return list(self.FXN_PLOT_MAP.get(self.user_params.problem_type, {}).keys())
+        return list(cls.FXN_PLOT_MAP.get(user_params.problem_type, {}).keys())
 
     def _plot_single_metric(
             self, 
@@ -527,10 +575,7 @@ class PlotData:
         if self.user_params.store_plots:
             pass
 
-    def plot(self,
-             metadata_path:str,
-             metadata_file_format: str, 
-             metric_name: str = "all", threshold: float = 0.0) -> None:
+    def plot(self, metric_name: str = "all", threshold: float = 0.0) -> None:
         """
         Plot the data from the results
 
@@ -550,23 +595,24 @@ class PlotData:
 
         # if the metadata path is provided then the metric result needs to be recalculated as per the
         # metadata filters of the interest
-        if metadata_path:
-            if self.user_data:
-                pass
-            metadata = self.data_loader.load(
-                src_path=metadata_path,
-                data_format=metadata_file_format
-            )
+        if self.user_params.metadata_path:
+            if self.user_data.was_converted:
+                prediction = self.user_data.converted_prediction
+                annotation = self.user_data.converted_annotation
+            else:
+                prediction = self.user_data.prediction
+                annotation = self.user_data.annotation
+
             validation_data = _metric_validation_executor.create_validation_collection_data(
-                self.user_data.converted_prediction,
-                self.user_data.converted_annotation,
+                prediction,
+                annotation,
                 self.user_params.json_structure_type,
-                metadata
+                self.user_data.metadata
             )
             metric_results = _metric_validation_executor.load(
                 validation_data,
                 self.user_data.class_mapping,
-                metadata
+                self.user_data.metadata
             )
         else:
             metric_results = self.metrics_results

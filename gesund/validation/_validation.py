@@ -108,6 +108,7 @@ class Validation:
         }
         self.user_params = UserInputParams(**params)
 
+        # set up and load all the required data
         self._load_data()
     
         # set up batch job id
@@ -120,7 +121,7 @@ class Validation:
 
         :return: None
         """
-         # Load data
+        # Load data
         # set up source data for processing 
         data_loader = DataLoader(self.user_params.data_format)
         data = {
@@ -140,6 +141,7 @@ class Validation:
             self._convert_data(data)
         
         self.data = UserInputData(**data)
+
 
     def _convert_data(self, data):
         """
@@ -239,20 +241,17 @@ class Validation:
             batch_job_id=self.batch_job_id,
             validation_problem_type_factory=ValidationProblemTypeFactory()
         )
-        plot_data_executor.plot(
-            metadata_path=self.user_params.metadata_path,
-            metadata_file_format=self.user_params.data_format
-        )
+        plot_data_executor.plot()
 
 
     def run(self) -> Union[None, ResultData]:
         """
         A function to run the validation pipeline
 
-        :param: 
+        :param: None
         :type:
 
-        :return:
+        :return: None
         :rtype: 
         """
         results = {}

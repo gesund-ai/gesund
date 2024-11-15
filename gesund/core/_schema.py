@@ -90,7 +90,8 @@ class UserInputParams(BaseModel):
 class UserInputData(BaseModel):
     prediction: Union[List[Dict], Dict]
     annotation: Union[List[Dict], Dict]
-    class_mapping: Dict 
+    metadata: Union[List[Dict], Dict]
+    class_mapping: Dict
     converted_prediction: Optional[Union[List[Dict], Dict]] = None
     converted_annotation: Optional[Union[List[Dict], Dict]] = None
     was_converted: Optional[bool] = False
