@@ -1,17 +1,17 @@
 {
     "info": {
-        "year": "2024", 
-        "version": "1.0", 
-        "description": "Exported from Gesund AI", 
-        "contributor": "Gesund AI", 
-        "url": "https://gesund.ai", 
+        "year": "2024",
+        "version": "1.0",
+        "description": "Exported from Gesund AI",
+        "contributor": "Gesund AI",
+        "url": "https://gesund.ai",
         "date_created": "2024-09-13T21:31:20"
     },
-  
+
     "licenses": [
         {
-            "url": "http://creativecommons.org/licenses/by-nc-sa/2.0/", 
-            "id": 1, 
+            "url": "http://creativecommons.org/licenses/by-nc-sa/2.0/",
+            "id": 1,
             "name": "NonLicensed Annotation"
         }
     ],
@@ -28,7 +28,7 @@
             "supercategory": "medical conditions"
         }
     ],
-  
+
     "images": [
         {
             "id": "664df1bf782d9eb107789013",
@@ -364,7 +364,7 @@
             "id": "28",
             "image_id": "664df1bf782d9eb10778902e",
             "category_id": 1
-        
+
         },
         {
             "id": "29",

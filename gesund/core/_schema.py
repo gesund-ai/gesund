@@ -22,7 +22,7 @@ class UserInputParams(BaseModel):
     allowed_values: ClassVar[dict] = {
         "problem_type": ["classification", "object_detection", "semantic_segmentation"],
         "json_structure_type": ["gesund", "coco", "yolo"],
-        "data_format": ["json"]
+        "data_format": ["json"],
     }
 
     @field_validator("annotations_path")
@@ -32,7 +32,7 @@ class UserInputParams(BaseModel):
         else:
             raise InputError(msg="Annotations path is invalid")
         return annotations_path
-    
+
     @field_validator("predictions_path")
     def validate_predictions_path(cls, predictions_path):
         if os.path.exists(predictions_path):
@@ -40,7 +40,7 @@ class UserInputParams(BaseModel):
         else:
             raise InputError(msg="Predictions path is invalid")
         return predictions_path
-    
+
     @field_validator("metadata_path")
     def validate_metadata_path(cls, metadata_path):
         if metadata_path:
@@ -51,7 +51,7 @@ class UserInputParams(BaseModel):
         else:
             print("No metadata path provided.")
         return metadata_path
-    
+
     @field_validator("class_mapping")
     def validate_class_mapping(cls, class_mapping):
         if isinstance(class_mapping, str):
@@ -62,7 +62,7 @@ class UserInputParams(BaseModel):
         else:
             print("Class mapping is dict input")
         return class_mapping
-    
+
     @field_validator("problem_type")
     def validate_problem_type(cls, problem_type):
         if problem_type not in cls.allowed_values["problem_type"]:
@@ -70,7 +70,7 @@ class UserInputParams(BaseModel):
         else:
             print("Problem Type validated !")
         return problem_type
-    
+
     @field_validator("json_structure_type")
     def validate_json_structure_type(cls, json_structure_type):
         if json_structure_type not in cls.allowed_values["json_structure_type"]:
@@ -78,7 +78,7 @@ class UserInputParams(BaseModel):
         else:
             print("JSON structure type validated!")
         return json_structure_type
-    
+
     @field_validator("data_format")
     def validate_data_format(cls, data_format):
         if data_format not in cls.allowed_values["data_format"]:
@@ -98,5 +98,35 @@ class UserInputData(BaseModel):
     was_converted: Optional[bool] = False
 
 
-class ResultData(BaseModel):
+class ResultDataClassification(BaseModel):
+    plot_blind_spot_metrics: Dict
+    plot_class_distributions: Dict
+    plot_class_performance_by_threshold: Dict
+    plot_class_performances: Dict
+    plot_confidence_histogram_scatter_distribution: Dict
+    plot_confusion_matrix: Dict
+    plot_explore_predictions: Dict
+    plot_gtless_confidence_histogram_scatter_distribution: Dict
+    plot_highlighted_overall_metrics: Dict
+    plot_lift_chart: Dict
+    plot_meta_distributions: Dict
+    plot_most_confused_bar: Dict
+    plot_most_confused_class_images: Dict
+    plot_parallel_categorical_analysis: Dict
+    plot_precision_recall_multiclass_statistics: Dict
+    plot_prediction_dataset_distribution: Dict
+    plot_prediction_distribution: Dict
+    plot_roc_multiclass_statistics: Dict
+    plot_softmax_probabilities_distribution: Dict
+    plot_statistics_classbased_table: Dict
+    plot_top_losses: Dict
+    plot_tp_tn_fp_fn: Dict
+    plot_training_validation_comparison_classbased_table: Dict
+
+
+class ResultDataObjectDetection(BaseModel):
+    pass
+
+
+class ResultDataSegmentation(BaseModel):
     pass

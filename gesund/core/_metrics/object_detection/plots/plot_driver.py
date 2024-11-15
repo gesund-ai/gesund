@@ -9,6 +9,7 @@ from .object_stats import PlotObjectStats
 from .confidence_distribution import PlotConfidenceGraphs
 from .dataset_stats import PlotDatasetStats
 
+
 class ObjectDetectionPlotDriver:
     def __init__(
         self,
@@ -33,7 +34,6 @@ class ObjectDetectionPlotDriver:
             self.meta = pd.DataFrame(meta_data_dict).T
         if loss_dict:
             self.loss = pd.DataFrame(loss_dict, index=[0])
-
 
         self.sample_size = len(self.true)
         self.class_order = list(range(len(class_mappings.keys())))
@@ -124,11 +124,12 @@ class ObjectDetectionPlotDriver:
         return self.plot_average_precision.blind_spot_metrics(
             target_attribute_dict=self.filtering_meta, threshold=0.1
         )
-        
+
     def _calling_all_plots(self):
         # Getting all methods that do not start with '_'
         methods = [
-            method_name for method_name in dir(self)
+            method_name
+            for method_name in dir(self)
             if callable(getattr(self, method_name)) and not method_name.startswith("_")
         ]
         results = {}
@@ -148,5 +149,5 @@ class ObjectDetectionPlotDriver:
                 results[method_name] = f"Could not call {method_name}: {str(e)}"
             except Exception as e:
                 results[method_name] = f"Error in {method_name}: {str(e)}"
-        
+
         return results

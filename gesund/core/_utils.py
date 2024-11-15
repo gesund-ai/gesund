@@ -4,30 +4,32 @@ import os
 import bson
 from pathlib import Path
 
+
 def read_json(file_path):
     """
     Read a JSON file and return its contents as a Python dictionary.
-    
-    This function opens the specified file, reads the JSON content, and 
+
+    This function opens the specified file, reads the JSON content, and
     returns it as a Python dictionary. The file should contain valid JSON data.
 
     :param file_path: (str) The path to the JSON file to read.
-    
+
     :return: (dict) The JSON data loaded into a Python dictionary.
-    
+
     :raises FileNotFoundError: If the specified file does not exist.
     :raises json.JSONDecodeError: If the file contains invalid JSON data.
     """
 
-    with open(file_path, 'r') as file:
+    with open(file_path, "r") as file:
         data = json.load(file)
     return data
+
 
 def save_plot_metrics_as_json(overall_metrics, output_dir):
     """
     Save each plot's metrics as individual JSON files in the specified directory.
-    
-    This function iterates over the overall metrics dictionary and saves 
+
+    This function iterates over the overall metrics dictionary and saves
     each plot's metrics in separate JSON files, named according to the plot names.
     If the directory does not exist, it will be created.
 
@@ -35,28 +37,26 @@ def save_plot_metrics_as_json(overall_metrics, output_dir):
     :param output_dir: (str) Path to the directory where the JSON files should be saved.
 
     :return: None
-    
+
     :raises OSError: If the directory cannot be created or if the files cannot be written.
     """
 
     # Create output directory if it doesn't exist
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-    
+
     # Iterate over the overall metrics and save each as a separate JSON
     for plot_name, metrics in overall_metrics.items():
         output_file = os.path.join(output_dir, f"{plot_name}.json")
         try:
-            with open(output_file, 'w') as f:
+            with open(output_file, "w") as f:
                 json.dump(metrics, f, indent=4)
         except Exception as e:
             print(f"Could not save metrics for {plot_name} because: {e}")
-            
-            
-
 
 
 import numpy as np
 import pandas as pd
+
 
 class ValidationUtils:
     def __init__(self, meta_pred_true):
@@ -76,7 +76,7 @@ class ValidationUtils:
         """
         Filters data by more than one attribute.
 
-        :param target_attribute_dict: (dict, optional) A dictionary where keys are attribute names 
+        :param target_attribute_dict: (dict, optional) A dictionary where keys are attribute names
                                       and values are the desired filter criteria.
 
         :return: (pd.DataFrame) A DataFrame containing the filtered metadata based on the specified attributes.
@@ -88,7 +88,9 @@ class ValidationUtils:
                 if self.is_list_numeric(self.meta_pred_true[target_attribute].values):
                     slider_min, slider_max = target_attribute_dict[target_attribute]
                     filtered_meta_pred_true = filtered_meta_pred_true[
-                        self.meta_pred_true[target_attribute].between(slider_min, slider_max)
+                        self.meta_pred_true[target_attribute].between(
+                            slider_min, slider_max
+                        )
                     ]
                 else:
                     target_value = target_attribute_dict[target_attribute]
@@ -116,7 +118,9 @@ class ValidationUtils:
                 meta_data=doc.meta_data, meta_filter=meta_filter
             )
             if add:
-                for meta_name in list(set(doc.meta_data.keys()) - set(allowed_meta_keys)):
+                for meta_name in list(
+                    set(doc.meta_data.keys()) - set(allowed_meta_keys)
+                ):
                     doc.meta_data.pop(meta_name)
                 filtered_validation_collection_data.append(doc.dict())
         return filtered_validation_collection_data
@@ -143,7 +147,11 @@ class ValidationUtils:
                         if meta_data[meta_key] != meta_filter[meta_key]:
                             add_multi.append(False)
                     add = any(add_multi)
-                elif not (min(meta_filter[meta_key]) <= meta_data[meta_key] <= max(meta_filter[meta_key])):
+                elif not (
+                    min(meta_filter[meta_key])
+                    <= meta_data[meta_key]
+                    <= max(meta_filter[meta_key])
+                ):
                     add = False
         return add
 
@@ -151,7 +159,7 @@ class ValidationUtils:
         """
         Filters data by a single attribute.
 
-        :param target_attribute_dict: (dict) A dictionary where the key is the attribute name 
+        :param target_attribute_dict: (dict) A dictionary where the key is the attribute name
                                        and the value is the desired filter criteria.
 
         :return: (pd.DataFrame) A DataFrame containing the filtered metadata based on the specified attribute.
@@ -173,7 +181,7 @@ class ValidationUtils:
         """
         Filters data by multiple attributes.
 
-        :param target_attributes_dict: (dict) A dictionary where keys are attribute names 
+        :param target_attributes_dict: (dict) A dictionary where keys are attribute names
                                         and values are the desired filter criteria.
 
         :return: (pd.DataFrame) A DataFrame containing the filtered metadata based on the specified attributes.
@@ -184,7 +192,9 @@ class ValidationUtils:
             if self.is_list_numeric(self.meta_pred_true[target_attribute].values):
                 slider_min, slider_max = target_attributes_dict[target_attribute]
                 filtered_meta_pred_true = filtered_meta_pred_true[
-                    self.meta_pred_true[target_attribute].between(slider_min, slider_max)
+                    self.meta_pred_true[target_attribute].between(
+                        slider_min, slider_max
+                    )
                 ]
             else:
                 target_value = target_attributes_dict[target_attribute]
@@ -290,15 +300,16 @@ class ValidationUtils:
     def polygon_to_rle(polygon: list, shape):
         import cv2
         from pycocotools.mask import encode
+
         """
         Convert a polygon to a Run-Length Encoding (RLE) format mask.
 
-        This function fills a polygon in a mask of the given shape and encodes 
+        This function fills a polygon in a mask of the given shape and encodes
         it into Run-Length Encoding format for efficient storage and transmission.
 
-        :param polygon: (list) A list of points representing the vertices of the polygon in the format 
+        :param polygon: (list) A list of points representing the vertices of the polygon in the format
                         [[x1, y1], [x2, y2], ...].
-        :param shape: (tuple) The shape of the mask to be created, typically in the form 
+        :param shape: (tuple) The shape of the mask to be created, typically in the form
                       (height, width).
 
         :return: (dict) A dictionary representing the Run-Length Encoding of the mask.
@@ -319,17 +330,17 @@ class ValidationUtils:
         """
         Calculate the Intersection over Union (IoU) between two masks.
 
-        This function computes the IoU score, which is a measure of overlap 
-        between two masks. The IoU is calculated as the area of intersection 
+        This function computes the IoU score, which is a measure of overlap
+        between two masks. The IoU is calculated as the area of intersection
         divided by the area of union.
 
-        :param gt_mask: (list) A list of points representing the ground truth mask vertices 
+        :param gt_mask: (list) A list of points representing the ground truth mask vertices
                          in the format [[x1, y1], [x2, y2], ...].
-        :param pred_mask: (list) A list of points representing the predicted mask vertices 
+        :param pred_mask: (list) A list of points representing the predicted mask vertices
                           in the format [[x1, y1], [x2, y2], ...].
         :param threshold: (float, optional) The threshold value for IoU, default is 0.5.
 
-        :return: (float) The IoU score in the range [0, 1]. A score of 0 indicates no overlap, 
+        :return: (float) The IoU score in the range [0, 1]. A score of 0 indicates no overlap,
                  while a score of 1 indicates perfect overlap.
 
         :raises ValueError: If the input masks are invalid or not in the expected format.
@@ -368,13 +379,13 @@ class Statistics:
         """
         Calculate the confidence interval for a given metric.
 
-        This function computes the confidence interval for a given metric based 
-        on the provided sample size and z-score. The confidence interval is 
+        This function computes the confidence interval for a given metric based
+        on the provided sample size and z-score. The confidence interval is
         calculated using the formula: CI = metric ± z * sqrt((metric * (1 - metric)) / len_).
 
         :param metric: (float) The observed metric for which to calculate the confidence interval.
         :param len_: (int) The sample size used to estimate the confidence interval.
-        :param z_value: (float, optional) The z-score corresponding to the desired confidence level, 
+        :param z_value: (float, optional) The z-score corresponding to the desired confidence level,
                         default is 1.96 (for 95% confidence level).
 
         :return: (tuple) A tuple containing the lower and upper bounds of the confidence interval.
@@ -392,8 +403,8 @@ class Statistics:
         """
         Calculate a histogram for a given array.
 
-        This function computes a histogram for the specified array, creating bins 
-        based on the provided minimum and maximum values. The histogram is returned 
+        This function computes a histogram for the specified array, creating bins
+        based on the provided minimum and maximum values. The histogram is returned
         as a list of dictionaries with bin categories and counts.
 
         :param array_: (list or np.ndarray) The array of values for which to calculate the histogram.
@@ -401,7 +412,7 @@ class Statistics:
         :param max_: (float) The maximum value for the histogram bins.
         :param n_bins: (int) The number of bins to create in the histogram.
 
-        :return: (list) A list of dictionaries where each dictionary contains a category 
+        :return: (list) A list of dictionaries where each dictionary contains a category
                  and the corresponding value count for that bin.
 
         :raises ValueError: If n_bins is less than or equal to zero.

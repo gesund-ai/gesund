@@ -5,6 +5,7 @@ import sklearn
 
 from gesund.core._utils import ValidationUtils, Statistics
 
+
 class PlotDatasetStats:
     def __init__(self, class_mappings, meta_data_dict=None):
         self.meta_data_dict = meta_data_dict

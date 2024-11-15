@@ -5,6 +5,7 @@ import numpy as np
 from ..metrics.average_precision import AveragePrecision
 from gesund.core._utils import ValidationUtils
 
+
 class PlotAveragePrecision:
     def __init__(
         self,
@@ -186,7 +187,9 @@ class PlotAveragePrecision:
         )
 
         class_metrics = average_precision.calculate_ap_metrics(idxs=idxs)
-        overall_metrics = average_precision.calculate_highlighted_overall_metrics(threshold)
+        overall_metrics = average_precision.calculate_highlighted_overall_metrics(
+            threshold
+        )
 
         for key in list(class_metrics.keys()):
             class_metrics[rename_dict[key]] = class_metrics.pop(key)
@@ -200,5 +203,5 @@ class PlotAveragePrecision:
         }
 
         blind_spot_metrics_dict["Average"] = overall_metrics
-        
+
         return blind_spot_metrics_dict

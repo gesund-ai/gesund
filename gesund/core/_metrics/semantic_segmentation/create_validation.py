@@ -4,7 +4,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from .plots.plot_driver import SemanticSegmentationPlotDriver
-from gesund.metrics.semantic_segmentation.segmentation_metric_plot import Semantic_Segmentation_Plot
+from gesund.metrics.semantic_segmentation.segmentation_metric_plot import (
+    Semantic_Segmentation_Plot,
+)
+
 
 class ValidationCreation:
     """
@@ -15,13 +18,13 @@ class ValidationCreation:
     :param batch_job_id: (str) Unique identifier for the batch job.
     :param filter_field: (str, optional) The field to filter the data. Defaults to "image_url".
     :param generate_metrics: (bool, optional) Whether to generate metrics during validation creation. Defaults to True.
-    
+
     Attributes:
         batch_job_id (str): Unique identifier for the batch job.
         filter_field (str): The field to filter the data.
         generate_metrics (bool): Whether to generate metrics during validation creation.
     """
-    
+
     def __init__(self, batch_job_id, filter_field="image_url", generate_metrics=True):
         """
         Initialize the ValidationCreation class.
@@ -34,7 +37,9 @@ class ValidationCreation:
         self.filter_field = filter_field
         self.generate_metrics = generate_metrics
 
-    def create_validation_collection_data(self, successful_batch_data, annotation_data, format=None, meta_data=None):
+    def create_validation_collection_data(
+        self, successful_batch_data, annotation_data, format=None, meta_data=None
+    ):
         """
         Create a list of validation collection data from batch and annotation data.
 
@@ -44,9 +49,9 @@ class ValidationCreation:
         :param meta_data: (dict, optional) Additional metadata for each image. Defaults to None.
 
         :return: (list) A list of dictionaries with validation data for each image.
-        """        
+        """
         validation_collection_data = []
-        
+
         for image_id in successful_batch_data:
             batch_item = successful_batch_data[image_id]
             annotation_item = annotation_data[image_id]
@@ -57,14 +62,16 @@ class ValidationCreation:
                 batch_item["shape"][0],
                 batch_item["shape"][1],
             ]
-            image_information_dict["meta_data"] = meta_data[image_id]["metadata"] if meta_data else {}
+            image_information_dict["meta_data"] = (
+                meta_data[image_id]["metadata"] if meta_data else {}
+            )
             image_information_dict["ground_truth"] = annotation_item["annotation"]
             image_information_dict["objects"] = batch_item["masks"]
             image_information_dict["created_timestamp"] = time.time()
             validation_collection_data.append(image_information_dict)
-            
+
         return validation_collection_data
-    
+
     def load(self, validation_collection_data, class_mappings, filtering_meta=None):
         """
         Load the validation collection data and class mappings to generate metrics and plots.
@@ -76,9 +83,9 @@ class ValidationCreation:
         :return: (dict) Dictionary containing the overall computed metrics.
         """
         generate_metrics = True
-        
-        #study_list = self.validation_cruds.get_study_list_by_batch_job_id(batch_job_id)
-        #self.study_list = study_list
+
+        # study_list = self.validation_cruds.get_study_list_by_batch_job_id(batch_job_id)
+        # self.study_list = study_list
         self.study_list = []
 
         plotting_data = self._load_plotting_data(
@@ -110,12 +117,12 @@ class ValidationCreation:
             batch_job_id=self.batch_job_id,
             filtering_meta=filtering_meta,
         )
-        
+
         overall_metrics = self.plot_driver._calling_all_plots()
-        
+
         return overall_metrics
 
-    def plot_metrics(self, metrics, json_output_dir,plot_outputs_dir, plot_configs):
+    def plot_metrics(self, metrics, json_output_dir, plot_outputs_dir, plot_configs):
         """
         Generate and save various types of plots based on the provided metrics and configurations.
 
@@ -130,23 +137,33 @@ class ValidationCreation:
         :return: None
         """
         file_name_patterns = {
-            'violin_graph': ('violin_path', 'plot_{}.json'),
-            'plot_by_meta_data': ('plot_by_meta_data', 'plot_metrics_by_meta_data.json'),
-            'overall_metrics': ('overall_data', 'plot_highlighted_{}.json'),
-            'classbased_table': ('classed_table', 'plot_statistics_{}.json'),
-            'blind_spot': ('blind_spot', 'plot_{}_metrics.json')
+            "violin_graph": ("violin_path", "plot_{}.json"),
+            "plot_by_meta_data": (
+                "plot_by_meta_data",
+                "plot_metrics_by_meta_data.json",
+            ),
+            "overall_metrics": ("overall_data", "plot_highlighted_{}.json"),
+            "classbased_table": ("classed_table", "plot_statistics_{}.json"),
+            "blind_spot": ("blind_spot", "plot_{}_metrics.json"),
         }
 
         draw_params = {
-            'violin_graph': lambda c: {'metrics': c.get('metrics'), 'threshold': c.get('threshold')},
-            'plot_by_meta_data': lambda c: {'meta_data_args': c.get('meta_data_args')},
-            'overall_metrics': lambda c: {'overall_args': c.get('overall_args')},
-            'classbased_table': lambda c: {'classbased_table_args': c.get('classbased_table_args')},
-            'blind_spot': lambda c: {'blind_spot_args': c.get('blind_spot_args')}
+            "violin_graph": lambda c: {
+                "metrics": c.get("metrics"),
+                "threshold": c.get("threshold"),
+            },
+            "plot_by_meta_data": lambda c: {"meta_data_args": c.get("meta_data_args")},
+            "overall_metrics": lambda c: {"overall_args": c.get("overall_args")},
+            "classbased_table": lambda c: {
+                "classbased_table_args": c.get("classbased_table_args")
+            },
+            "blind_spot": lambda c: {"blind_spot_args": c.get("blind_spot_args")},
         }
 
         for draw_type, config in plot_configs.items():
-            arg_name, file_pattern = file_name_patterns.get(draw_type, (None, 'plot_{}.json'))
+            arg_name, file_pattern = file_name_patterns.get(
+                draw_type, (None, "plot_{}.json")
+            )
             if arg_name is None:
                 print(f"Warning: Unknown draw type '{draw_type}'. Skipping.")
                 continue
@@ -154,13 +171,16 @@ class ValidationCreation:
             file_name = file_pattern.format(draw_type)
             file_path = os.path.join(json_output_dir, file_name)
             plot = Semantic_Segmentation_Plot(**{arg_name: file_path})
-            save_path = os.path.join(plot_outputs_dir, f'{draw_type}.png')
+            save_path = os.path.join(plot_outputs_dir, f"{draw_type}.png")
 
             params = draw_params.get(draw_type, lambda _: {})(config)
             plot.draw(draw_type, save_path=save_path, **params)
 
     def _load_plotting_data(
-        self, validation_collection_data=None, generate_metrics=True, study_list=None,
+        self,
+        validation_collection_data=None,
+        generate_metrics=True,
+        study_list=None,
     ):
         """
         Load plotting data for per-image and per-dataset plots.
@@ -173,7 +193,9 @@ class ValidationCreation:
         """
         plotting_data = dict()
         plotting_data["per_image"] = self._craft_per_image_plotting_data(
-            validation_collection_data, generate_metrics=generate_metrics, study_list=study_list
+            validation_collection_data,
+            generate_metrics=generate_metrics,
+            study_list=study_list,
         )
 
         return plotting_data
@@ -203,25 +225,15 @@ class ValidationCreation:
             if len(ground_truth_list) > 1:
                 for item in ground_truth_list:
                     label = item["label"]
-                    rle = {
-                        "rle": item["mask"]["mask"], 
-                        "shape": shape, 
-                        "class": label
-                    }
+                    rle = {"rle": item["mask"]["mask"], "shape": shape, "class": label}
                     rle_dict["rles"].append(rle)
                 ground_truth_dict[image_id] = rle_dict
-                
+
             else:
                 ground_truth = ground_truth_list[0]
                 label = ground_truth["label"]
                 rles_str = ground_truth["mask"]["mask"]
-                rles = {
-                    "rles": [{
-                        "rle": rles_str, 
-                        "shape": shape, 
-                        "class": label
-                    }]
-                }
+                rles = {"rles": [{"rle": rles_str, "shape": shape, "class": label}]}
                 ground_truth_dict[image_id] = rles
 
         # Prediction dict
@@ -232,7 +244,7 @@ class ValidationCreation:
             for rle_dict in rles:
                 rle_dict["shape"] = shape
             prediction_dict[image_id] = objects
-        
+
         # Loss dict
         if generate_metrics:
             try:
@@ -250,7 +262,7 @@ class ValidationCreation:
 
         data["ground_truth"] = ground_truth_dict
         data["prediction"] = prediction_dict
-        
+
         data["meta_data"] = meta_data_dict
 
         if generate_metrics:

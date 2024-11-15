@@ -157,7 +157,7 @@ All output JSON files for all graphs and plots will be present in the `outputs` 
 
 #### COCO Format
 
-It is to be noted that COCO format is traditionally used for object detection, instance segmentation, and keypoint detection, but it is not designed for image classification. Therefore, we have adapted COCO-like structures for classification tasks. 
+It is to be noted that COCO format is traditionally used for object detection, instance segmentation, and keypoint detection, but it is not designed for image classification. Therefore, we have adapted COCO-like structures for classification tasks.
 
 Sample format can be seen below:
 

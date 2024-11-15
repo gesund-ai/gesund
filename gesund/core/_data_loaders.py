@@ -3,21 +3,18 @@ import pandas as pd
 
 from ._exceptions import DataLoadError
 
-class DataLoader:
 
+class DataLoader:
     def __init__(self, data_format: str):
         """
         A function to initialize the data
 
         :param data_format: string value indicating the data
         :type data_format: str
-        
+
         :return: None
         """
-        data_loaders = {
-            "csv": self._csv_loader,
-            "json": self._json_loader
-        }
+        data_loaders = {"csv": self._csv_loader, "json": self._json_loader}
         self._loader_fxn = data_loaders[data_format]
 
     @staticmethod
@@ -51,7 +48,6 @@ class DataLoader:
         :rtype: pd.DataFrame
         """
         return pd.DataFrame(src_path)
-
 
     def load(self, src_path: str) -> dict:
         """

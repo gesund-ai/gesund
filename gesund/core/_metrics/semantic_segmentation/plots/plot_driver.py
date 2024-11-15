@@ -36,7 +36,9 @@ class SemanticSegmentationPlotDriver:
         self.sample_size = len(self.true)
         self.class_order = list(range(len(class_mappings.keys())))
 
-        self.artifacts_path = "os.path.join(InternalConfig.VALIDATION_OBJDET_SEGM_TABLE_PATH"
+        self.artifacts_path = (
+            "os.path.join(InternalConfig.VALIDATION_OBJDET_SEGM_TABLE_PATH"
+        )
 
         # Import Classes
         self.plot_coco_metrics = PlotCOCOMetrics(
@@ -90,10 +92,14 @@ class SemanticSegmentationPlotDriver:
         return self.plot_coco_metrics.main_metric()
 
     def plot_statistics_classbased_table(self, target_attribute_dict=None):
-        return self.plot_coco_metrics.statistics_classbased_table(target_attribute_dict=self.filtering_meta)
+        return self.plot_coco_metrics.statistics_classbased_table(
+            target_attribute_dict=self.filtering_meta
+        )
 
-    def plot_top_misses(self, metric ='IoU', sort_by = "Ascending", top_k=150):
-        return self.plot_top_misses_.top_misses(metric = metric, sort_by = sort_by, top_k=top_k)
+    def plot_top_misses(self, metric="IoU", sort_by="Ascending", top_k=150):
+        return self.plot_top_misses_.top_misses(
+            metric=metric, sort_by=sort_by, top_k=top_k
+        )
 
     def plot_metrics_by_meta_data(self, target_attribute_dict=None):
         return self.plot_coco_metrics.metrics_by_meta_data(
@@ -108,16 +114,17 @@ class SemanticSegmentationPlotDriver:
 
     def plot_violin_graph(self):
         return self.plot_violin_.violin_graph()
-    
+
     def plot_blind_spot_metrics(self, target_attribute_dict=None):
         return self.plot_coco_metrics.blind_spot_metrics(
             target_attribute_dict=self.filtering_meta, threshold=0.1
         )
-        
+
     def _calling_all_plots(self):
         # Getting all methods that do not start with '_'
         methods = [
-            method_name for method_name in dir(self)
+            method_name
+            for method_name in dir(self)
             if callable(getattr(self, method_name)) and not method_name.startswith("_")
         ]
         results = {}
@@ -137,5 +144,5 @@ class SemanticSegmentationPlotDriver:
                 results[method_name] = f"Could not call {method_name}: {str(e)}"
             except Exception as e:
                 results[method_name] = f"Error in {method_name}: {str(e)}"
-        
+
         return results

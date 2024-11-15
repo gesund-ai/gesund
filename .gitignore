@@ -169,6 +169,7 @@ cython_debug/
 #
 
 .pytest_cache
+outputs/*
 
 */*/__pycache__
 */__pycache__

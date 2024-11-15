@@ -81,7 +81,9 @@ class PlotStatsTables:
         :param pred_categorical: Prediction for samples
         :return: payload_dict
         """
-        filtered_meta_pred_true = self.validation_utils.filter_attribute_by_dict(target_attribute_dict)
+        filtered_meta_pred_true = self.validation_utils.filter_attribute_by_dict(
+            target_attribute_dict
+        )
         true = filtered_meta_pred_true["true"]
         pred_categorical = filtered_meta_pred_true["pred_categorical"]
 

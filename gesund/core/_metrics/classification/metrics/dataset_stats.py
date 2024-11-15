@@ -5,6 +5,7 @@ import sklearn
 
 from gesund.core._utils import ValidationUtils, Statistics
 
+
 class DatasetStats:
     def calculate_class_distributions(self, true):
         """

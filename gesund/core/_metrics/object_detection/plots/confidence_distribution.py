@@ -7,6 +7,7 @@ import random
 from ..metrics.average_precision import AveragePrecision
 from gesund.core._utils import ValidationUtils, Statistics
 
+
 class PlotConfidenceGraphs:
     def __init__(self, class_mappings, coco_, meta_data_dict=None):
         self.class_mappings = class_mappings
