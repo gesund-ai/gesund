@@ -2,22 +2,22 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import auc
 import sklearn
-
+from typing import Any, Dict, List, Optional, Union
 
 class LiftChart:
-    def __init__(self, class_mappings):
+    def __init__(self, class_mappings: Dict[int, str]) -> None:
         self.class_mappings = class_mappings
         self.class_order = [int(i) for i in list(class_mappings.keys())]
 
     def _decile_table(
         self,
-        true,
-        pred_logits,
-        predicted_class=0,
-        change_deciles=20,
-        labels=True,
-        round_decimal=3,
-    ):
+        true: Union[List[int], np.ndarray, pd.Series],
+        pred_logits: pd.DataFrame,
+        predicted_class: int = 0,
+        change_deciles: int = 20,
+        labels: bool = True,
+        round_decimal: int = 3,
+        ) -> pd.DataFrame:
         """Generates the Decile Table from labels and probabilities
 
         The Decile Table is creared by first sorting the customers by their predicted
@@ -108,14 +108,13 @@ class LiftChart:
 
     def calculate_lift_curve_points(
         self,
-        true,
-        pred_logits,
-        predicted_class=None,
-        change_deciles=20,
-        labels=True,
-        round_decimal=3,
-    ):
-
+        true: Union[List[int], np.ndarray, pd.Series],
+        pred_logits: pd.DataFrame,
+        predicted_class: Optional[int] = None,
+        change_deciles: int = 20,
+        labels: bool = True,
+        round_decimal: int = 3,
+        ) -> Dict[str, List[Dict[str, float]]]:
         class_lift_dict = dict()
         if predicted_class in [None, "all", "overall"]:
             for class_ in list(self.class_mappings.keys()):
