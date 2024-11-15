@@ -1,3 +1,4 @@
+from typing import Any, Dict, List, Optional
 import time
 import pandas as pd
 import numpy as np
@@ -24,7 +25,7 @@ class ValidationCreation:
         filter_field (str): The field to filter the data.
         generate_metrics (bool): Whether to generate metrics during validation creation.
     """
-
+    
     def __init__(self, batch_job_id, filter_field="image_url", generate_metrics=True):
         """
         Initialize the ValidationCreation class.
@@ -37,9 +38,7 @@ class ValidationCreation:
         self.filter_field = filter_field
         self.generate_metrics = generate_metrics
 
-    def create_validation_collection_data(
-        self, successful_batch_data, annotation_data, format=None, meta_data=None
-    ):
+    def create_validation_collection_data(self, successful_batch_data, annotation_data, format=None, meta_data=None):
         """
         Create a list of validation collection data from batch and annotation data.
 
@@ -71,7 +70,7 @@ class ValidationCreation:
             validation_collection_data.append(image_information_dict)
 
         return validation_collection_data
-
+    
     def load(self, validation_collection_data, class_mappings, filtering_meta=None):
         """
         Load the validation collection data and class mappings to generate metrics and plots.
@@ -122,7 +121,7 @@ class ValidationCreation:
 
         return overall_metrics
 
-    def plot_metrics(self, metrics, json_output_dir, plot_outputs_dir, plot_configs):
+    def plot_metrics(self, metrics, json_output_dir,plot_outputs_dir, plot_configs):
         """
         Generate and save various types of plots based on the provided metrics and configurations.
 
@@ -177,10 +176,7 @@ class ValidationCreation:
             plot.draw(draw_type, save_path=save_path, **params)
 
     def _load_plotting_data(
-        self,
-        validation_collection_data=None,
-        generate_metrics=True,
-        study_list=None,
+        self, validation_collection_data=None, generate_metrics=True, study_list=None,
     ):
         """
         Load plotting data for per-image and per-dataset plots.
@@ -201,8 +197,11 @@ class ValidationCreation:
         return plotting_data
 
     def _craft_per_image_plotting_data(
-        self, validation_collection_data, generate_metrics, study_list=None
-    ):
+        self, 
+        validation_collection_data: Optional[List[Dict[str, Any]]], 
+        generate_metrics: bool, 
+        study_list: Optional[List[Any]] = None
+        ) -> Dict[str, Any]:
         """
         Create data for per-image plots.
 

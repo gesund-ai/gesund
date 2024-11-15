@@ -5,6 +5,7 @@ import json
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+from typing import Any, Dict, List, Optional, Tuple
 
 from .plots.plot_driver import ObjectDetectionPlotDriver
 from gesund.metrics.object_detection.object_detection_metric_plot import (
@@ -21,7 +22,6 @@ class ValidationCreation:
         filter_field (str): The field to filter the data, default is "image_url".
         generate_metrics (bool): Whether to generate metrics during validation creation, default is True.
     """
-
     def __init__(self, batch_job_id, filter_field="image_url", generate_metrics=True):
         """
         Initialize the ValidationCreation class.
@@ -34,9 +34,7 @@ class ValidationCreation:
         self.filter_field = filter_field
         self.generate_metrics = generate_metrics
 
-    def create_validation_collection_data(
-        self, successful_batch_data, annotation_data, format, meta_data=None
-    ):
+    def create_validation_collection_data(self, successful_batch_data, annotation_data, format, meta_data=None):
         """
         Create a list of validation collection data from batch and annotation data.
 
@@ -79,7 +77,7 @@ class ValidationCreation:
             )
             validation_collection_data.append(image_information_dict)
         return validation_collection_data
-
+    
     def _load_plotting_data(self, validation_collection_data, class_mappings):
         """
         Load plotting data for per-image and per-dataset plots.
@@ -98,9 +96,7 @@ class ValidationCreation:
         )
         return plotting_data
 
-    def _craft_per_dataset_plotting_data(
-        self, validation_collection_data, class_mappings
-    ):
+    def _craft_per_dataset_plotting_data(self, validation_collection_data, class_mappings):
         """
         Create data for per-dataset plots (e.g., COCO format).
 
@@ -119,7 +115,10 @@ class ValidationCreation:
             )
         return per_dataset
 
-    def _craft_per_image_plotting_data(self, validation_collection_data):
+    def _craft_per_image_plotting_data(
+        self, 
+        validation_collection_data: List[Dict[str, Any]]
+        ) -> Dict[str, Any]:
         """
         Create data for per-image plots.
 
@@ -158,7 +157,12 @@ class ValidationCreation:
             pass
         return data
 
-    def load(self, validation_collection_data, class_mappings, filtering_meta=None):
+    def load(
+        self, 
+        validation_collection_data: List[Dict[str, Any]], 
+        class_mappings: Dict[int, str], 
+        filtering_meta: Optional[Dict[str, Any]] = None
+        ) -> Dict[str, Any]:
         """
         Load the validation collection data and class mappings to generate metrics and plots.
 
@@ -229,7 +233,13 @@ class ValidationCreation:
 
         return overall_metrics
 
-    def plot_metrics(self, metrics, json_output_dir, plot_outputs_dir, plot_configs):
+    def plot_metrics(
+        self, 
+        metrics: Dict[str, Any], 
+        json_output_dir: str, 
+        plot_outputs_dir: str, 
+        plot_configs: Dict[str, Any]
+        ) -> None:
         """
         Generate and save various types of plots based on the provided metrics and configurations.
 
@@ -283,7 +293,10 @@ class ValidationCreation:
             except Exception as e:
                 print(f"Error creating {draw_type}: {e}")
 
-    def _load_pred_coco(self, validation_collection_data=None):
+    def _load_pred_coco(
+        self, 
+        validation_collection_data: List[Dict[str, Any]]
+        ) -> List[Dict[str, Any]]:
         """
         Load prediction data in COCO format.
 
@@ -325,7 +338,11 @@ class ValidationCreation:
 
         return pred_dict_list
 
-    def _load_annot_coco(self, validation_collection_data=None, class_mappings=None):
+    def _load_annot_coco(
+        self, 
+        validation_collection_data: List[Dict[str, Any]], 
+        class_mappings: Dict[int, str]
+        ) -> Dict[str, Any]:
         """
         Load annotation data in COCO format.
 
