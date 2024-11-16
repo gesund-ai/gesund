@@ -45,6 +45,7 @@ def test_common_plots_initialization(common_plots: CommonPlots) -> None:
     :return: None
     :rtype: None
     """    
+    
     assert common_plots.cls_driver is None
     assert common_plots.obj_driver is None
     assert common_plots.seg_driver is None
@@ -62,6 +63,7 @@ def test_class_distribution_plot(common_plots: CommonPlots, mock_cls_driver: Mag
     :return: None
     :rtype: None
     """
+
     metrics: Dict[str, int] = {"classA": 100, "classB": 150}
     threshold: float = 0.5
 
@@ -83,6 +85,7 @@ def test_classification_blind_spot_plot(common_plots: CommonPlots, mock_cls_driv
     :return: None
     :rtype: None
     """
+
     metrics: Dict[str, float] = {"accuracy": 0.95}
     class_types: List[str] = ["classA", "classB"]
 
@@ -105,6 +108,7 @@ def test_class_performance_by_threshold_plot(common_plots: CommonPlots, mock_cls
     :return: None
     :rtype: None
     """
+
     metrics: Dict[str, float] = {"precision": 0.8, "recall": 0.75}
     graph_type: str = "graph_1"
     threshold: float = 0.6
@@ -129,6 +133,7 @@ def test_roc_statistics_plot(common_plots: CommonPlots, mock_cls_driver: MagicMo
     :return: None
     :rtype: None
     """
+
     roc_class: List[str] = ["classA", "classB"]
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -149,6 +154,7 @@ def test_precision_recall_statistics_plot(common_plots: CommonPlots, mock_cls_dr
     :return: None
     :rtype: None
     """
+
     pr_class: List[str] = ["classA", "classB"]
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -169,6 +175,7 @@ def test_classification_confidence_histogram_plot(common_plots: CommonPlots, moc
     :return: None
     :rtype: None
     """
+
     confidence_histogram_args: List[Any] = ["arg1", "arg2"]
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -189,6 +196,7 @@ def test_classification_overall_metrics_plot(common_plots: CommonPlots, mock_cls
     :return: None
     :rtype: None
     """
+
     overall_metrics_args: List[str] = ["metric1", "metric2"]
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -210,6 +218,7 @@ def test_confusion_matrix_plot(common_plots: CommonPlots, mock_cls_driver: Magic
     :return: None
     :rtype: None
     """
+
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path: str = os.path.join(tmpdir, "confusion_matrix.png")
         common_plots._confusion_matrix(save_path)
@@ -228,6 +237,7 @@ def test_prediction_dataset_distribution_plot(common_plots: CommonPlots, mock_cl
     :return: None
     :rtype: None
     """
+
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path: str = os.path.join(tmpdir, "prediction_dataset_distribution.png")
         common_plots._prediction_dataset_distribution(save_path)
@@ -248,6 +258,7 @@ def test_most_confused_bar_plot(common_plots: CommonPlots, mock_cls_driver: Magi
     :return: None
     :rtype: None
     """
+
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path: str = os.path.join(tmpdir, "most_confused_bar.png")
         common_plots._most_confused_bar(save_path)
@@ -267,6 +278,7 @@ def test_confidence_histogram_scatter_distribution_plot(common_plots: CommonPlot
     :return: None
     :rtype: None
     """
+
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path: str = os.path.join(tmpdir, "confidence_histogram_scatter_distribution.png")
         common_plots._confidence_histogram_scatter_distribution(save_path)
@@ -286,6 +298,7 @@ def test_lift_chart_plot(common_plots: CommonPlots, mock_cls_driver: MagicMock) 
     :return: None
     :rtype: None
     """
+
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path: str = os.path.join(tmpdir, "lift_chart.png")
         common_plots._lift_chart(save_path)
@@ -304,6 +317,7 @@ def test_object_detection_blind_spot_plot(common_plots: CommonPlots, mock_obj_dr
     :return: None
     :rtype: None
     """
+
     blind_spot_args: List[str] = ["arg1", "arg2"]
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -324,6 +338,7 @@ def test_object_detection_overall_metrics_plot(common_plots: CommonPlots, mock_o
     :return: None
     :rtype: None
     """
+
     overall_metrics_args: List[str] = ["metric1", "metric2"]
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -345,6 +360,7 @@ def test_top_misses_plot(common_plots: CommonPlots, mock_obj_driver: MagicMock) 
     :return: None
     :rtype: None
     """
+
     top_misses_args: List[str] = ["miss1", "miss2"]
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -366,6 +382,7 @@ def test_classbased_table_metrics_plot(common_plots: CommonPlots, mock_obj_drive
     :return: None
     :rtype: None
     """
+
     classbased_table_args: List[str] = ["table_arg1", "table_arg2"]
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -386,6 +403,7 @@ def test_mixed_metrics_plot(common_plots: CommonPlots, mock_obj_driver: MagicMoc
     :return: None
     :rtype: None
     """
+
     mixed_metrics_args: List[str] = ["mixed_arg1", "mixed_arg2"]
 
     with tempfile.TemporaryDirectory() as tmpdir:
