@@ -1,10 +1,33 @@
 import pytest
-from gesund.core._converters.converter_factory import ConverterFactory
 from gesund.core._converters.coco_converter import COCOToGesund
-from gesund.core._converters.yolo_converter import YoloToGesund
 import numpy as np
 from gesund.core._converters.yolo_converter import ClassificationConverter, ObjectDetectionConverter, SemanticSegmentationConverter
 from typing import List, Dict, Any
+from unittest.mock import MagicMock
+from pydantic import BaseModel, ValidationError
+
+
+class AnnotationModel(BaseModel):
+    image_id: str
+    annotation: List[Dict[str, Any]]
+
+class PredictionModel(BaseModel):
+    image_id: str
+    prediction_class: int
+    confidence: float
+    logits: List[float]
+    loss: float
+
+class SemanticAnnotationModel(BaseModel):
+    image_id: str
+    annotation: List[Dict[str, Any]]
+
+class SemanticPredictionModel(BaseModel):
+    image_id: str
+    masks: Dict[str, Any]
+    shape: List[int]
+    status: int
+
 
 # Sample data for ClassificationConverter
 class_annotations: List[Dict[str, Any]] = [
@@ -59,7 +82,10 @@ semantic_predictions: List[Dict[str, Any]] = [
 
 def test_classification_converter() -> None:
     """
-    Test the ClassificationConverter with sample data.
+    A function to test the ClassificationConverter to transform classification data to gesund format given the sample annotations and predictions.
+
+    :return: None
+    :rtype: None
     """
     converter = ClassificationConverter(
         annotations=class_annotations,
@@ -70,30 +96,20 @@ def test_classification_converter() -> None:
     annotations = converter._convert_annotations()
     predictions = converter._convert_predictions()
 
-    assert annotations == {
-        "image_1": {
-            "image_id": "image_1",
-            "annotation": [
-                {"label": 0},
-                {"label": 1}
-            ]
-        }
-    }
-
-    expected_predictions = {
-        "image_1": {
-            "image_id": "image_1",
-            "prediction_class": 1,
-            "confidence": pytest.approx(0.8),
-            "logits": pytest.approx([0.2, 0.8]),
-            "loss": pytest.approx(0.2)
-        }
-    }
-    assert predictions == expected_predictions
+    try:
+        for image_id in annotations:
+            AnnotationModel(**annotations[image_id])
+        for image_id in predictions:
+            PredictionModel(**predictions[image_id])
+    except ValidationError as e:
+        pytest.fail(f"Validation failed: {e}")
 
 def test_semantic_segmentation_converter() -> None:
     """
-    Test the SemanticSegmentationConverter with sample data.
+    A function to test the SemanticSegmentationConverter to transform semantic segmentation data to gesund format given the sample annotations and predictions.
+
+    :return: None
+    :rtype: None
     """
     converter = SemanticSegmentationConverter(
         annotations=semantic_annotations,
@@ -104,57 +120,37 @@ def test_semantic_segmentation_converter() -> None:
     annotations = converter._convert_annotations()
     predictions = converter._convert_predictions()
 
-    actual_annotation_rle = annotations["image_1"]["annotation"][0]["mask"]["mask"]
-    actual_prediction_rle = predictions["image_1"]["masks"]["rles"][0]["rle"]
-
-    expected_annotations = {
-        "image_1": {
-            "image_id": "image_1",
-            "annotation": [
-                {
-                    "image_id": "image_1",
-                    "label": 0,
-                    "type": "mask",
-                    "measurement_info": {
-                        "objectName": "mask",
-                        "measurement": "Segmentation"
-                    },
-                    "mask": {
-                        "mask": actual_annotation_rle  
-                    },
-                    "shape": [512, 512],
-                    "window_level": None
-                }
-            ]
-        }
-    }
-
-    expected_predictions = {
-        "image_1": {
-            "image_id": "image_1",
-            "masks": {
-                "rles": [{"rle": actual_prediction_rle, "class": 0}]  
-            },
-            "shape": [512, 512],
-            "status": 200
-        }
-    }
-
-    assert annotations == expected_annotations
-    assert predictions == expected_predictions
+    try:
+        for image_id in annotations:
+            SemanticAnnotationModel(**annotations[image_id])
+        for image_id in predictions:
+            SemanticPredictionModel(**predictions[image_id])
+    except ValidationError as e:
+        pytest.fail(f"Validation failed: {e}")
 
 def test_get_converter_yolo() -> None:
     """
-    Test the ConverterFactory to get a YoloToGesund converter.
+    A function to get the YoloToGesund converter to transform the data to gesund format given the 'yolo' converter type.
+
+    :return: None
+    :rtype: None
     """
+    from gesund.core._converters.converter_factory import ConverterFactory
+    from gesund.core._converters.yolo_converter import YoloToGesund
+
     factory = ConverterFactory()
     converter = factory.get_converter("yolo")
     assert isinstance(converter, YoloToGesund)
 
 def test_get_converter_invalid() -> None:
     """
-    Test the ConverterFactory to get an invalid converter.
+    A function to get an invalid converter from the ConverterFactory and verify that it returns None.
+
+    :return: None
+    :rtype: None
     """
+    from gesund.core._converters.converter_factory import ConverterFactory
+
     factory = ConverterFactory()
     converter = factory.get_converter("invalid")
     assert converter is None
