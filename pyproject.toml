@@ -38,7 +38,7 @@ dependencies = [
     "numpy==1.21.6",
     "numba==0.55.2",
     "tqdm",
-    { git = "https://github.com/HammadK44/cocoapi.git", branch = "Dev", subdirectory = "PythonAPI", name = "pycocotools" }
+    "pycocotools @ git+https://github.com/HammadK44/cocoapi.git@Dev#subdirectory=PythonAPI"
 ]
 
 [project.urls]
