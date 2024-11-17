@@ -34,7 +34,24 @@ def plot_config(request):
             "most_confused_bar": {},
             "confidence_histogram_scatter_distribution": {},
             "lift_chart": {},
-        }
+        },
+        "object_detection": {
+            "mixed_plot": {"mixed_plot": ["map10", "map50", "map75"], "threshold": 0.5},
+            "top_misses": {"min_miou": 0.70, "top_n": 10},
+            "confidence_histogram": {"confidence_histogram_labels": ["TP", "FP"]},
+            "classbased_table": {
+                "classbased_table_metrics": ["precision", "recall", "f1"],
+                "threshold": 0.2,
+            },
+            "overall_metrics": {
+                "overall_metrics_metrics": ["map", "mar"],
+                "threshold": 0.5,
+            },
+            "blind_spot": {
+                "blind_spot_Average": ["mAP@50", "mAP@10", "mAR@max=10", "mAR@max=100"],
+                "threshold": 0.5,
+            },
+        },
     }
     return plot_configs[request.param["problem_type"]]
 
@@ -136,7 +153,3 @@ def test_validation_plotmetrics_object_detection(plot_config):
     )
     obj_det_validation.run()
     assert os.path.exists(obj_det_validation.output_dir) is True
-
-
-def test_validation_resultdata():
-    pass

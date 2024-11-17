@@ -208,7 +208,6 @@ class Validation:
         )
 
         _metric_validation_executor = _validation_class(self.batch_job_id)
-
         try:
             if self.data.was_converted:
                 prediction = self.data.converted_prediction

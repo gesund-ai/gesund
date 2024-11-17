@@ -7,7 +7,7 @@ import os
 import matplotlib.pyplot as plt
 
 from .plots.plot_driver import ObjectDetectionPlotDriver
-from gesund.metrics.object_detection.object_detection_metric_plot import (
+from gesund.core._metrics.object_detection.object_detection_metric_plot import (
     Object_Detection_Plot,
 )
 
