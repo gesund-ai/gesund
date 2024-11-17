@@ -137,7 +137,7 @@ class Validation:
         self.problem_type_result_map = {
             "classification": ResultDataClassification,
             "object_detection": ResultDataObjectDetection,
-            "segmentation": ResultDataSegmentation,
+            "semantic_segmentation": ResultDataSegmentation,
         }
 
     def _load_data(self) -> dict:
