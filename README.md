@@ -43,14 +43,3 @@ By participating in this project, you agree to abide by this Code of Conduct. If
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
-## Call for Contributions
-
-We welcome contributions from the community! If you're interested in enhancing this library or fixing issues, please follow these steps:
-
-- **Fork** the repository.
-- **Create** a new branch for your feature or bug fix.
-- **Commit** your changes with clear and descriptive messages.
-- **Push** your changes to your forked repository.
-- **Submit** a pull request for review.
-
-Please ensure your code adheres to the project's coding standards and includes appropriate tests. Thank you for your contributions!
