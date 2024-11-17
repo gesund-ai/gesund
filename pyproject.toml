@@ -6,19 +6,19 @@ build-backend = "setuptools.build_meta"
 name = "gesund"
 version = "2024.11.1"
 authors = [
-  { name="Veysel Koccaman", email="veysel@gesund.ai" },
-  { name="Hammad Khalid", email="hammad@gesund.ai" },
-  { name="Akson Varghese", email="akson@gesund.ai"},
-  { name="Ozkan Uysal", email="ozkan@gesund.ai"},
+  { name = "Veysel Koccaman", email = "veysel@gesund.ai" },
+  { name = "Hammad Khalid", email = "hammad@gesund.ai" },
+  { name = "Akson Varghese", email = "akson@gesund.ai" },
+  { name = "Ozkan Uysal", email = "ozkan@gesund.ai" },
 ]
 maintainers = [
-    { name="Hammad Khalid", email="hammad@gesund.ai" },
-  { name="Akson Varghese", email="akson@gesund.ai"},
-  { name="Ozkan Uysal", email="ozkan@gesund.ai"},
+  { name = "Hammad Khalid", email = "hammad@gesund.ai" },
+  { name = "Akson Varghese", email = "akson@gesund.ai" },
+  { name = "Ozkan Uysal", email = "ozkan@gesund.ai" },
 ]
 description = "A CRO platform for clinical-grade AI Train. Validate. Secure clearance. Gesund.ai orchestrates the AI as-a-Medical Device lifecycle, providing privacy-centered access to diverse yet standardized medical data sources, and a unique analytical toolbox that fosters clinical validation, regulatory clearance and effective marketing"
 readme = "README.md"
-license = {file = "LICENSE.txt"}
+license = { file = "LICENSE.txt" }
 keywords = ["gesund", "medical", "radiology", "machine learning", "ai", "artificial intelligence"]
 requires-python = ">=3.8"
 classifiers = [
@@ -38,7 +38,7 @@ dependencies = [
     "numpy==1.21.6",
     "numba==0.55.2",
     "tqdm",
-    "pycocotools=={url = "git+https://github.com/HammadK44/cocoapi.git@Dev#egg=pycocotools&subdirectory=PythonAPI"}"
+    "pycocotools @ git+https://github.com/HammadK44/cocoapi.git@Dev#subdirectory=PythonAPI"
 ]
 
 [project.urls]
@@ -49,5 +49,5 @@ Documentation = "https://gesund-ai.github.io/"
 [project.optional-dependencies]
 test = [ "pytest", "pytest-cov"]
 
-[tool.setuptools.include_package_data]
-include_package_data = true
+[tool.setuptools]
+package-data = {"*" = ["*"]}
