@@ -1,12 +1,14 @@
-
 <h1 align="center">
-<img src="https://egirisim.com/wp-content/uploads/2023/08/gesund-ai-1068x580.jpg" width="300">
+  <img src="gesund/assets/gesund_logo.png" width="300" alt="Gesund Logo">
 </h1><br>
 
 # Validation Metrics Library
 
+[![PyPi](https://img.shields.io/pypi/v/gesund)](https://pypi.org/project/gesund)
 [![PyPI Downloads](https://img.shields.io/pypi/dm/gesund.svg?label=PyPI%20downloads)](
 https://pypi.org/project/gesund/)
+
+
 
 
 This library provides tools for calculating validation metrics for predictions and annotations in machine learning workflows. It includes a command-line tool for computing and displaying validation metrics.
@@ -27,8 +29,7 @@ pip install gesund
 
 ## Code of Conduct
 
-Gesund is a community-driven open source project developed by group of
-[contributors](https://github.com/gesund-ai/gesund/graphs/contributors).
+
 We are committed to fostering a welcoming and inclusive community. Please adhere to the following guidelines when contributing to this project:
 
 - **Respect**: Treat everyone with respect and consideration. Harassment or discrimination of any kind is not tolerated.
@@ -37,6 +38,10 @@ We are committed to fostering a welcoming and inclusive community. Please adhere
 - **Professionalism**: Maintain a professional attitude in all project interactions.
 
 By participating in this project, you agree to abide by this Code of Conduct. If you witness or experience any behavior that violates these guidelines, please contact the project maintainers.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ## Call for Contributions
 
