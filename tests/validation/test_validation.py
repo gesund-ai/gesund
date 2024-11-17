@@ -52,6 +52,35 @@ def plot_config(request):
                 "threshold": 0.5,
             },
         },
+        "semantic_segmentation": {
+            "violin_graph": {"metrics": ["Acc", "Spec", "AUC"], "threshold": 0.5},
+            "plot_by_meta_data": {
+                "meta_data_args": [
+                    "FalsePositive",
+                    "Dice Score",
+                    "mean Sensitivity",
+                    "mean AUC",
+                    "Precision",
+                    "AverageHausdorffDistance",
+                    "SimpleHausdorffDistance",
+                ]
+            },
+            "overall_metrics": {
+                "overall_args": ["mean AUC", "fwIoU", "mean Sensitivity"]
+            },
+            "classbased_table": {"classbased_table_args": 0.5},
+            "blind_spot": {
+                "blind_spot_args": [
+                    "fwIoU",
+                    "mean IoU",
+                    "mean Sensitivity",
+                    "mean Specificity",
+                    "mean Kappa",
+                    "mean AUC",
+                    "",
+                ]
+            },
+        },
     }
     return plot_configs[request.param["problem_type"]]
 
@@ -151,5 +180,28 @@ def test_validation_plotmetrics_object_detection(plot_config):
         plot_config=plot_config,
         run_validation_only=False,
     )
-    obj_det_validation.run()
+    results = obj_det_validation.run()
     assert os.path.exists(obj_det_validation.output_dir) is True
+
+
+@pytest.mark.parametrize(
+    "plot_config", [{"problem_type": "semantic_segmentation"}], indirect=True
+)
+def test_validation_plotmetrics_segmentation(plot_config):
+    data_dir = "./tests/_data/semantic_segmentation"
+    seg_validation = Validation(
+        annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
+        predictions_path=f"{data_dir}/gesund_custom_format/prediction.json",
+        class_mapping=f"{data_dir}/test_class_mappings.json",
+        problem_type="semantic_segmentation",
+        data_format="json",
+        json_structure_type="gesund",
+        metadata_path=f"{data_dir}/test_metadata.json",
+        return_dict=False,
+        display_plots=True,
+        store_plots=True,
+        plot_config=plot_config,
+        run_validation_only=False,
+    )
+    results = seg_validation.run()
+    assert os.path.exists(seg_validation.output_dir) is True
