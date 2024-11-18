@@ -154,6 +154,9 @@ class ValidationCreation:
 
         :return: None
         """
+        os.makedirs(plot_outputs_dir, exist_ok=True)
+        os.makedirs(json_outputs_dir, exist_ok=True)
+        
         file_name_patterns: Dict[str, Tuple[str, str]] = {
             "class_distributions": ("class_distributions_path", "plot_{}.json"),
             "blind_spot": ("blind_spot_path", "plot_{}_metrics.json"),

@@ -136,6 +136,9 @@ class ValidationCreation:
 
         :return: None
         """
+        os.makedirs(json_output_dir, exist_ok=True)
+        os.makedirs(plot_outputs_dir, exist_ok=True)
+        
         file_name_patterns = {
             "violin_graph": ("violin_path", "plot_{}.json"),
             "plot_by_meta_data": (
