@@ -36,9 +36,7 @@ class SemanticSegmentationPlotDriver:
         self.sample_size = len(self.true)
         self.class_order = list(range(len(class_mappings.keys())))
 
-        self.artifacts_path = (
-            "os.path.join(InternalConfig.VALIDATION_OBJDET_SEGM_TABLE_PATH"
-        )
+        self.artifacts_path = None  
 
         # Import Classes
         self.plot_coco_metrics = PlotCOCOMetrics(
@@ -75,15 +73,6 @@ class SemanticSegmentationPlotDriver:
         )
 
         self.plot_dataset_stats = PlotDatasetStats(meta=self.meta)
-
-        # TO DO: Fix this
-        self._create_artifacts()
-
-    def _create_artifacts(
-        self,
-    ):
-        if not os.path.isfile(self.artifacts_path):
-            self.plot_coco_metrics.create_artifacts(self.artifacts_path)
 
     def plot_highlighted_overall_metrics(self):
         return self.plot_coco_metrics.highlighted_overall_metrics()
