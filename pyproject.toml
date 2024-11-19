@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gesund"
-version = "2024.11.1"
+version = "0.1.6"
 authors = [
   { name = "Veysel Koccaman", email = "veysel@gesund.ai" },
   { name = "Hammad Khalid", email = "hammad@gesund.ai" },
@@ -25,20 +25,6 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-]
-dependencies = [
-    "bson",
-    "jsonschema",
-    "scikit-learn",
-    "pandas",
-    "seaborn",
-    "opencv-python",
-    "dictances==1.5.3",
-    "miseval==1.2.2",
-    "numpy==1.21.6",
-    "numba==0.55.2",
-    "tqdm",
-    "pycocotools @ git+https://github.com/HammadK44/cocoapi.git@Dev#subdirectory=PythonAPI"
 ]
 
 [project.urls]
