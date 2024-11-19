@@ -1,0 +1,72 @@
+[
+  {
+    "image_id": "image_1",
+    "predictions": [
+      {"class": 0, "x_center": 0.5, "y_center": 0.5, "width": 0.2, "height": 0.3, "config_id": "abcd", "confidence": 0.9, "loss": 0.1},
+      {"class": 1, "x_center": 0.3, "y_center": 0.7, "width": 0.1, "height": 0.2, "config_id": "xyz", "confidence": 0.9, "loss": 0.2}
+    ]
+  },
+  {
+    "image_id": "image_2",
+    "predictions": [
+      {"class": 1, "x_center": 0.8, "y_center": 0.3, "width": 0.2, "height": 0.1, "config_id": "efgh", "confidence": 0.8, "loss": 0.15},
+      {"class": 0, "x_center": 0.2, "y_center": 0.6, "width": 0.3, "height": 0.2, "config_id": "ijkl", "confidence": 0.7, "loss": 0.25}
+    ]
+  },
+  {
+    "image_id": "image_3",
+    "predictions": [
+      {"class": 0, "x_center": 0.3, "y_center": 0.2, "width": 0.1, "height": 0.3, "config_id": "mnop", "confidence": 0.6, "loss": 0.1},
+      {"class": 1, "x_center": 0.7, "y_center": 0.5, "width": 0.2, "height": 0.2, "config_id": "qrst", "confidence": 0.5, "loss": 0.2}
+    ]
+  },
+  {
+    "image_id": "image_4",
+    "predictions": [
+      {"class": 1, "x_center": 0.1, "y_center": 0.4, "width": 0.3, "height": 0.2, "config_id": "uvwx", "confidence": 0.4, "loss": 0.15},
+      {"class": 0, "x_center": 0.5, "y_center": 0.8, "width": 0.2, "height": 0.1, "config_id": "yzab", "confidence": 0.3, "loss": 0.25}
+    ]
+  },
+  {
+    "image_id": "image_5",
+    "predictions": [
+      {"class": 1, "x_center": 0.6, "y_center": 0.1, "width": 0.2, "height": 0.2, "config_id": "cdef", "confidence": 0.2, "loss": 0.1},
+      {"class": 1, "x_center": 0.2, "y_center": 0.7, "width": 0.3, "height": 0.1, "config_id": "ghij", "confidence": 0.1, "loss": 0.2}
+    ]
+  },
+  {
+    "image_id": "image_6",
+    "predictions": [
+      {"class": 0, "x_center": 0.4, "y_center": 0.3, "width": 0.1, "height": 0.2, "config_id": "klmn", "confidence": 1.0, "loss": 0.15},
+      {"class": 0, "x_center": 0.8, "y_center": 0.6, "width": 0.2, "height": 0.3, "config_id": "opqr", "confidence": 0.9, "loss": 0.25}
+    ]
+  },
+  {
+    "image_id": "image_7",
+    "predictions": [
+      {"class": 0, "x_center": 0.2, "y_center": 0.5, "width": 0.3, "height": 0.1, "config_id": "qrst", "confidence": 0.8, "loss": 0.1},
+      {"class": 1, "x_center": 0.6, "y_center": 0.2, "width": 0.1, "height": 0.2, "config_id": "uvwx", "confidence": 0.7, "loss": 0.2}
+    ]
+  },
+  {
+    "image_id": "image_8",
+    "predictions": [
+      {"class": 1, "x_center": 0.7, "y_center": 0.1, "width": 0.2, "height": 0.3, "config_id": "yzab", "confidence": 0.6, "loss": 0.15},
+      {"class": 1, "x_center": 0.3, "y_center": 0.4, "width": 0.1, "height": 0.2, "config_id": "cdef", "confidence": 0.5, "loss": 0.25}
+    ]
+  },
+  {
+    "image_id": "image_9",
+    "predictions": [
+      {"class": 1, "x_center": 0.5, "y_center": 0.2, "width": 0.1, "height": 0.2, "config_id": "ghij", "confidence": 0.4, "loss": 0.1},
+      {"class": 0, "x_center": 0.1, "y_center": 0.6, "width": 0.2, "height": 0.3, "config_id": "klmn", "confidence": 0.3, "loss": 0.2}
+    ]
+  },
+  {
+    "image_id": "image_10",
+    "predictions": [
+      {"class": 0, "x_center": 0.3, "y_center": 0.1, "width": 0.2, "height": 0.1, "config_id": "opqr", "confidence": 0.2, "loss": 0.15},
+      {"class": 0, "x_center": 0.7, "y_center": 0.4, "width": 0.3, "height": 0.2, "config_id": "qrst", "confidence": 0.1, "loss": 0.25}
+    ]
+  }
+]

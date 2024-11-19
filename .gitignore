@@ -168,4 +168,8 @@ cython_debug/
 #.idea/
 #
 
-gesund/test_validation.py
+.pytest_cache
+outputs/*
+
+*/*/__pycache__
+*/__pycache__

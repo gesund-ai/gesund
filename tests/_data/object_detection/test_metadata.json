@@ -1,0 +1,114 @@
+{
+    "bcd_2": {
+        "image_id": "bcd_2",
+        "metadata": {
+            "Age": 29,
+            "Ethnicity": "Asian",
+            "Gender": "Male"
+          }
+    },
+    "bcd_5": {
+        "image_id": "bcd_5",
+        "metadata": {
+            "Age": 25,
+            "Ethnicity": "Asian",
+            "Gender": "Female"
+          }
+    },
+    "bcd_8": {
+        "image_id": "bcd_8",
+        "metadata": {
+            "Age": 36,
+            "Ethnicity": "White",
+            "Gender": "Female"
+          }
+    },
+    "bcd_9": {
+        "image_id": "bcd_9",
+        "metadata": {
+            "Age": 55,
+            "Ethnicity": "White",
+            "Gender": "Male"
+          }
+    },
+    "bcd_10": {
+        "image_id": "bcd_10",
+        "metadata": {
+            "Age": 46,
+            "Ethnicity": "African-American",
+            "Gender": "Female"
+          }
+    },
+    "bcd_12": {
+        "image_id": "bcd_12",
+        "metadata": {
+            "Age": 22,
+            "Ethnicity": "Asian",
+            "Gender": "Male"
+          }
+    },
+    "bcd_14": {
+        "image_id": "bcd_14",
+        "metadata": {
+            "Age": 64,
+            "Ethnicity": "White",
+            "Gender": "Female"
+          }
+    },
+    "bcd_15": {
+        "image_id": "bcd_15",
+        "metadata": {
+            "Age": 44,
+            "Ethnicity": "Hispanic",
+            "Gender": "Female"
+          }
+    },
+    "bcd_16": {
+        "image_id": "bcd_16",
+        "metadata": {
+            "Age": 77,
+            "Ethnicity": "Hispanic",
+            "Gender": "Male"
+          }
+    },
+    "bcd_17": {
+        "image_id": "bcd_17",
+        "metadata": {
+            "Age": 53,
+            "Ethnicity": "White",
+            "Gender": "Male"
+          }
+    },
+    "bcd_22": {
+        "image_id": "bcd_22",
+        "metadata": {
+            "Age": 57,
+            "Ethnicity": "Asian",
+            "Gender": "Female"
+          }
+    },
+    "bcd_26": {
+        "image_id": "bcd_26",
+        "metadata": {
+            "Age": 61,
+            "Ethnicity": "African-American",
+            "Gender": "Female"
+          }
+    },
+    "bcd_28": {
+        "image_id": "bcd_28",
+        "metadata": {
+            "Age": 35,
+            "Ethnicity": "African-American",
+            "Gender": "Male"
+          }
+    },
+    "bcd_30": {
+        "image_id": "bcd_30",
+        "metadata": {
+            "Age": 26,
+            "Ethnicity": "African-American",
+            "Gender": "Female"
+          }
+    }
+    }
