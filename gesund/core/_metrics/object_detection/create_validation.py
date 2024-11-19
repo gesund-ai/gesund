@@ -243,8 +243,6 @@ class ValidationCreation:
 
         :return: None
         """
-        os.makedirs(json_output_dir, exist_ok=True)
-        os.makedirs(plot_outputs_dir, exist_ok=True)
         
         file_name_patterns = {
             "mixed_plot": ("mixed_json_path", "plot_performance_by_iou_threshold.json"),
