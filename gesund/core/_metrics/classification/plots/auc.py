@@ -8,7 +8,7 @@ from sklearn.preprocessing import label_binarize
 from sklearn.metrics import precision_recall_curve, roc_curve, average_precision_score
 
 from ..metrics.auc import AUC
-from gesund.utils.validation_data_utils import ValidationUtils, Statistics
+from gesund.core._utils import ValidationUtils, Statistics
 
 
 class PlotAUC:

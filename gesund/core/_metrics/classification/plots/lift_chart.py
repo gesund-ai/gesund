@@ -4,7 +4,7 @@ from sklearn.metrics import auc
 import sklearn
 
 from ..metrics import LiftChart
-from gesund.utils.validation_data_utils import ValidationUtils, Statistics
+from gesund.core._utils import ValidationUtils, Statistics
 
 
 class PlotLiftGainChart:

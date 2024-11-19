@@ -2,8 +2,9 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import auc
 import sklearn
+from typing import Dict, List, Optional, Union, Any
+from gesund.core._utils import ValidationUtils, Statistics
 
-from gesund.utils.validation_data_utils import ValidationUtils, Statistics
 
 class PlotDatasetStats:
     def __init__(self, class_mappings, meta_data_dict=None):
@@ -13,7 +14,10 @@ class PlotDatasetStats:
         self.class_mappings = class_mappings
         self.class_idxs = [int(i) for i in list(class_mappings.keys())]
 
-    def calculate_meta_distributions(self, meta):
+    def calculate_meta_distributions(
+        self, 
+        meta: pd.DataFrame
+        ) -> Dict[str, Dict[str, Any]]:
         """
         Calculates statistics on meta data.
         :param true: true labels as a list = [1,0,3,4] for 4 sample dataset
@@ -48,7 +52,13 @@ class PlotDatasetStats:
 
         return {"bar": bars, "histogram": histograms}
 
-    def _plot_meta_distributions(self):
+    def _plot_meta_distributions(self) -> Dict[str, Any]:
+        """
+        Plot distributions of metadata attributes.
+
+        :return: Dictionary containing plot configuration and data
+        :rtype: Dict[str, Any]
+        """
         meta = pd.DataFrame(self.meta_data_dict).T
         meta_counts = self.calculate_meta_distributions(meta)
         data_dict = {}

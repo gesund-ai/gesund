@@ -13,3 +13,5 @@ numba==0.55.2
 tqdm
 pycocotools @ git+https://github.com/HammadK44/cocoapi.git@Dev#subdirectory=PythonAPI/
 seaborn==0.13.2
+pytest==8.3.3
+pydantic==2.9.2

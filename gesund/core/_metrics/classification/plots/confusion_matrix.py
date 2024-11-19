@@ -4,7 +4,7 @@ from sklearn.metrics import auc
 import sklearn
 
 from ..metrics.confusion_matrix import ConfusionMatrix
-from gesund.utils.validation_data_utils import ValidationUtils, Statistics
+from gesund.core._utils import ValidationUtils, Statistics
 
 
 class PlotConfusionMatrix:

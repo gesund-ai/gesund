@@ -1,1 +1,1 @@
-from .core import validation
+from .validation._validation import Validation

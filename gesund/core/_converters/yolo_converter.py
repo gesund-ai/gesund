@@ -18,11 +18,17 @@ def mask_to_rle(mask: np.ndarray) -> List[int]:
 
 
 class ClassificationConverter:
-    def __init__(self, annotations: list, predictions: list, image_width: int=512, image_height: int = 512):
+    def __init__(
+        self,
+        annotations: list,
+        predictions: list,
+        image_width: int = 512,
+        image_height: int = 512,
+    ):
         """
         The initialization function of the class
 
-        :param annotations: list of annotations 
+        :param annotations: list of annotations
         :param predictions: list of predictions
         :param image_width: integer value representing the image width
         :param image_height: integer value representing the image height
@@ -53,12 +59,12 @@ class ClassificationConverter:
                 logits[1 - class_id] = 1 - confidence
 
                 pred = {
-                        "image_id": image_id,
-                        "prediction_class": class_id,
-                        "confidence": confidence,
-                        "logits": logits,
-                        "loss": loss
-                    }
+                    "image_id": image_id,
+                    "prediction_class": class_id,
+                    "confidence": confidence,
+                    "logits": logits,
+                    "loss": loss,
+                }
 
                 # if image_id in custom_json:
                 #     custom_json[image_id].append(pred)
@@ -80,32 +86,31 @@ class ClassificationConverter:
                 class_id = annotation["class"]
 
                 if image_id in custom_json:
-                    custom_json[image_id]["annotation"].append(
-                        {"label": class_id}
-                    )
-                else:    
+                    custom_json[image_id]["annotation"].append({"label": class_id})
+                else:
                     custom_json[image_id] = {
                         "image_id": image_id,
                         "annotation": [
                             {
                                 "label": class_id,
                             }
-                        ]
+                        ],
                     }
         return custom_json
 
+
 class ObjectDetectionConverter:
     def __init__(
-            self, 
-            annotations: Union[list, dict], 
-            predictions: Union[list, dict], 
-            image_width: int, 
-            image_height: int
-        ):
+        self,
+        annotations: Union[list, dict],
+        predictions: Union[list, dict],
+        image_width: int,
+        image_height: int,
+    ):
         """
         The initialization function of the class
 
-        
+
         :param annotations: a list of annotation in the yolo format to convert to gesund format
         :type annotations: list
         :param predictions: a list of predictions in the yolo format to convert into the gesund format
@@ -149,14 +154,9 @@ class ObjectDetectionConverter:
                 y2 = int((y_center + height / 2) * self.image_height)
 
                 custom_prediction = {
-                    "box": {
-                        "x1": x1, 
-                        "y1": y1,
-                        "x2": x2,
-                        "y2": y2
-                    },
+                    "box": {"x1": x1, "y1": y1, "x2": x2, "y2": y2},
                     "confidence": annotation["confidence"],
-                    "prediction_class": class_id
+                    "prediction_class": class_id,
                 }
 
                 if image_id in custom_json:
@@ -164,11 +164,12 @@ class ObjectDetectionConverter:
                 else:
                     custom_json[image_id] = {
                         "objects": [],
-                        "shape": [self.image_width, self.image_height], "status": 200,
-                        "image_id": image_id
+                        "shape": [self.image_width, self.image_height],
+                        "status": 200,
+                        "image_id": image_id,
                     }
                     custom_json[image_id]["objects"].append(custom_prediction)
-        return custom_json 
+        return custom_json
 
     def _convert_annotations(self) -> dict:
         """
@@ -185,7 +186,7 @@ class ObjectDetectionConverter:
 
             custom_annotations = []
             for annotation in annotations:
-                class_id = annotation['class']
+                class_id = annotation["class"]
                 x_center = annotation["x_center"]
                 y_center = annotation["y_center"]
                 width = annotation["width"]
@@ -197,29 +198,28 @@ class ObjectDetectionConverter:
                 x2 = int((x_center + width / 2) * self.image_width)
                 y2 = int((y_center + height / 2) * self.image_height)
 
-                custom_annotation = { 
+                custom_annotation = {
                     "label": f"class_{class_id}",
-                    "points": [
-                        {"x": x1, "y": y1},
-                        {"x": x2, "y": y2}
-                    ],
-                    "type": "rect"
+                    "points": [{"x": x1, "y": y1}, {"x": x2, "y": y2}],
+                    "type": "rect",
                 }
                 custom_annotations.append(custom_annotation)
-            
+
             custom_json[image_id] = {
                 "image_id": image_id,
-                "annotation": custom_annotations
+                "annotation": custom_annotations,
             }
         return custom_json
 
+
 class SemanticSegmentationConverter:
     def __init__(
-            self, 
-            annotations: Union[list, dict], 
-            predictions: Union[list, dict], 
-            image_width: int, 
-            image_height: int):
+        self,
+        annotations: Union[list, dict],
+        predictions: Union[list, dict],
+        image_width: int,
+        image_height: int,
+    ):
         """
         the initialization function of the class
 
@@ -231,14 +231,14 @@ class SemanticSegmentationConverter:
         :type image_width: int
         :param image_height: The height of the image
         :type image_height: int
-        
+
         :return: None
         """
         self.annotation = annotations
         self.predictions = predictions
         self.image_width = image_width
         self.image_height = image_height
-    
+
     def _convert_predictions(self) -> dict:
         """
         A function to convert the yolo predictions to gesund predictions format
@@ -257,12 +257,17 @@ class SemanticSegmentationConverter:
 
                 # convert to pixel values
                 pixel_values = [
-                    {"x": int(val["x"] * self.image_width), "y": int(val["y"] * self.image_height)}
+                    {
+                        "x": int(val["x"] * self.image_width),
+                        "y": int(val["y"] * self.image_height),
+                    }
                     for val in segmentation
                 ]
 
                 # convert the pixel values to binary masks
-                binary_mask = np.zeros((self.image_height, self.image_width), dtype=np.uint8)
+                binary_mask = np.zeros(
+                    (self.image_height, self.image_width), dtype=np.uint8
+                )
                 for point in pixel_values:
                     x, y = point["x"], point["y"]
                     if 0 <= x < self.image_width and 0 <= y < self.image_height:
@@ -279,18 +284,16 @@ class SemanticSegmentationConverter:
                 else:
                     custom_json[image_id] = {
                         "image_id": image_id,
-                        "masks":{
-                            "rles": [rle]
-                        },
+                        "masks": {"rles": [rle]},
                         "shape": [self.image_width, self.image_height],
-                        "status": 200
+                        "status": 200,
                     }
             return custom_json
 
     def _convert_annotations(self) -> dict:
         """
         A function to convert the yolo annotations to gesund predictions format
-        
+
         :return: a list of objects in the gesund predictions format
         :rtype: dict
         """
@@ -300,24 +303,29 @@ class SemanticSegmentationConverter:
             image_id = item["image_id"]
             annotations = item["annotations"]
 
-            custom_annotations  = []
+            custom_annotations = []
             for annotation in annotations:
                 class_id = annotation["class"]
                 segmentation = annotation["segmentation"]
 
                 # convert the normalized values to pixel values
                 pixel_values = [
-                    {"x": int(val["x"] * self.image_width), 'y': int(val["y"] * self.image_height)}
+                    {
+                        "x": int(val["x"] * self.image_width),
+                        "y": int(val["y"] * self.image_height),
+                    }
                     for val in segmentation
                 ]
 
                 # convert the pixel values to binary masks
-                binary_mask = np.zeros((self.image_height, self.image_width), dtype=np.uint8)
+                binary_mask = np.zeros(
+                    (self.image_height, self.image_width), dtype=np.uint8
+                )
 
-                for point in pixel_values: 
+                for point in pixel_values:
                     x, y = point["x"], point["y"]
-                    if 0<= x < self.image_width and 0 <= y < self.image_height:
-                        binary_mask[y, x] = 1        
+                    if 0 <= x < self.image_width and 0 <= y < self.image_height:
+                        binary_mask[y, x] = 1
 
                 # convert the binary masks to RLE masks
                 rle = mask_to_rle(binary_mask)
@@ -329,33 +337,33 @@ class SemanticSegmentationConverter:
                     "type": "mask",
                     "measurement_info": {
                         "objectName": "mask",
-                        "measurement": "Segmentation"
+                        "measurement": "Segmentation",
                     },
-                    "mask": {
-                        "mask": rle
-                    },
+                    "mask": {"mask": rle},
                     "shape": [self.image_width, self.image_height],
-                    "window_level": None
+                    "window_level": None,
                 }
                 custom_annotations.append(custom_annotation)
             custom_json[image_id] = {
                 "image_id": image_id,
-                "annotation": custom_annotations
+                "annotation": custom_annotations,
             }
-        
+
         return custom_json
+
 
 class InstanceSegmentationConverter:
     def __init__(
-            self, 
-            annotations: Union[list, dict], 
-            predictions: Union[list, dict], 
-            image_width: int, 
-            image_height: int):
+        self,
+        annotations: Union[list, dict],
+        predictions: Union[list, dict],
+        image_width: int,
+        image_height: int,
+    ):
         """
         The initialization function of the class
 
-        
+
         :param annotations: a list of annotation in the yolo format to convert to gesund format
         :type annotations: Union[list, dict]
         :param predictions: a list of predictions in the yolo format to convert into the gesund format
@@ -364,14 +372,14 @@ class InstanceSegmentationConverter:
         :type image_width: int
         :param image_height: The height of the image
         :type image_height: int
-        
+
         :return: None
         """
         self.annotation = annotations
         self.predictions = predictions
         self.image_width = image_width
         self.image_height = image_height
-    
+
     def _convert_predictions(self) -> dict:
         """
         A function to convert the yolo predictions to gesund predictions format
@@ -392,7 +400,6 @@ class InstanceSegmentationConverter:
 
 
 class YoloProblemTypeFactory:
-
     def get_yolo_converter(self, problem_type: str):
         """
         A factory method to get the yolo converter
@@ -412,18 +419,18 @@ class YoloProblemTypeFactory:
         else:
             raise NotImplementedError
 
-class YoloToGesund:
 
+class YoloToGesund:
     def convert(
-            self,
-            annotation: Union[List[Dict], Dict],
-            prediction: Union[List[Dict], Dict],
-            problem_type: str,
-            image_width: Optional[int] = 512, 
-            image_height: Optional[int] = 512
-            ) -> Dict:
+        self,
+        annotation: Union[List[Dict], Dict],
+        prediction: Union[List[Dict], Dict],
+        problem_type: str,
+        image_width: Optional[int] = 512,
+        image_height: Optional[int] = 512,
+    ) -> Dict:
         """
-        A run method to execute the pipeline and convert the given format to gesund format 
+        A run method to execute the pipeline and convert the given format to gesund format
 
         :param annotation: the annotations data
         :type annotation: Union[List[Dict], Dict]
@@ -440,12 +447,12 @@ class YoloToGesund:
         :rtype: dict
         """
         _converter_cls = YoloProblemTypeFactory().get_yolo_converter(
-            problem_type=problem_type)
+            problem_type=problem_type
+        )
         _converter = _converter_cls(
             annotations=annotation,
             predictions=prediction,
             image_width=image_width,
-            image_height=image_height
+            image_height=image_height,
         )
         return _converter._convert_annotations(), _converter._convert_predictions()
-    

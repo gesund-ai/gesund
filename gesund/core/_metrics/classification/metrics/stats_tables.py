@@ -9,18 +9,22 @@ from .accuracy import Accuracy
 from .auc import AUC
 from .most_confused import MostConfused
 from .dataset_stats import DatasetStats
-from gesund.utils.validation_data_utils import Statistics
-
+from gesund.core._utils import Statistics
+from typing import Any, Dict, List, Optional, Union, Tuple
 
 class StatsTables:
-    def __init__(self, class_mappings):
+    def __init__(self, class_mappings: Dict[int, str]) -> None:
         self.class_mappings = class_mappings
         self.class_order = list(range(len(class_mappings.keys())))
 
         self.auc = AUC(class_mappings)
         self.accuracy = Accuracy(class_mappings)
 
-    def calculate_statistics_classbased_table(self, true, pred_categorical):
+    def calculate_statistics_classbased_table(
+        self,
+        true: Union[List[int], np.ndarray, pd.Series],
+        pred_categorical: Union[List[int], np.ndarray, pd.Series],
+        ) -> Dict[str, Any]:
         rename_statistics_dict = {
             "FP": "False Positive",
             "TP": "True Positive",
@@ -52,8 +56,12 @@ class StatsTables:
         return sense_spec_dict_renamed
 
     def calculate_highlighted_overall_metrics(
-        self, true, pred_categorical, pred_logits, cal_conf_interval=False
-    ):
+        self,
+        true: Union[List[int], np.ndarray, pd.Series],
+        pred_categorical: Union[List[int], np.ndarray, pd.Series],
+        pred_logits: pd.DataFrame,
+        cal_conf_interval: bool = False,
+        ) -> Union[List[Tuple[float, float]], List[Tuple[float, float]]]:
         accuracy = self.accuracy.calculate_accuracy(
             true=true, pred_categorical=pred_categorical, target_class="overall"
         )
@@ -105,7 +113,7 @@ class StatsTables:
             return new_metric_list
         return metrics_list
 
-    def _calculate_shannon_diversity_index(self, true):
+    def _calculate_shannon_diversity_index(self, true: pd.Series) -> float:
         class_dist_dict = true.value_counts().to_dict()
         if len(class_dist_dict) > 1:
             n = true.shape[0]
@@ -121,8 +129,12 @@ class StatsTables:
         else:  # in case where there is only one class then its highly imbalanaced
             return 0
 
-    def calculate_blind_spot_metrics(self, true, pred_categorical, pred_logits):
-
+    def calculate_blind_spot_metrics(
+        self,
+        true: Union[List[int], np.ndarray, pd.Series],
+        pred_categorical: Union[List[int], np.ndarray, pd.Series],
+        pred_logits: pd.DataFrame,
+        ) -> Dict[str, Dict[str, Union[float, str]]]:
         # Calculate Metrics
         accuracy = self.accuracy.calculate_accuracy(
             true=true, pred_categorical=pred_categorical, target_class="overall"

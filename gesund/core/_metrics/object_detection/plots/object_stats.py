@@ -1,10 +1,10 @@
 from collections import Counter
-
+from typing import Dict, List, Optional, Union, Any
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from gesund.utils.validation_data_utils import ValidationUtils, Statistics
+from gesund.core._utils import ValidationUtils, Statistics
 
 
 class PlotObjectStats:
@@ -19,7 +19,21 @@ class PlotObjectStats:
         self.class_mappings = class_mappings
         self.class_idxs = [int(i) for i in list(class_mappings.keys())]
 
-    def _plot_object_counts(self, confidence=0, target_attribute_dict=None):
+    def _plot_object_counts(
+        self,
+        confidence: float = 0,
+        target_attribute_dict: Optional[Dict[str, Any]] = None
+        ) -> Dict[str, Any]:
+        """
+        Plot object counts comparing ground truth and predictions.
+
+        :param confidence: Confidence threshold for filtering predictions
+        :type confidence: float
+        :param target_attribute_dict: Dictionary for filtering by attributes
+        :type target_attribute_dict: Optional[Dict[str, Any]]
+        :return: Dictionary containing bar chart data of object counts
+        :rtype: Dict[str, Any]
+        """
         # Filter wrt target attribute dict
         idxs = self.validation_utils.filter_attribute_by_dict(
             target_attribute_dict
@@ -75,7 +89,18 @@ class PlotObjectStats:
         }
         return payload_dict
 
-    def _plot_prediction_distribution(self, target_attribute_dict=None):
+    def _plot_prediction_distribution(
+        self,
+        target_attribute_dict: Optional[Dict[str, Any]] = None
+        ) -> Dict[str, Any]:
+        """
+        Plot distribution of predictions across different classes.
+
+        :param target_attribute_dict: Dictionary for filtering by attributes
+        :type target_attribute_dict: Optional[Dict[str, Any]]
+        :return: Dictionary containing pie chart data of prediction distribution
+        :rtype: Dict[str, Any]
+        """
         idxs = self.validation_utils.filter_attribute_by_dict(
             target_attribute_dict
         ).index.tolist()

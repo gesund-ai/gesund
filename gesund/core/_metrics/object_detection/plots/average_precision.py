@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
-
+from typing import Dict, List, Optional, Union, Any
 
 from ..metrics.average_precision import AveragePrecision
-from gesund.utils.validation_data_utils import ValidationUtils
+from gesund.core._utils import ValidationUtils
+
 
 class PlotAveragePrecision:
     def __init__(
@@ -20,8 +21,21 @@ class PlotAveragePrecision:
             meta_df = pd.DataFrame(meta_data_dict).T
             self.validation_utils = ValidationUtils(meta_df)
 
-    def _plot_performance_by_iou_threshold(self, threshold, return_points=False):
+    def _plot_performance_by_iou_threshold(
+        self, 
+        threshold: float,
+        return_points: bool = False
+        ) -> Dict[str, Any]:
+        """
+        Plot performance metrics at specific IoU threshold.
 
+        :param threshold: IoU threshold value
+        :type threshold: float
+        :param return_points: Whether to return coordinate points
+        :type return_points: bool
+        :return: Dictionary containing performance metrics data
+        :rtype: Dict[str, Any]
+        """
         payload_dict = dict()
         payload_dict["type"] = "mixed"
 
@@ -46,8 +60,18 @@ class PlotAveragePrecision:
             payload_dict["data"] = {"ap_results": response}
         return payload_dict
 
-    def _plot_highlighted_overall_metrics(self, threshold):
+    def _plot_highlighted_overall_metrics(
+        self, 
+        threshold: float
+        ) -> Dict[str, Any]:
+        """
+        Plot highlighted overall metrics at specified threshold.
 
+        :param threshold: IoU threshold value
+        :type threshold: float
+        :return: Dictionary containing overall metrics data
+        :rtype: Dict[str, Any]
+        """
         rename_dict = {
             f"map{int(threshold*100)}": f"mAP@{int(threshold*100)}",
             f"map{int(threshold*100)}_11": f"mAP11@{int(threshold*100)}",
@@ -75,7 +99,18 @@ class PlotAveragePrecision:
         payload_dict = {"type": "overall", "data": val_train_dict}
         return payload_dict
 
-    def _filter_ap_metrics(self, target_attribute_dict):
+    def _filter_ap_metrics(
+        self, 
+        target_attribute_dict: Optional[Dict[str, Any]]
+        ) -> List[int]:
+        """
+        Filter average precision metrics based on target attributes.
+
+        :param target_attribute_dict: Dictionary of target attributes for filtering
+        :type target_attribute_dict: Optional[Dict[str, Any]]
+        :return: List of filtered indices
+        :rtype: List[int]
+        """
         if target_attribute_dict:
             idxs = self.validation_utils.filter_attribute_by_dict(
                 target_attribute_dict
@@ -84,8 +119,20 @@ class PlotAveragePrecision:
         return idxs
 
     def _plot_statistics_classbased_table(
-        self, threshold=None, target_attribute_dict=None
-    ):
+        self,
+        threshold: Optional[float] = None,
+        target_attribute_dict: Optional[Dict[str, Any]] = None
+        ) -> Dict[str, Any]:
+        """
+        Plot class-based statistics table.
+
+        :param threshold: IoU threshold value
+        :type threshold: Optional[float]
+        :param target_attribute_dict: Dictionary for filtering by attributes
+        :type target_attribute_dict: Optional[Dict[str, Any]]
+        :return: Dictionary containing class-based statistics
+        :rtype: Dict[str, Any]
+        """
 
         average_precision = AveragePrecision(
             class_mappings=self.class_mappings,
@@ -145,7 +192,11 @@ class PlotAveragePrecision:
         payload_dict = {f"mAP@{int(threshold*100)}": mean_map_given}
         return payload_dict
 
-    def blind_spot_metrics(self, target_attribute_dict, threshold):
+    def blind_spot_metrics(
+        self,
+        target_attribute_dict: Optional[Dict[str, Any]],
+        threshold: float
+        ) -> Dict[str, Any]:
         """
         Plots ROC Curve for target_class.
         References:
@@ -186,7 +237,9 @@ class PlotAveragePrecision:
         )
 
         class_metrics = average_precision.calculate_ap_metrics(idxs=idxs)
-        overall_metrics = average_precision.calculate_highlighted_overall_metrics(threshold)
+        overall_metrics = average_precision.calculate_highlighted_overall_metrics(
+            threshold
+        )
 
         for key in list(class_metrics.keys()):
             class_metrics[rename_dict[key]] = class_metrics.pop(key)
@@ -200,5 +253,5 @@ class PlotAveragePrecision:
         }
 
         blind_spot_metrics_dict["Average"] = overall_metrics
-        
+
         return blind_spot_metrics_dict

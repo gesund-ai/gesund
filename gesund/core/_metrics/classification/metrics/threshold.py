@@ -6,17 +6,26 @@ from sklearn.preprocessing import label_binarize
 from sklearn.metrics import precision_recall_curve, roc_curve, average_precision_score
 
 from .auc import AUC
-
+from typing import Any, Dict, List, Optional, Union
 
 class ThresholdMetrics:
-    def __init__(self, true, pred_logits, class_mappings):
+    def __init__(
+        self,
+        true: Union[List[int], np.ndarray, pd.Series],
+        pred_logits: pd.DataFrame,
+        class_mappings: Dict[int, str]
+        ) -> None:
         self.pred_logits = pred_logits
         self.true = true
         self.class_mappings = class_mappings
 
         self.auc = AUC(class_mappings=class_mappings)
 
-    def calculate_statistics_per_class(self, true, pred_categorical):
+    def calculate_statistics_per_class(
+        self,
+        true: Union[List[int], np.ndarray, pd.Series],
+        pred_categorical: Union[List[int], np.ndarray, pd.Series]
+        ) -> Dict[str, Any]:
         """
         Calculates class wise stats for the given class.
         :param target_class: Class to calculate metrics.

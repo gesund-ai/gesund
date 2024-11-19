@@ -3,14 +3,19 @@ import pandas as pd
 
 from ._exceptions import DataLoadError
 
+
 class DataLoader:
-    def __init__(self):
+    def __init__(self, data_format: str):
         """
-        A initialisation function
+        A function to initialize the data
+
+        :param data_format: string value indicating the data
+        :type data_format: str
 
         :return: None
         """
-        pass
+        data_loaders = {"csv": self._csv_loader, "json": self._json_loader}
+        self._loader_fxn = data_loaders[data_format]
 
     @staticmethod
     def _json_loader(src_path: str) -> list:
@@ -42,22 +47,15 @@ class DataLoader:
         :return: loaded data frame
         :rtype: pd.DataFrame
         """
-        pass
+        return pd.DataFrame(src_path)
 
-
-    def load(self, src_path: str, data_format: str) -> dict:
+    def load(self, src_path: str) -> dict:
         """
         A function to load the data
 
         :param src_path: source path of the file
         :type src_path: str
-        :param data_format: type of the data format
-        :type data_format: str
 
         :return: None
         """
-        data_loaders = {
-            "csv": self._csv_loader,
-            "json": self._json_loader
-        }
-        return data_loaders[data_format](src_path)
+        return self._loader_fxn(src_path)

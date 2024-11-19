@@ -4,8 +4,7 @@ import numpy as np
 import pandas as pd
 
 from ..metrics.coco_metrics import COCOMetrics
-from gesund.utils.validation_data_utils import ValidationUtils, Statistics
-
+from gesund.core._utils import ValidationUtils, Statistics
 
 
 class PlotCOCOMetrics:
@@ -34,31 +33,35 @@ class PlotCOCOMetrics:
         metrics_dict = {k: {"Validation": v} for k, v in metrics_dict.items()}
         payload_dict = {"type": "overall", "data": metrics_dict}
         return payload_dict
-    
+
     def study_classbased_table(self, target_attribute_dict):
-        
+
         if target_attribute_dict:
-            gt, pred = self.validation_utils._filter_dict_by_study(self.ground_truth_dict,
-                                                                    self.prediction_dict,
-                                                                    target_attribute_dict["study_id"])
+            gt, pred = self.validation_utils._filter_dict_by_study(
+                self.ground_truth_dict,
+                self.prediction_dict,
+                target_attribute_dict["study_id"],
+            )
             metrics_dict = self.coco_metrics.calculate_statistics_classbased_table(
-                    gt=gt, pred=pred, target_attribute_dict=target_attribute_dict
-                )
-            
+                gt=gt, pred=pred, target_attribute_dict=target_attribute_dict
+            )
+
         else:
             metrics_dict = self.coco_metrics.calculate_statistics_classbased_table(
-                gt=self.ground_truth_dict, pred=self.prediction_dict, target_attribute_dict=target_attribute_dict
+                gt=self.ground_truth_dict,
+                pred=self.prediction_dict,
+                target_attribute_dict=target_attribute_dict,
             )
-            
+
         payload_dict = {"type": "table", "data": {"Validation": metrics_dict}}
-        
+
         return payload_dict
-        
+
     def statistics_classbased_table(self, target_attribute_dict):
-        
+
         if self.study_list:
             return {}
-            
+
         if target_attribute_dict:
 
             filtered_image_rows = self.validation_utils.filter_attribute_by_dict(
@@ -76,20 +79,21 @@ class PlotCOCOMetrics:
                 for image_id in filtered_image_ids
                 if image_id in self.prediction_dict
             )
-            
+
             metrics_dict = self.coco_metrics.calculate_statistics_classbased_table(
                 gt=gt, pred=pred, target_attribute_dict=target_attribute_dict
             )
 
         else:
             metrics_dict = self.coco_metrics.calculate_statistics_classbased_table(
-                gt=self.ground_truth_dict, pred=self.prediction_dict, target_attribute_dict=target_attribute_dict
+                gt=self.ground_truth_dict,
+                pred=self.prediction_dict,
+                target_attribute_dict=target_attribute_dict,
             )
-        
+
         payload_dict = {"type": "table", "data": {"Validation": metrics_dict}}
         return payload_dict
 
-    
     def metrics_by_meta_data(self, target_attribute_dict=None):
         # Filter by meta
         image_ids = self.validation_utils.filter_attribute_by_dict(
@@ -157,17 +161,30 @@ class PlotCOCOMetrics:
 
         payload_dict = {"type": "bar", "data": {}}
 
-        graph_1_metrics = ["TruePositive", "TrueNegative", "FalsePositive", "FalseNegative"]
+        graph_1_metrics = [
+            "TruePositive",
+            "TrueNegative",
+            "FalsePositive",
+            "FalseNegative",
+        ]
         graph_2_metrics = ["AverageHausdorffDistance", "SimpleHausdorffDistance"]
 
-        graph_1_dict = {key: int(metrics[key]) for key in graph_1_metrics if key in metrics}
+        graph_1_dict = {
+            key: int(metrics[key]) for key in graph_1_metrics if key in metrics
+        }
         payload_dict["data"]["graph_1"] = graph_1_dict
 
         graph_2_dict = {key: metrics[key] for key in graph_2_metrics if key in metrics}
         payload_dict["data"]["graph_2"] = graph_2_dict
 
-        graph_3_dict = {key: metrics[key] for key in metrics if key not in graph_1_metrics and key not in graph_2_metrics}
-        payload_dict["data"]["graph_3"] = graph_3_dict   # Remaining metrics to graph_3 (specified by frontend)
+        graph_3_dict = {
+            key: metrics[key]
+            for key in metrics
+            if key not in graph_1_metrics and key not in graph_2_metrics
+        }
+        payload_dict["data"][
+            "graph_3"
+        ] = graph_3_dict  # Remaining metrics to graph_3 (specified by frontend)
 
         return payload_dict
 
@@ -180,7 +197,9 @@ class PlotCOCOMetrics:
         payload_dict = {
             "type": "main_metric",
             "data": {
-                "mean IoU": metrics_dict["Vol.mIoU"] if self.study_list else metrics_dict["mean IoU"],
+                "mean IoU": metrics_dict["Vol.mIoU"]
+                if self.study_list
+                else metrics_dict["mean IoU"],
             },
         }
         return payload_dict
@@ -195,7 +214,8 @@ class PlotCOCOMetrics:
         :return: payload_dict
         """
         filtered_image_ids = self.validation_utils.filter_attribute_by_dict(
-            target_attribute_dict).index.tolist()
+            target_attribute_dict
+        ).index.tolist()
 
         filtered_gt = dict(
             (image_id, self.ground_truth_dict[image_id])
@@ -216,11 +236,12 @@ class PlotCOCOMetrics:
             gt=filtered_gt, pred=filtered_pred
         )
 
-        blind_spot_metrics_dict = {str(i): value 
-                                   for i, value in enumerate(class_metrics.values(), 0)}
+        blind_spot_metrics_dict = {
+            str(i): value for i, value in enumerate(class_metrics.values(), 0)
+        }
 
         blind_spot_metrics_dict["Average"] = overall_metrics
-        
+
         return blind_spot_metrics_dict
 
     def create_artifacts(self, artifacts_path):

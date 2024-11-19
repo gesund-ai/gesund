@@ -1,10 +1,11 @@
 import numpy as np
 import pandas as pd
 from sklearn.metrics import auc
+from typing import Any, Dict, List, Optional, Union
 
 
 class Accuracy:
-    def __init__(self, class_mappings=None):
+    def __init__(self, class_mappings: Optional[Dict[int, str]] = None) -> None:
         self.class_mappings = class_mappings
         if self.class_mappings:
             self.class_order = [int(i) for i in list(class_mappings.keys())]
@@ -15,7 +16,7 @@ class Accuracy:
         else:
             return 0
 
-    def calculate_accuracy(self, true, pred_categorical, target_class=None):
+    def _calculate_accuracy(self, true: Union[np.ndarray, pd.Series], pred_categorical: Union[np.ndarray, pd.Series]) -> float:
         """
         Returns accuracy for all dataset between 0-1.
         return: accuracy between 0-1.
