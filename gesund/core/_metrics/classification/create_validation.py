@@ -32,13 +32,12 @@ class ValidationCreation:
         self.filter_field = filter_field
         self.generate_metrics = generate_metrics
 
-    def create_validation_collection_data(self, successful_batch_data, annotation_data, format=None, meta_data=None):
+    def create_validation_collection_data(self, successful_batch_data, annotation_data, meta_data=None):
         """
         Create validation collection data from successful batch predictions and annotations.
 
         :param successful_batch_data: Dictionary containing prediction data for each item ID.
         :param annotation_data: Dictionary containing annotation (ground truth) data for each item ID.
-        :param format: Format for the data (currently unused). Defaults to None.
         :param meta_data: Additional metadata for each item. Defaults to None.
 
         :raises ValueError: If annotation data is missing for any item ID.

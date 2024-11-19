@@ -38,13 +38,12 @@ class ValidationCreation:
         self.filter_field = filter_field
         self.generate_metrics = generate_metrics
 
-    def create_validation_collection_data(self, successful_batch_data, annotation_data, format=None, meta_data=None):
+    def create_validation_collection_data(self, successful_batch_data, annotation_data, meta_data=None):
         """
         Create a list of validation collection data from batch and annotation data.
 
         :param successful_batch_data: (dict) Dictionary containing data for successfully processed images.
         :param annotation_data: (dict) Dictionary containing annotation data for the images.
-        :param format: (str) Format of the annotations (e.g., 'coco').
         :param meta_data: (dict, optional) Additional metadata for each image. Defaults to None.
 
         :return: (list) A list of dictionaries with validation data for each image.
