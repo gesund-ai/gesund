@@ -173,4 +173,3 @@ outputs/*
 
 */*/__pycache__
 */__pycache__
-object_detection_malaria.ipynb
