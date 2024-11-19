@@ -15,9 +15,8 @@ class PlotDatasetStats:
         self.class_idxs = [int(i) for i in list(class_mappings.keys())]
 
     def calculate_meta_distributions(
-        self, 
-        meta: pd.DataFrame
-        ) -> Dict[str, Dict[str, Any]]:
+        self, meta: pd.DataFrame
+    ) -> Dict[str, Dict[str, Any]]:
         """
         Calculates statistics on meta data.
         :param true: true labels as a list = [1,0,3,4] for 4 sample dataset

@@ -22,6 +22,7 @@ class ValidationCreation:
         filter_field (str): The field to filter the data, default is "image_url".
         generate_metrics (bool): Whether to generate metrics during validation creation, default is True.
     """
+
     def __init__(self, batch_job_id, filter_field="image_url", generate_metrics=True):
         """
         Initialize the ValidationCreation class.
@@ -34,14 +35,16 @@ class ValidationCreation:
         self.filter_field = filter_field
         self.generate_metrics = generate_metrics
 
-    def create_validation_collection_data(self, successful_batch_data, annotation_data, meta_data=None):
+    def create_validation_collection_data(
+        self, successful_batch_data, annotation_data, meta_data=None
+    ):
         """
         Create a list of validation collection data from batch and annotation data.
-    
+
         :param successful_batch_data: Dictionary containing data for successfully processed images (dict).
         :param annotation_data: Dictionary containing annotation data for the images (dict).
         :param meta_data: Additional metadata for each image (dict, optional). Defaults to None.
-    
+
         :return: A list of dictionaries with validation data for each image (list).
         """
 
@@ -78,7 +81,7 @@ class ValidationCreation:
             )
             validation_collection_data.append(image_information_dict)
         return validation_collection_data
-    
+
     def _load_plotting_data(self, validation_collection_data, class_mappings):
         """
         Load plotting data for per-image and per-dataset plots.
@@ -97,7 +100,9 @@ class ValidationCreation:
         )
         return plotting_data
 
-    def _craft_per_dataset_plotting_data(self, validation_collection_data, class_mappings):
+    def _craft_per_dataset_plotting_data(
+        self, validation_collection_data, class_mappings
+    ):
         """
         Create data for per-dataset plots (e.g., COCO format).
 
@@ -117,9 +122,8 @@ class ValidationCreation:
         return per_dataset
 
     def _craft_per_image_plotting_data(
-        self, 
-        validation_collection_data: List[Dict[str, Any]]
-        ) -> Dict[str, Any]:
+        self, validation_collection_data: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """
         Create data for per-image plots.
 
@@ -159,11 +163,11 @@ class ValidationCreation:
         return data
 
     def load(
-        self, 
-        validation_collection_data: List[Dict[str, Any]], 
-        class_mappings: Dict[int, str], 
-        filtering_meta: Optional[Dict[str, Any]] = None
-        ) -> Dict[str, Any]:
+        self,
+        validation_collection_data: List[Dict[str, Any]],
+        class_mappings: Dict[int, str],
+        filtering_meta: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """
         Load the validation collection data and class mappings to generate metrics and plots.
 
@@ -235,12 +239,12 @@ class ValidationCreation:
         return overall_metrics
 
     def plot_metrics(
-        self, 
-        metrics: Dict[str, Any], 
-        json_output_dir: str, 
-        plot_outputs_dir: str, 
-        plot_configs: Dict[str, Any]
-        ) -> None:
+        self,
+        metrics: Dict[str, Any],
+        json_output_dir: str,
+        plot_outputs_dir: str,
+        plot_configs: Dict[str, Any],
+    ) -> None:
         """
         Generate and save various types of plots based on the provided metrics and configurations.
 
@@ -254,7 +258,7 @@ class ValidationCreation:
 
         :return: None
         """
-        
+
         file_name_patterns = {
             "mixed_plot": ("mixed_json_path", "plot_performance_by_iou_threshold.json"),
             "top_misses": ("top_misses_path", "plot_{}.json"),
@@ -296,9 +300,8 @@ class ValidationCreation:
                 print(f"Error creating {draw_type}: {e}")
 
     def _load_pred_coco(
-        self, 
-        validation_collection_data: List[Dict[str, Any]]
-        ) -> List[Dict[str, Any]]:
+        self, validation_collection_data: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
         """
         Load prediction data in COCO format.
 
@@ -341,10 +344,10 @@ class ValidationCreation:
         return pred_dict_list
 
     def _load_annot_coco(
-        self, 
-        validation_collection_data: List[Dict[str, Any]], 
-        class_mappings: Dict[int, str]
-        ) -> Dict[str, Any]:
+        self,
+        validation_collection_data: List[Dict[str, Any]],
+        class_mappings: Dict[int, str],
+    ) -> Dict[str, Any]:
         """
         Load annotation data in COCO format.
 

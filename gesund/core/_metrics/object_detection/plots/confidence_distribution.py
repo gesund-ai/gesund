@@ -12,7 +12,7 @@ from gesund.core._utils import ValidationUtils, Statistics
 class PlotConfidenceGraphs:
     """
     A class to plot confidence distribution graphs for detection or classification results.
-    
+
     :param class_mappings: Mapping between class IDs and class names
     :type class_mappings: Dict[str, str]
     :param coco_: Detection/classification results in COCO format
@@ -25,8 +25,8 @@ class PlotConfidenceGraphs:
         self,
         class_mappings: Dict[str, str],
         coco_: Dict[str, Any],
-        meta_data_dict: Optional[Dict[str, Any]] = None
-        ) -> None:
+        meta_data_dict: Optional[Dict[str, Any]] = None,
+    ) -> None:
         self.class_mappings = class_mappings
         self.coco_ = coco_
         if bool(meta_data_dict):
@@ -34,13 +34,11 @@ class PlotConfidenceGraphs:
             self.validation_utils = ValidationUtils(meta_data_dict)
 
     def _plot_confidence_histogram_scatter_distribution(
-        self,
-        predicted_class: Optional[str] = None,
-        n_samples: int = 300
-        ) -> Dict[str, Any]:
+        self, predicted_class: Optional[str] = None, n_samples: int = 300
+    ) -> Dict[str, Any]:
         """
         Plots confidence distribution as histogram and scatter plot.
-        
+
         :param predicted_class: Class name to filter results
         :type predicted_class: Optional[str]
         :param n_samples: Number of samples to plot

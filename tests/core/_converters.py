@@ -1,7 +1,11 @@
 import pytest
 from gesund.core._converters.coco_converter import COCOToGesund
 import numpy as np
-from gesund.core._converters.yolo_converter import ClassificationConverter, ObjectDetectionConverter, SemanticSegmentationConverter
+from gesund.core._converters.yolo_converter import (
+    ClassificationConverter,
+    ObjectDetectionConverter,
+    SemanticSegmentationConverter,
+)
 from typing import List, Dict, Any
 from unittest.mock import MagicMock
 from pydantic import BaseModel, ValidationError
@@ -11,6 +15,7 @@ class AnnotationModel(BaseModel):
     image_id: str
     annotation: List[Dict[str, Any]]
 
+
 class PredictionModel(BaseModel):
     image_id: str
     prediction_class: int
@@ -18,9 +23,11 @@ class PredictionModel(BaseModel):
     logits: List[float]
     loss: float
 
+
 class SemanticAnnotationModel(BaseModel):
     image_id: str
     annotation: List[Dict[str, Any]]
+
 
 class SemanticPredictionModel(BaseModel):
     image_id: str
@@ -31,10 +38,7 @@ class SemanticPredictionModel(BaseModel):
 
 # Sample data for ClassificationConverter
 class_annotations: List[Dict[str, Any]] = [
-    {
-        "image_id": "image_1",
-        "annotations": [{"class": 0}, {"class": 1}]
-    }
+    {"image_id": "image_1", "annotations": [{"class": 0}, {"class": 1}]}
 ]
 
 class_predictions: List[Dict[str, Any]] = [
@@ -42,8 +46,8 @@ class_predictions: List[Dict[str, Any]] = [
         "image_id": "image_1",
         "predictions": [
             {"class": 0, "confidence": 0.9, "loss": 0.1},
-            {"class": 1, "confidence": 0.8, "loss": 0.2}
-        ]
+            {"class": 1, "confidence": 0.8, "loss": 0.2},
+        ],
     }
 ]
 
@@ -57,10 +61,10 @@ semantic_annotations: List[Dict[str, Any]] = [
                 "segmentation": [
                     {"x": 0.1, "y": 0.1},
                     {"x": 0.2, "y": 0.2},
-                    {"x": 0.3, "y": 0.3}
-                ]
+                    {"x": 0.3, "y": 0.3},
+                ],
             }
-        ]
+        ],
     }
 ]
 
@@ -73,12 +77,13 @@ semantic_predictions: List[Dict[str, Any]] = [
                 "segmentation": [
                     {"x": 0.1, "y": 0.1},
                     {"x": 0.2, "y": 0.2},
-                    {"x": 0.3, "y": 0.3}
-                ]
+                    {"x": 0.3, "y": 0.3},
+                ],
             }
-        ]
+        ],
     }
 ]
+
 
 def test_classification_converter() -> None:
     """
@@ -91,7 +96,7 @@ def test_classification_converter() -> None:
         annotations=class_annotations,
         predictions=class_predictions,
         image_width=512,
-        image_height=512
+        image_height=512,
     )
     annotations = converter._convert_annotations()
     predictions = converter._convert_predictions()
@@ -104,6 +109,7 @@ def test_classification_converter() -> None:
     except ValidationError as e:
         pytest.fail(f"Validation failed: {e}")
 
+
 def test_semantic_segmentation_converter() -> None:
     """
     A function to test the SemanticSegmentationConverter to transform semantic segmentation data to gesund format given the sample annotations and predictions.
@@ -115,7 +121,7 @@ def test_semantic_segmentation_converter() -> None:
         annotations=semantic_annotations,
         predictions=semantic_predictions,
         image_width=512,
-        image_height=512
+        image_height=512,
     )
     annotations = converter._convert_annotations()
     predictions = converter._convert_predictions()
@@ -127,6 +133,7 @@ def test_semantic_segmentation_converter() -> None:
             SemanticPredictionModel(**predictions[image_id])
     except ValidationError as e:
         pytest.fail(f"Validation failed: {e}")
+
 
 def test_get_converter_yolo() -> None:
     """
@@ -141,6 +148,7 @@ def test_get_converter_yolo() -> None:
     factory = ConverterFactory()
     converter = factory.get_converter("yolo")
     assert isinstance(converter, YoloToGesund)
+
 
 def test_get_converter_invalid() -> None:
     """

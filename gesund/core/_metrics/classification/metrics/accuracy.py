@@ -16,7 +16,11 @@ class Accuracy:
         else:
             return 0
 
-    def _calculate_accuracy(self, true: Union[np.ndarray, pd.Series], pred_categorical: Union[np.ndarray, pd.Series]) -> float:
+    def _calculate_accuracy(
+        self,
+        true: Union[np.ndarray, pd.Series],
+        pred_categorical: Union[np.ndarray, pd.Series],
+    ) -> float:
         """
         Returns accuracy for all dataset between 0-1.
         return: accuracy between 0-1.

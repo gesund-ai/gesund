@@ -22,10 +22,8 @@ class PlotAveragePrecision:
             self.validation_utils = ValidationUtils(meta_df)
 
     def _plot_performance_by_iou_threshold(
-        self, 
-        threshold: float,
-        return_points: bool = False
-        ) -> Dict[str, Any]:
+        self, threshold: float, return_points: bool = False
+    ) -> Dict[str, Any]:
         """
         Plot performance metrics at specific IoU threshold.
 
@@ -60,10 +58,7 @@ class PlotAveragePrecision:
             payload_dict["data"] = {"ap_results": response}
         return payload_dict
 
-    def _plot_highlighted_overall_metrics(
-        self, 
-        threshold: float
-        ) -> Dict[str, Any]:
+    def _plot_highlighted_overall_metrics(self, threshold: float) -> Dict[str, Any]:
         """
         Plot highlighted overall metrics at specified threshold.
 
@@ -100,9 +95,8 @@ class PlotAveragePrecision:
         return payload_dict
 
     def _filter_ap_metrics(
-        self, 
-        target_attribute_dict: Optional[Dict[str, Any]]
-        ) -> List[int]:
+        self, target_attribute_dict: Optional[Dict[str, Any]]
+    ) -> List[int]:
         """
         Filter average precision metrics based on target attributes.
 
@@ -121,8 +115,8 @@ class PlotAveragePrecision:
     def _plot_statistics_classbased_table(
         self,
         threshold: Optional[float] = None,
-        target_attribute_dict: Optional[Dict[str, Any]] = None
-        ) -> Dict[str, Any]:
+        target_attribute_dict: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """
         Plot class-based statistics table.
 
@@ -193,10 +187,8 @@ class PlotAveragePrecision:
         return payload_dict
 
     def blind_spot_metrics(
-        self,
-        target_attribute_dict: Optional[Dict[str, Any]],
-        threshold: float
-        ) -> Dict[str, Any]:
+        self, target_attribute_dict: Optional[Dict[str, Any]], threshold: float
+    ) -> Dict[str, Any]:
         """
         Plots ROC Curve for target_class.
         References:

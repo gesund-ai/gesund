@@ -4,6 +4,7 @@ from sklearn.metrics import auc
 import sklearn
 from typing import Any, Dict, List, Optional, Union
 
+
 class LiftChart:
     def __init__(self, class_mappings: Dict[int, str]) -> None:
         self.class_mappings = class_mappings
@@ -17,7 +18,7 @@ class LiftChart:
         change_deciles: int = 20,
         labels: bool = True,
         round_decimal: int = 3,
-        ) -> pd.DataFrame:
+    ) -> pd.DataFrame:
         """Generates the Decile Table from labels and probabilities
 
         The Decile Table is creared by first sorting the customers by their predicted
@@ -114,7 +115,7 @@ class LiftChart:
         change_deciles: int = 20,
         labels: bool = True,
         round_decimal: int = 3,
-        ) -> Dict[str, List[Dict[str, float]]]:
+    ) -> Dict[str, List[Dict[str, float]]]:
         class_lift_dict = dict()
         if predicted_class in [None, "all", "overall"]:
             for class_ in list(self.class_mappings.keys()):

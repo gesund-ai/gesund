@@ -12,6 +12,7 @@ from .dataset_stats import DatasetStats
 from gesund.core._utils import Statistics
 from typing import Any, Dict, List, Optional, Union, Tuple
 
+
 class StatsTables:
     def __init__(self, class_mappings: Dict[int, str]) -> None:
         self.class_mappings = class_mappings
@@ -24,7 +25,7 @@ class StatsTables:
         self,
         true: Union[List[int], np.ndarray, pd.Series],
         pred_categorical: Union[List[int], np.ndarray, pd.Series],
-        ) -> Dict[str, Any]:
+    ) -> Dict[str, Any]:
         rename_statistics_dict = {
             "FP": "False Positive",
             "TP": "True Positive",
@@ -61,7 +62,7 @@ class StatsTables:
         pred_categorical: Union[List[int], np.ndarray, pd.Series],
         pred_logits: pd.DataFrame,
         cal_conf_interval: bool = False,
-        ) -> Union[List[Tuple[float, float]], List[Tuple[float, float]]]:
+    ) -> Union[List[Tuple[float, float]], List[Tuple[float, float]]]:
         accuracy = self.accuracy.calculate_accuracy(
             true=true, pred_categorical=pred_categorical, target_class="overall"
         )
@@ -134,7 +135,7 @@ class StatsTables:
         true: Union[List[int], np.ndarray, pd.Series],
         pred_categorical: Union[List[int], np.ndarray, pd.Series],
         pred_logits: pd.DataFrame,
-        ) -> Dict[str, Dict[str, Union[float, str]]]:
+    ) -> Dict[str, Dict[str, Union[float, str]]]:
         # Calculate Metrics
         accuracy = self.accuracy.calculate_accuracy(
             true=true, pred_categorical=pred_categorical, target_class="overall"

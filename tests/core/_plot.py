@@ -44,14 +44,16 @@ def test_common_plots_initialization(common_plots: CommonPlots) -> None:
 
     :return: None
     :rtype: None
-    """    
-    
+    """
+
     assert common_plots.cls_driver is None
     assert common_plots.obj_driver is None
     assert common_plots.seg_driver is None
 
 
-def test_class_distribution_plot(common_plots: CommonPlots, mock_cls_driver: MagicMock) -> None:
+def test_class_distribution_plot(
+    common_plots: CommonPlots, mock_cls_driver: MagicMock
+) -> None:
     """
     Test that the _class_distribution method calls the cls_driver's _plot_class_distributions correctly.
 
@@ -70,10 +72,14 @@ def test_class_distribution_plot(common_plots: CommonPlots, mock_cls_driver: Mag
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path: str = os.path.join(tmpdir, "class_distribution.png")
         common_plots._class_distribution(metrics, threshold, save_path)
-        mock_cls_driver._plot_class_distributions.assert_called_once_with(metrics, threshold, save_path)
+        mock_cls_driver._plot_class_distributions.assert_called_once_with(
+            metrics, threshold, save_path
+        )
 
 
-def test_classification_blind_spot_plot(common_plots: CommonPlots, mock_cls_driver: MagicMock) -> None:
+def test_classification_blind_spot_plot(
+    common_plots: CommonPlots, mock_cls_driver: MagicMock
+) -> None:
     """
     Test that the _classification_blind_spot method calls the cls_driver's _plot_blind_spot correctly.
 
@@ -92,11 +98,14 @@ def test_classification_blind_spot_plot(common_plots: CommonPlots, mock_cls_driv
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path: str = os.path.join(tmpdir, "classification_blind_spot.png")
         common_plots._classification_blind_spot(metrics, class_types, save_path)
-        mock_cls_driver._plot_blind_spot.assert_called_once_with(metrics, class_types, save_path)
+        mock_cls_driver._plot_blind_spot.assert_called_once_with(
+            metrics, class_types, save_path
+        )
 
 
-
-def test_class_performance_by_threshold_plot(common_plots: CommonPlots, mock_cls_driver: MagicMock) -> None:
+def test_class_performance_by_threshold_plot(
+    common_plots: CommonPlots, mock_cls_driver: MagicMock
+) -> None:
     """
     Test that the _class_performance_by_threshold method calls the cls_driver's _plot_class_performance_by_threshold correctly.
 
@@ -115,13 +124,17 @@ def test_class_performance_by_threshold_plot(common_plots: CommonPlots, mock_cls
 
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path: str = os.path.join(tmpdir, "class_performance_by_threshold.png")
-        common_plots._class_performance_by_threshold(metrics, graph_type, threshold, save_path)
+        common_plots._class_performance_by_threshold(
+            metrics, graph_type, threshold, save_path
+        )
         mock_cls_driver._plot_class_performance_by_threshold.assert_called_once_with(
             graph_type, metrics, threshold, save_path
         )
 
 
-def test_roc_statistics_plot(common_plots: CommonPlots, mock_cls_driver: MagicMock) -> None:
+def test_roc_statistics_plot(
+    common_plots: CommonPlots, mock_cls_driver: MagicMock
+) -> None:
     """
     Test that the _roc_statistics method calls the cls_driver's _plot_roc_statistics correctly.
 
@@ -139,10 +152,14 @@ def test_roc_statistics_plot(common_plots: CommonPlots, mock_cls_driver: MagicMo
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path: str = os.path.join(tmpdir, "roc_statistics.png")
         common_plots._roc_statistics(roc_class, save_path)
-        mock_cls_driver._plot_roc_statistics.assert_called_once_with(roc_class, save_path)
+        mock_cls_driver._plot_roc_statistics.assert_called_once_with(
+            roc_class, save_path
+        )
 
 
-def test_precision_recall_statistics_plot(common_plots: CommonPlots, mock_cls_driver: MagicMock) -> None:
+def test_precision_recall_statistics_plot(
+    common_plots: CommonPlots, mock_cls_driver: MagicMock
+) -> None:
     """
     Test that the _precision_recall_statistics method calls the cls_driver's _plot_precision_recall_statistics correctly.
 
@@ -160,10 +177,14 @@ def test_precision_recall_statistics_plot(common_plots: CommonPlots, mock_cls_dr
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path: str = os.path.join(tmpdir, "precision_recall_statistics.png")
         common_plots._precision_recall_statistics(pr_class, save_path)
-        mock_cls_driver._plot_precision_recall_statistics.assert_called_once_with(pr_class, save_path)
+        mock_cls_driver._plot_precision_recall_statistics.assert_called_once_with(
+            pr_class, save_path
+        )
 
 
-def test_classification_confidence_histogram_plot(common_plots: CommonPlots, mock_cls_driver: MagicMock) -> None:
+def test_classification_confidence_histogram_plot(
+    common_plots: CommonPlots, mock_cls_driver: MagicMock
+) -> None:
     """
     Test that the _classification_confidence_histogram method calls the cls_driver's _plot_confidence_histogram correctly.
 
@@ -180,11 +201,17 @@ def test_classification_confidence_histogram_plot(common_plots: CommonPlots, moc
 
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path: str = os.path.join(tmpdir, "classification_confidence_histogram.png")
-        common_plots._classification_confidence_histogram(confidence_histogram_args, save_path)
-        mock_cls_driver._plot_confidence_histogram.assert_called_once_with(confidence_histogram_args, save_path)
+        common_plots._classification_confidence_histogram(
+            confidence_histogram_args, save_path
+        )
+        mock_cls_driver._plot_confidence_histogram.assert_called_once_with(
+            confidence_histogram_args, save_path
+        )
 
 
-def test_classification_overall_metrics_plot(common_plots: CommonPlots, mock_cls_driver: MagicMock) -> None:
+def test_classification_overall_metrics_plot(
+    common_plots: CommonPlots, mock_cls_driver: MagicMock
+) -> None:
     """
     Test that the _classification_overall_metrics method calls the cls_driver's _plot_overall_metrics correctly.
 
@@ -202,11 +229,14 @@ def test_classification_overall_metrics_plot(common_plots: CommonPlots, mock_cls
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path: str = os.path.join(tmpdir, "classification_overall_metrics.png")
         common_plots._classification_overall_metrics(overall_metrics_args, save_path)
-        mock_cls_driver._plot_overall_metrics.assert_called_once_with(overall_metrics_args, save_path)
+        mock_cls_driver._plot_overall_metrics.assert_called_once_with(
+            overall_metrics_args, save_path
+        )
 
 
-
-def test_confusion_matrix_plot(common_plots: CommonPlots, mock_cls_driver: MagicMock) -> None:
+def test_confusion_matrix_plot(
+    common_plots: CommonPlots, mock_cls_driver: MagicMock
+) -> None:
     """
     Test that the _confusion_matrix method calls the cls_driver's _plot_confusion_matrix correctly.
 
@@ -225,7 +255,9 @@ def test_confusion_matrix_plot(common_plots: CommonPlots, mock_cls_driver: Magic
         mock_cls_driver._plot_confusion_matrix.assert_called_once_with(save_path)
 
 
-def test_prediction_dataset_distribution_plot(common_plots: CommonPlots, mock_cls_driver: MagicMock) -> None:
+def test_prediction_dataset_distribution_plot(
+    common_plots: CommonPlots, mock_cls_driver: MagicMock
+) -> None:
     """
     Test that the _prediction_dataset_distribution method calls the cls_driver's _plot_prediction_dataset_distribution correctly.
 
@@ -241,12 +273,14 @@ def test_prediction_dataset_distribution_plot(common_plots: CommonPlots, mock_cl
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path: str = os.path.join(tmpdir, "prediction_dataset_distribution.png")
         common_plots._prediction_dataset_distribution(save_path)
-        mock_cls_driver._plot_prediction_dataset_distribution.assert_called_once_with(save_path)
+        mock_cls_driver._plot_prediction_dataset_distribution.assert_called_once_with(
+            save_path
+        )
 
 
-
-
-def test_most_confused_bar_plot(common_plots: CommonPlots, mock_cls_driver: MagicMock) -> None:
+def test_most_confused_bar_plot(
+    common_plots: CommonPlots, mock_cls_driver: MagicMock
+) -> None:
     """
     Test that the _most_confused_bar method calls the cls_driver's _plot_most_confused_bar correctly.
 
@@ -265,8 +299,9 @@ def test_most_confused_bar_plot(common_plots: CommonPlots, mock_cls_driver: Magi
         mock_cls_driver._plot_most_confused_bar.assert_called_once_with(save_path)
 
 
-
-def test_confidence_histogram_scatter_distribution_plot(common_plots: CommonPlots, mock_cls_driver: MagicMock) -> None:
+def test_confidence_histogram_scatter_distribution_plot(
+    common_plots: CommonPlots, mock_cls_driver: MagicMock
+) -> None:
     """
     Test that the _confidence_histogram_scatter_distribution method calls the cls_driver's _plot_confidence_histogram_scatter_distribution correctly.
 
@@ -280,10 +315,13 @@ def test_confidence_histogram_scatter_distribution_plot(common_plots: CommonPlot
     """
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        save_path: str = os.path.join(tmpdir, "confidence_histogram_scatter_distribution.png")
+        save_path: str = os.path.join(
+            tmpdir, "confidence_histogram_scatter_distribution.png"
+        )
         common_plots._confidence_histogram_scatter_distribution(save_path)
-        mock_cls_driver._plot_confidence_histogram_scatter_distribution.assert_called_once_with(save_path)
-
+        mock_cls_driver._plot_confidence_histogram_scatter_distribution.assert_called_once_with(
+            save_path
+        )
 
 
 def test_lift_chart_plot(common_plots: CommonPlots, mock_cls_driver: MagicMock) -> None:
@@ -305,7 +343,9 @@ def test_lift_chart_plot(common_plots: CommonPlots, mock_cls_driver: MagicMock) 
         mock_cls_driver._plot_lift_chart.assert_called_once_with(save_path)
 
 
-def test_object_detection_blind_spot_plot(common_plots: CommonPlots, mock_obj_driver: MagicMock) -> None:
+def test_object_detection_blind_spot_plot(
+    common_plots: CommonPlots, mock_obj_driver: MagicMock
+) -> None:
     """
     Test that the _object_detection_blind_spot method calls the obj_driver's _plot_blind_spot correctly.
 
@@ -323,10 +363,14 @@ def test_object_detection_blind_spot_plot(common_plots: CommonPlots, mock_obj_dr
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path: str = os.path.join(tmpdir, "object_detection_blind_spot.png")
         common_plots._object_detection_blind_spot(blind_spot_args, save_path)
-        mock_obj_driver._plot_blind_spot.assert_called_once_with(blind_spot_args, save_path)
+        mock_obj_driver._plot_blind_spot.assert_called_once_with(
+            blind_spot_args, save_path
+        )
 
 
-def test_object_detection_overall_metrics_plot(common_plots: CommonPlots, mock_obj_driver: MagicMock) -> None:
+def test_object_detection_overall_metrics_plot(
+    common_plots: CommonPlots, mock_obj_driver: MagicMock
+) -> None:
     """
     Test that the _object_detection_overall_metrics method calls the obj_driver's _plot_overall_metrics correctly.
 
@@ -344,8 +388,9 @@ def test_object_detection_overall_metrics_plot(common_plots: CommonPlots, mock_o
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path: str = os.path.join(tmpdir, "object_detection_overall_metrics.png")
         common_plots._object_detection_overall_metrics(overall_metrics_args, save_path)
-        mock_obj_driver._plot_overall_metrics.assert_called_once_with(overall_metrics_args, save_path)
-
+        mock_obj_driver._plot_overall_metrics.assert_called_once_with(
+            overall_metrics_args, save_path
+        )
 
 
 def test_top_misses_plot(common_plots: CommonPlots, mock_obj_driver: MagicMock) -> None:
@@ -366,11 +411,14 @@ def test_top_misses_plot(common_plots: CommonPlots, mock_obj_driver: MagicMock) 
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path: str = os.path.join(tmpdir, "top_misses.png")
         common_plots._top_misses(top_misses_args, save_path)
-        mock_obj_driver._plot_top_misses.assert_called_once_with(top_misses_args, save_path)
+        mock_obj_driver._plot_top_misses.assert_called_once_with(
+            top_misses_args, save_path
+        )
 
 
-
-def test_classbased_table_metrics_plot(common_plots: CommonPlots, mock_obj_driver: MagicMock) -> None:
+def test_classbased_table_metrics_plot(
+    common_plots: CommonPlots, mock_obj_driver: MagicMock
+) -> None:
     """
     Test that the _classbased_table_metrics method calls the obj_driver's _plot_classbased_table_metrics correctly.
 
@@ -388,10 +436,14 @@ def test_classbased_table_metrics_plot(common_plots: CommonPlots, mock_obj_drive
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path: str = os.path.join(tmpdir, "classbased_table_metrics.png")
         common_plots._classbased_table_metrics(classbased_table_args, save_path)
-        mock_obj_driver._plot_classbased_table_metrics.assert_called_once_with(classbased_table_args, save_path)
+        mock_obj_driver._plot_classbased_table_metrics.assert_called_once_with(
+            classbased_table_args, save_path
+        )
 
 
-def test_mixed_metrics_plot(common_plots: CommonPlots, mock_obj_driver: MagicMock) -> None:
+def test_mixed_metrics_plot(
+    common_plots: CommonPlots, mock_obj_driver: MagicMock
+) -> None:
     """
     Test that the _mixed_metrics method calls the obj_driver's _plot_mixed_metrics correctly.
 
@@ -409,4 +461,6 @@ def test_mixed_metrics_plot(common_plots: CommonPlots, mock_obj_driver: MagicMoc
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path: str = os.path.join(tmpdir, "mixed_metrics.png")
         common_plots._mixed_metrics(mixed_metrics_args, save_path)
-        mock_obj_driver._plot_mixed_metrics.assert_called_once_with(mixed_metrics_args, save_path)
+        mock_obj_driver._plot_mixed_metrics.assert_called_once_with(
+            mixed_metrics_args, save_path
+        )

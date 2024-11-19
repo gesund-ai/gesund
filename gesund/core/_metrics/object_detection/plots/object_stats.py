@@ -22,8 +22,8 @@ class PlotObjectStats:
     def _plot_object_counts(
         self,
         confidence: float = 0,
-        target_attribute_dict: Optional[Dict[str, Any]] = None
-        ) -> Dict[str, Any]:
+        target_attribute_dict: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """
         Plot object counts comparing ground truth and predictions.
 
@@ -90,9 +90,8 @@ class PlotObjectStats:
         return payload_dict
 
     def _plot_prediction_distribution(
-        self,
-        target_attribute_dict: Optional[Dict[str, Any]] = None
-        ) -> Dict[str, Any]:
+        self, target_attribute_dict: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Plot distribution of predictions across different classes.
 

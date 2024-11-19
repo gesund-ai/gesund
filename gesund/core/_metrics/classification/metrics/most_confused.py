@@ -17,8 +17,8 @@ class MostConfused:
     def calculate_most_confused(
         self,
         true: Union[List[int], np.ndarray, pd.Series],
-        pred_categorical: Union[List[int], np.ndarray, pd.Series]
-        ) -> Dict[str, Any]:        
+        pred_categorical: Union[List[int], np.ndarray, pd.Series],
+    ) -> Dict[str, Any]:
         """Improve Explanation
         Calculates number of confusion for all classes on dataset.
         :return: confused_list_idxs , confused_list_values

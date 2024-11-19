@@ -82,10 +82,8 @@ class ObjectDetectionPlotDriver:
         )
 
     def plot_performance_by_iou_threshold(
-        self, 
-        threshold: float = 0.5,
-        return_points: bool = False
-        ) -> Dict[str, Any]:
+        self, threshold: float = 0.5, return_points: bool = False
+    ) -> Dict[str, Any]:
         """
         Plot performance metrics at specified IoU threshold.
 
@@ -101,9 +99,8 @@ class ObjectDetectionPlotDriver:
         )
 
     def plot_statistics_classbased_table(
-        self,
-        target_attribute_dict: Optional[Dict[str, Any]] = None
-        ) -> Dict[str, Any]:
+        self, target_attribute_dict: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Plot statistics table based on classes.
 
@@ -119,8 +116,8 @@ class ObjectDetectionPlotDriver:
     def plot_object_counts(
         self,
         confidence: float = 0,
-        target_attribute_dict: Optional[Dict[str, Any]] = None
-        ) -> Dict[str, Any]:
+        target_attribute_dict: Optional[Dict[str, Any]] = None,
+    ) -> Dict[str, Any]:
         """
         Plot object count distributions.
 
@@ -135,10 +132,7 @@ class ObjectDetectionPlotDriver:
             confidence=confidence, target_attribute_dict=self.filtering_meta
         )
 
-    def plot_top_misses(
-        self,
-        top_k: int = 100
-        ) -> Dict[str, Any]:
+    def plot_top_misses(self, top_k: int = 100) -> Dict[str, Any]:
         """
         Plot top misclassified samples.
 
@@ -150,10 +144,8 @@ class ObjectDetectionPlotDriver:
         return self.plot_loss._plot_top_misses(top_k=top_k)
 
     def plot_confidence_histogram_scatter_distribution(
-        self,
-        predicted_class: Optional[str] = None,
-        n_samples: int = 300
-        ) -> Dict[str, Any]:
+        self, predicted_class: Optional[str] = None, n_samples: int = 300
+    ) -> Dict[str, Any]:
         """
         Plot confidence distribution as histogram and scatter plot.
 
@@ -171,9 +163,8 @@ class ObjectDetectionPlotDriver:
         )
 
     def plot_prediction_distribution(
-        self,
-        target_attribute_dict: Optional[Dict[str, Any]] = None
-        ) -> Dict[str, Any]:
+        self, target_attribute_dict: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Plot distribution of predictions.
 
@@ -217,9 +208,8 @@ class ObjectDetectionPlotDriver:
 
     # Blind Spots
     def plot_blind_spot_metrics(
-        self,
-        target_attribute_dict: Optional[Dict[str, Any]] = None
-        ) -> Dict[str, Any]:
+        self, target_attribute_dict: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
         """
         Plot metrics for model blind spots.
 

@@ -192,6 +192,7 @@ def test_validation_plotmetrics_object_detection(plot_config):
 )
 def test_validation_plotmetrics_segmentation(plot_config):
     from gesund.core._schema import ResultDataSegmentation
+
     data_dir = "./tests/_data/semantic_segmentation"
     seg_validation = Validation(
         annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
@@ -210,4 +211,3 @@ def test_validation_plotmetrics_segmentation(plot_config):
     results = seg_validation.run()
     assert os.path.exists(seg_validation.output_dir) is True
     assert isinstance(results, ResultDataSegmentation) is True
-

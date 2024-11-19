@@ -23,8 +23,8 @@ class AUC:
     def calculate_sense_spec(
         self,
         true: Union[np.ndarray, pd.Series],
-        pred_categorical: Union[np.ndarray, pd.Series]
-        ) -> Dict[str, Any]:
+        pred_categorical: Union[np.ndarray, pd.Series],
+    ) -> Dict[str, Any]:
         """
         Calculate statistics for each class
         :return: statistics dict
@@ -155,11 +155,8 @@ class AUC:
         return sense_spec_dict
 
     def _create_precision_recall_points(
-        self,
-        prec: np.ndarray,
-        rec: np.ndarray,
-        threshold: np.ndarray
-        ) -> Tuple[List[Dict[str, Union[float, str]]], float]:
+        self, prec: np.ndarray, rec: np.ndarray, threshold: np.ndarray
+    ) -> Tuple[List[Dict[str, Union[float, str]]], float]:
         points_list = []
         auc_value = auc(rec, prec)
 
@@ -182,8 +179,8 @@ class AUC:
         self,
         true: Union[np.ndarray, pd.Series],
         pred_categorical: Union[np.ndarray, pd.Series],
-        target_class: Optional[Union[str, int]] = None
-        ) -> Union[float, Dict[int, float]]:        
+        target_class: Optional[Union[str, int]] = None,
+    ) -> Union[float, Dict[int, float]]:
         if target_class == "overall" or target_class is None:
             return matthews_corrcoef(true, pred_categorical)
 
@@ -207,10 +204,8 @@ class AUC:
             return self._calculate_accuracy(true, pred_categorical)
 
     def calculate_multiclass_precision_recall_statistics(
-        self,
-        true: Union[np.ndarray, pd.Series],
-        pred_logits: pd.DataFrame
-        ) -> Tuple[Dict[str, List[Dict[str, float]]], Dict[str, Union[float, str]]]:
+        self, true: Union[np.ndarray, pd.Series], pred_logits: pd.DataFrame
+    ) -> Tuple[Dict[str, List[Dict[str, float]]], Dict[str, Union[float, str]]]:
         """
         Calculates multiclass precision-recall curve statistics for precision-recall plots. May be renamed if it's suitable for binary cases.
         Reference : https://scikit-learn.org/stable/auto_examples/model_selection/plot_precision_recall.html#sphx-glr-auto-examples-model-selection-plot-precision-recall-py
@@ -274,11 +269,8 @@ class AUC:
         return points, aucs
 
     def _create_roc_points(
-        self,
-        fpr: np.ndarray,
-        tpr: np.ndarray,
-        threshold: np.ndarray
-        ) -> List[Dict[str, float]]:
+        self, fpr: np.ndarray, tpr: np.ndarray, threshold: np.ndarray
+    ) -> List[Dict[str, float]]:
         points_list = []
         for i in range(len(fpr) - len(threshold)):
             threshold = np.append(threshold, threshold[-1])
@@ -299,8 +291,11 @@ class AUC:
         true: Union[np.ndarray, pd.Series],
         pred_logits: pd.DataFrame,
         return_points: bool = False,
-        use_class_name: bool = True
-        ) -> Union[Dict[str, Union[float, str]], Tuple[Dict[str, List[Dict[str, float]]], Dict[str, Union[float, str]]]]:
+        use_class_name: bool = True,
+    ) -> Union[
+        Dict[str, Union[float, str]],
+        Tuple[Dict[str, List[Dict[str, float]]], Dict[str, Union[float, str]]],
+    ]:
         """
         Calculates multiclass ROC curve statistics for ROC plots. May be renamed if it's suitable for binary cases.
         Reference : https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html

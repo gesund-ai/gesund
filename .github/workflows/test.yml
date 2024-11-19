@@ -31,4 +31,4 @@ jobs:
 
       - name: test_script
         run: pytest tests/
-        
+

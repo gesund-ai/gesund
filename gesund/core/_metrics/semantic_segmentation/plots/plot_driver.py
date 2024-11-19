@@ -36,7 +36,7 @@ class SemanticSegmentationPlotDriver:
         self.sample_size = len(self.true)
         self.class_order = list(range(len(class_mappings.keys())))
 
-        self.artifacts_path = None  
+        self.artifacts_path = None
 
         # Import Classes
         self.plot_coco_metrics = PlotCOCOMetrics(

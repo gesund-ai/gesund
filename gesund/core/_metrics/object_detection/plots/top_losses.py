@@ -16,10 +16,7 @@ class PlotTopLosses:
             loss=self.loss, coco_=self.coco_, class_mappings=self.class_mappings
         )
 
-    def _plot_top_misses(
-        self,
-        top_k: int = 100
-        ) -> Dict[str, Any]:
+    def _plot_top_misses(self, top_k: int = 100) -> Dict[str, Any]:
         """
         Calculates minimum loss samples with appropriate information.
         :param self:
