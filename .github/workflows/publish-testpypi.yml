@@ -6,7 +6,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Publish Python 🐍 distribution 📦 to PyPI and TestPyPI
+name: Publish TestPyPI
 
 on: push
 
