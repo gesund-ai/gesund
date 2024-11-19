@@ -9,6 +9,7 @@ import sklearn
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 
+
 class AveragePrecision:
     def __init__(self, class_mappings, coco_):
         self.class_mappings = class_mappings

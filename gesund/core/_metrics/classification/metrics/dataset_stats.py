@@ -4,9 +4,11 @@ from sklearn.metrics import auc
 import sklearn
 
 from gesund.core._utils import ValidationUtils, Statistics
+from typing import Any, Dict, List, Optional, Union
+
 
 class DatasetStats:
-    def calculate_class_distributions(self, true):
+    def calculate_class_distributions(self, true: pd.Series) -> List[Dict[Any, int]]:
         """
         Calculates statistics on classes.
         :param true: true labels as a list = [1,0,3,4] for 4 sample dataset
@@ -17,7 +19,7 @@ class DatasetStats:
 
         return [true.value_counts().to_dict()]
 
-    def calculate_meta_distributions(self, meta):
+    def calculate_meta_distributions(self, meta: pd.DataFrame) -> Dict[str, Dict[str, Any]]:
         """
         Calculates statistics on meta data.
         :param true: true labels as a list = [1,0,3,4] for 4 sample dataset

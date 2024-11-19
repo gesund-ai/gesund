@@ -25,7 +25,7 @@ class ClassificationPlotDriver:
         meta_pred_true,
         class_mappings,
         loss,
-        filtering_meta
+        filtering_meta,
     ):
         self.filtering_meta = filtering_meta
         # Import Classes
@@ -156,9 +156,7 @@ class ClassificationPlotDriver:
 
     # Parallel Plots
     def plot_parallel_categorical_analysis(self, true_class=0):
-        return self.plot_parallel.parallel_categorical_analysis(
-            true_class=true_class
-        )
+        return self.plot_parallel.parallel_categorical_analysis(true_class=true_class)
 
     # Prediction Analysis
     def plot_prediction_distribution(self, target_attribute_dict=None):
@@ -215,12 +213,15 @@ class ClassificationPlotDriver:
 
     # Blind Spots
     def plot_blind_spot_metrics(self, target_attribute_dict=None):
-        return self.plot_blind_spot.blind_spot_metrics(target_attribute_dict=self.filtering_meta)
-    
+        return self.plot_blind_spot.blind_spot_metrics(
+            target_attribute_dict=self.filtering_meta
+        )
+
     def _calling_all_plots(self):
         # Getting all methods that do not start with '_'
         methods = [
-            method_name for method_name in dir(self)
+            method_name
+            for method_name in dir(self)
             if callable(getattr(self, method_name)) and not method_name.startswith("_")
         ]
         results = {}
@@ -239,5 +240,5 @@ class ClassificationPlotDriver:
                 results[method_name] = f"Could not call {method_name}: {str(e)}"
             except Exception as e:
                 results[method_name] = f"Error in {method_name}: {str(e)}"
-        
+
         return results

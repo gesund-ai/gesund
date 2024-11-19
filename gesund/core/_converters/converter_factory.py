@@ -5,8 +5,9 @@ from .yolo_converter import YoloToGesund
 
 
 class ConverterFactory:
-
-    def get_converter(self, json_structure_type: str) -> Union[COCOToGesund, YoloToGesund]:
+    def get_converter(
+        self, json_structure_type: str
+    ) -> Union[COCOToGesund, YoloToGesund]:
         """
         A function to get the converter to transform the data to gesund format given the current json
         structure type

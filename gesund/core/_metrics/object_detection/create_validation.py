@@ -5,15 +5,18 @@ import json
 import numpy as np
 import os
 import matplotlib.pyplot as plt
+from typing import Any, Dict, List, Optional, Tuple
 
 from .plots.plot_driver import ObjectDetectionPlotDriver
-from gesund.metrics.object_detection.object_detection_metric_plot import Object_Detection_Plot
+from gesund.core._metrics.object_detection.object_detection_metric_plot import (
+    Object_Detection_Plot,
+)
 
 
 class ValidationCreation:
     """
     Class responsible for creating validation data and generating classification metrics and plots.
-    
+
     Attributes:
         batch_job_id (str): Unique identifier for the batch job.
         filter_field (str): The field to filter the data, default is "image_url".
@@ -41,7 +44,7 @@ class ValidationCreation:
     
         :return: A list of dictionaries with validation data for each image (list).
         """
-        
+
         validation_collection_data = list()
         # To Do: Optimize this
         for image_id in successful_batch_data:
@@ -50,7 +53,12 @@ class ValidationCreation:
             image_information_dict = {}
             image_information_dict["batch_job_id"] = self.batch_job_id
             image_information_dict["image_id"] = batch_item["image_id"]
-            image_information_dict["shape"] = annotation_item["shape"]
+
+            if format == "coco":
+                image_information_dict["shape"] = annotation_item["shape"]
+            else:
+                image_information_dict["shape"] = batch_item["shape"]
+
             image_information_dict["ground_truth"] = [
                 {
                     "class": i["label"],
@@ -65,7 +73,9 @@ class ValidationCreation:
             ]
             image_information_dict["objects"] = batch_item["objects"]
             image_information_dict["created_timestamp"] = time.time()
-            image_information_dict["meta_data"] = meta_data[image_id]["metadata"] if meta_data else {}
+            image_information_dict["meta_data"] = (
+                meta_data[image_id]["metadata"] if meta_data else {}
+            )
             validation_collection_data.append(image_information_dict)
         return validation_collection_data
     
@@ -79,8 +89,12 @@ class ValidationCreation:
         :return: Dictionary containing plotting data for per-image and per-dataset plots (dict).
         """
         plotting_data = dict()
-        plotting_data["per_image"] = self._craft_per_image_plotting_data(validation_collection_data)
-        plotting_data["per_dataset"] = self._craft_per_dataset_plotting_data(validation_collection_data, class_mappings)
+        plotting_data["per_image"] = self._craft_per_image_plotting_data(
+            validation_collection_data
+        )
+        plotting_data["per_dataset"] = self._craft_per_dataset_plotting_data(
+            validation_collection_data, class_mappings
+        )
         return plotting_data
 
     def _craft_per_dataset_plotting_data(self, validation_collection_data, class_mappings):
@@ -94,11 +108,18 @@ class ValidationCreation:
         """
         per_dataset = dict()
         if validation_collection_data:
-            per_dataset["prediction_coco"] = self._load_pred_coco(validation_collection_data)
-            per_dataset["ground_truth_coco"] = self._load_annot_coco(validation_collection_data, class_mappings)
+            per_dataset["prediction_coco"] = self._load_pred_coco(
+                validation_collection_data
+            )
+            per_dataset["ground_truth_coco"] = self._load_annot_coco(
+                validation_collection_data, class_mappings
+            )
         return per_dataset
 
-    def _craft_per_image_plotting_data(self, validation_collection_data):
+    def _craft_per_image_plotting_data(
+        self, 
+        validation_collection_data: List[Dict[str, Any]]
+        ) -> Dict[str, Any]:
         """
         Create data for per-image plots.
 
@@ -116,7 +137,11 @@ class ValidationCreation:
         prediction_dict = dict(zip(prediction_dict[:, 0], prediction_dict[:, 1]))
 
         try:
-            loss_dict = validation_df[["image_id", "loss"]].set_index("image_id").to_dict()["loss"]
+            loss_dict = (
+                validation_df[["image_id", "loss"]]
+                .set_index("image_id")
+                .to_dict()["loss"]
+            )
         except:
             pass
 
@@ -124,7 +149,7 @@ class ValidationCreation:
         data["objects"] = prediction_dict
         meta_data_dict = validation_df[["image_id", "meta_data"]].values
         meta_data_dict = dict(zip(meta_data_dict[:, 0], meta_data_dict[:, 1]))
-        
+
         data["meta_data"] = meta_data_dict
 
         try:
@@ -133,7 +158,12 @@ class ValidationCreation:
             pass
         return data
 
-    def load(self, validation_collection_data, class_mappings, filtering_meta=None):
+    def load(
+        self, 
+        validation_collection_data: List[Dict[str, Any]], 
+        class_mappings: Dict[int, str], 
+        filtering_meta: Optional[Dict[str, Any]] = None
+        ) -> Dict[str, Any]:
         """
         Load the validation collection data and class mappings to generate metrics and plots.
 
@@ -143,7 +173,10 @@ class ValidationCreation:
 
         :return: Dictionary containing the overall computed metrics (dict).
         """
-        plotting_data = self._load_plotting_data(validation_collection_data=validation_collection_data, class_mappings=class_mappings)
+        plotting_data = self._load_plotting_data(
+            validation_collection_data=validation_collection_data,
+            class_mappings=class_mappings,
+        )
 
         # Create per image variables
         ground_truth_dict = plotting_data["per_image"]["ground_truth"]
@@ -173,26 +206,41 @@ class ValidationCreation:
             batch_job_id=self.batch_job_id,
             filtering_meta=filtering_meta,
         )
-        
+
         overall_metrics = self.plot_driver._calling_all_plots()
 
-        if 'mAP11@10' in overall_metrics['main_metric']:
-            del overall_metrics['main_metric']['mAP11@10']
+        if "mAP11@10" in overall_metrics["main_metric"]:
+            del overall_metrics["main_metric"]["mAP11@10"]
 
-        for key in overall_metrics['plot_blind_spot_metrics']:
-            if 'AP11@10' in overall_metrics['plot_blind_spot_metrics'][key]:
-                del overall_metrics['plot_blind_spot_metrics'][key]['AP11@10']
+        for key in overall_metrics["plot_blind_spot_metrics"]:
+            if "AP11@10" in overall_metrics["plot_blind_spot_metrics"][key]:
+                del overall_metrics["plot_blind_spot_metrics"][key]["AP11@10"]
 
-        if 'mAP11@10' in overall_metrics['plot_highlighted_overall_metrics']['data']:
-            del overall_metrics['plot_highlighted_overall_metrics']['data']['mAP11@10']
+        if "mAP11@10" in overall_metrics["plot_highlighted_overall_metrics"]["data"]:
+            del overall_metrics["plot_highlighted_overall_metrics"]["data"]["mAP11@10"]
 
-        for key in overall_metrics['plot_statistics_classbased_table']['data']['Validation']:
-            if 'AP11@10' in overall_metrics['plot_statistics_classbased_table']['data']['Validation'][key]:
-                del overall_metrics['plot_statistics_classbased_table']['data']['Validation'][key]['AP11@10']
-                
+        for key in overall_metrics["plot_statistics_classbased_table"]["data"][
+            "Validation"
+        ]:
+            if (
+                "AP11@10"
+                in overall_metrics["plot_statistics_classbased_table"]["data"][
+                    "Validation"
+                ][key]
+            ):
+                del overall_metrics["plot_statistics_classbased_table"]["data"][
+                    "Validation"
+                ][key]["AP11@10"]
+
         return overall_metrics
 
-    def plot_metrics(self, metrics, json_output_dir, plot_outputs_dir, plot_configs):
+    def plot_metrics(
+        self, 
+        metrics: Dict[str, Any], 
+        json_output_dir: str, 
+        plot_outputs_dir: str, 
+        plot_configs: Dict[str, Any]
+        ) -> None:
         """
         Generate and save various types of plots based on the provided metrics and configurations.
 
@@ -206,26 +254,32 @@ class ValidationCreation:
 
         :return: None
         """
+        
         file_name_patterns = {
-            'mixed_plot': ('mixed_json_path', 'plot_performance_by_iou_threshold.json'),
-            'top_misses': ('top_misses_path', 'plot_{}.json'),
-            'confidence_histogram': ('confidence_histogram_path', 'plot_{}_scatter_distribution.json'),
-            'classbased_table': ('table_json_path', 'plot_statistics_{}.json'),
-            'overall_metrics': ('overall_json_path', 'plot_highlighted_{}.json'),
-            'blind_spot': ('blind_spot_path', 'plot_{}_metrics.json')
+            "mixed_plot": ("mixed_json_path", "plot_performance_by_iou_threshold.json"),
+            "top_misses": ("top_misses_path", "plot_{}.json"),
+            "confidence_histogram": (
+                "confidence_histogram_path",
+                "plot_{}_scatter_distribution.json",
+            ),
+            "classbased_table": ("table_json_path", "plot_statistics_{}.json"),
+            "overall_metrics": ("overall_json_path", "plot_highlighted_{}.json"),
+            "blind_spot": ("blind_spot_path", "plot_{}_metrics.json"),
         }
 
         draw_params = {
-            'mixed_plot': lambda c: {'mixed_args': c},
-            'top_misses': lambda c: {'top_misses_args': c},
-            'confidence_histogram': lambda c: {'confidence_histogram_args': c},
-            'classbased_table': lambda c: {'classbased_table_args': c},
-            'overall_metrics': lambda c: {'overall_args': c},
-            'blind_spot': lambda c: {'blind_spot_args': c}
+            "mixed_plot": lambda c: {"mixed_args": c},
+            "top_misses": lambda c: {"top_misses_args": c},
+            "confidence_histogram": lambda c: {"confidence_histogram_args": c},
+            "classbased_table": lambda c: {"classbased_table_args": c},
+            "overall_metrics": lambda c: {"overall_args": c},
+            "blind_spot": lambda c: {"blind_spot_args": c},
         }
 
         for draw_type, config in plot_configs.items():
-            arg_name, file_pattern = file_name_patterns.get(draw_type, (None, 'plot_{}.json'))
+            arg_name, file_pattern = file_name_patterns.get(
+                draw_type, (None, "plot_{}.json")
+            )
             if arg_name is None:
                 print(f"Warning: Unknown draw type '{draw_type}'. Skipping.")
                 continue
@@ -233,7 +287,7 @@ class ValidationCreation:
             file_name = file_pattern.format(draw_type)
             file_path = os.path.join(json_output_dir, file_name)
             plot = Object_Detection_Plot(**{arg_name: file_path})
-            save_path = os.path.join(plot_outputs_dir, f'{draw_type}.png')
+            save_path = os.path.join(plot_outputs_dir, f"{draw_type}.png")
 
             try:
                 params = draw_params.get(draw_type, lambda _: {})(config)
@@ -241,22 +295,25 @@ class ValidationCreation:
             except Exception as e:
                 print(f"Error creating {draw_type}: {e}")
 
-    def _load_pred_coco(self, validation_collection_data=None):
+    def _load_pred_coco(
+        self, 
+        validation_collection_data: List[Dict[str, Any]]
+        ) -> List[Dict[str, Any]]:
         """
         Load prediction data in COCO format.
 
-        This function processes a list of validation collection data and transforms it into 
+        This function processes a list of validation collection data and transforms it into
         a list of prediction dictionaries formatted according to the COCO specification.
 
         :param validation_collection_data: (list, optional) List of validation collection data.
-        
+
         :return: A list of prediction dictionaries in COCO format, each containing:
             - 'image_id' (int): Identifier of the image.
             - 'category_id' (int): Identifier of the predicted category.
             - 'bbox' (list): Bounding box coordinates in the format [x, y, width, height].
             - 'score' (float): Confidence score of the prediction.
         """
-        
+
         pred_dict_list = []
         predictions_list = validation_collection_data
         for pred in predictions_list:
@@ -280,14 +337,18 @@ class ValidationCreation:
                     "score": confidence,
                 }
                 pred_dict_list.append(add_dict)
-        
+
         return pred_dict_list
 
-    def _load_annot_coco(self, validation_collection_data=None, class_mappings=None):
+    def _load_annot_coco(
+        self, 
+        validation_collection_data: List[Dict[str, Any]], 
+        class_mappings: Dict[int, str]
+        ) -> Dict[str, Any]:
         """
         Load annotation data in COCO format.
 
-        This function processes a list of validation collection data and class mappings to generate 
+        This function processes a list of validation collection data and class mappings to generate
         a COCO-formatted dictionary containing image metadata, annotations, and category information.
 
         :param validation_collection_data: (list, optional) List of validation collection data.
@@ -313,7 +374,7 @@ class ValidationCreation:
                 - 'area' (float): Area of the bounding box.
                 - 'iscrowd' (int): Indicator if the annotation is for a crowd.
         """
-        
+
         coco_dict = {
             "info": {
                 "year": "2022",
@@ -398,7 +459,8 @@ class ValidationCreation:
                         (p["box"]["y2"] - p["box"]["y1"]),
                     ],
                     "segmentation": None,
-                    "area": (p["box"]["x2"] - p["box"]["x1"]) * (p["box"]["y2"] - p["box"]["y1"]),
+                    "area": (p["box"]["x2"] - p["box"]["x1"])
+                    * (p["box"]["y2"] - p["box"]["y1"]),
                     "iscrowd": 0,
                 }
                 obj_id += 1

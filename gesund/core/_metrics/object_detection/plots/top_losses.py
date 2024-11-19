@@ -1,5 +1,5 @@
 import numpy as np
-
+from typing import Dict, List, Optional, Union, Any
 from ..metrics.top_losses import TopLosses
 
 
@@ -16,7 +16,10 @@ class PlotTopLosses:
             loss=self.loss, coco_=self.coco_, class_mappings=self.class_mappings
         )
 
-    def _plot_top_misses(self, top_k=100):
+    def _plot_top_misses(
+        self,
+        top_k: int = 100
+        ) -> Dict[str, Any]:
         """
         Calculates minimum loss samples with appropriate information.
         :param self:

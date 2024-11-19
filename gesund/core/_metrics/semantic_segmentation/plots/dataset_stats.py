@@ -5,9 +5,10 @@ import sklearn
 
 from gesund.core._utils import ValidationUtils, Statistics
 
+
 class PlotDatasetStats:
-    def __init__(self,meta):
-        self.meta = meta 
+    def __init__(self, meta):
+        self.meta = meta
 
     def meta_distributions(self):
         meta_counts = self._calculate_meta_distributions(self.meta)
@@ -17,8 +18,6 @@ class PlotDatasetStats:
         payload_dict["type"] = "bar"
         payload_dict["data"] = data_dict
         return payload_dict
-
-
 
     def _calculate_meta_distributions(self, meta):
         """

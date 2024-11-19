@@ -4,8 +4,8 @@ import pandas as pd
 from sklearn.metrics import auc
 from sklearn.metrics import roc_auc_score
 
-from gesund.metrics.classification.metrics.auc import AUC
-from gesund.metrics.classification.metrics.stats_tables import StatsTables
+from gesund.core._metrics.classification.metrics.auc import AUC
+from gesund.core._metrics.classification.metrics.stats_tables import StatsTables
 from gesund.core._utils import ValidationUtils
 
 
@@ -81,7 +81,9 @@ class PlotStatsTables:
         :param pred_categorical: Prediction for samples
         :return: payload_dict
         """
-        filtered_meta_pred_true = self.validation_utils.filter_attribute_by_dict(target_attribute_dict)
+        filtered_meta_pred_true = self.validation_utils.filter_attribute_by_dict(
+            target_attribute_dict
+        )
         true = filtered_meta_pred_true["true"]
         pred_categorical = filtered_meta_pred_true["pred_categorical"]
 
