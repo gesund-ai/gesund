@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-from typing import Any, Dict, Tuple, Callable
+from typing import Any, Dict, List, Optional, Tuple, Callable
 
 from .plots.plot_driver import ClassificationPlotDriver
 from gesund.core._metrics.classification.classification_metric_plot import (
@@ -19,7 +19,6 @@ class ValidationCreation:
     :param filter_field: The field to filter the data, default is "image_url".
     :param generate_metrics: Whether to generate metrics during validation creation, default is True.
     """
-
     def __init__(self, batch_job_id, filter_field="image_url", generate_metrics=True):
         """
         Initialize the ValidationCreation class.
@@ -33,9 +32,7 @@ class ValidationCreation:
         self.filter_field = filter_field
         self.generate_metrics = generate_metrics
 
-    def create_validation_collection_data(
-        self, successful_batch_data, annotation_data, format=None, meta_data=None
-    ):
+    def create_validation_collection_data(self, successful_batch_data, annotation_data, format=None, meta_data=None):
         """
         Create validation collection data from successful batch predictions and annotations.
 
@@ -73,7 +70,7 @@ class ValidationCreation:
             validation_collection_data.append(information_dict)
 
         return validation_collection_data
-
+    
     def load(self, validation_collection_data, class_mappings, filtering_meta=None):
         """
         Load the validation data, calculate metrics, and return the overall metrics.
@@ -133,14 +130,8 @@ class ValidationCreation:
         overall_metrics = self.plot_driver._calling_all_plots()
 
         return overall_metrics
-
-    def plot_metrics(
-        self,
-        metrics: Dict[str, Any],
-        json_outputs_dir: str,
-        plot_outputs_dir: str,
-        plot_configs: Dict[str, Dict[str, Any]],
-    ) -> None:
+    
+    def plot_metrics(self, metrics: Dict[str, Any], json_outputs_dir: str, plot_outputs_dir: str, plot_configs: Dict[str, Dict[str, Any]]) -> None:
         """
         Generate and save various types of plots based on the provided metrics and configurations.
 
@@ -226,6 +217,7 @@ class ValidationCreation:
             params: Dict[str, Any] = draw_params.get(draw_type, lambda _: {})(config)
             plot.draw(draw_type, save_path=save_path, **params)
 
+
     def _load_plotting_data(self, validation_collection_data):
         """
         Load and organize the data needed for plotting.
@@ -241,7 +233,10 @@ class ValidationCreation:
         )
         return plotting_data
 
-    def _craft_per_image_plotting_data(self, validation_collection_data):
+    def _craft_per_image_plotting_data(
+        self,
+        validation_collection_data: List[Dict[str, Any]]
+        ) -> Dict[str, Any]:
         """
         Craft the per-image plotting data from the validation collection.
 

@@ -2,18 +2,23 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import auc
 import sklearn
+from typing import Any, Dict, List, Optional, Union
 
 from .confusion_matrix import ConfusionMatrix
 
 
 class MostConfused:
-    def __init__(self, class_mappings):
+    def __init__(self, class_mappings: Dict[int, str]) -> None:
         self.class_mappings = class_mappings
         self.class_order = [int(i) for i in list(class_mappings.keys())]
 
         self.confusion_matrix = ConfusionMatrix(class_mappings=class_mappings)
 
-    def calculate_most_confused(self, true, pred_categorical):
+    def calculate_most_confused(
+        self,
+        true: Union[List[int], np.ndarray, pd.Series],
+        pred_categorical: Union[List[int], np.ndarray, pd.Series]
+        ) -> Dict[str, Any]:        
         """Improve Explanation
         Calculates number of confusion for all classes on dataset.
         :return: confused_list_idxs , confused_list_values
