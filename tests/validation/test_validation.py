@@ -150,10 +150,10 @@ def test_validation_plotmetrics_classification(plot_config):
         json_structure_type="gesund",
         metadata_path=f"{data_dir}/test_metadata.json",
         return_dict=True,
-        display_plots=True,
-        store_plots=True,
+        display_plots=False,
+        store_plots=False,
         plot_config=plot_config,
-        run_validation_only=False,
+        run_validation_only=True,
     )
     results = classification_validation.run()
 

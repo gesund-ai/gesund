@@ -217,9 +217,12 @@ class Validation:
             else:
                 prediction = self.data.prediction
                 annotation = self.data.annotation
+            metadata = None
+            if self.user_params.metadata_path:
+                metadata = self.data.metadata
             validation_data = (
                 _metric_validation_executor.create_validation_collection_data(
-                    prediction, annotation, self.user_params.json_structure_type
+                    prediction, annotation, metadata
                 )
             )
 

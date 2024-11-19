@@ -574,7 +574,6 @@ class PlotData:
                 _metric_validation_executor.create_validation_collection_data(
                     prediction,
                     annotation,
-                    self.user_params.json_structure_type,
                     self.user_data.metadata,
                 )
             )
