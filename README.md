@@ -24,7 +24,6 @@ This library provides tools for calculating validation metrics for predictions a
 To use this library, ensure you have the necessary dependencies installed in your environment. You can install them via `pip`:
 
 ```sh
-pip install -r requirements.txt
 pip install gesund
 ```
 
