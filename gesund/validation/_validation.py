@@ -134,6 +134,8 @@ class Validation:
         self.batch_job_id = str(bson.ObjectId())
         self.output_dir = f"outputs/{self.batch_job_id}"
 
+        os.makedirs(self.output_dir, exist_ok=True)
+        os.makedirs(os.path.join(self.output_dir, "plots"), exist_ok=True)
         self.problem_type_result_map = {
             "classification": ResultDataClassification,
             "object_detection": ResultDataObjectDetection,
@@ -238,7 +240,6 @@ class Validation:
 
         :return: None
         """
-        os.makedirs(self.output_dir)
         for plot_name, metrics in results.items():
             output_file = os.path.join(self.output_dir, f"{plot_name}.json")
             try:
