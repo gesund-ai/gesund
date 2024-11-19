@@ -95,6 +95,7 @@ def test_validation_initialization(plot_config):
     classification_validation = Validation(
         annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
         predictions_path=f"{data_dir}/gesund_custom_format/prediction.json",
+        class_mapping=f"{data_dir}/test_class_mappings.json",
         problem_type="classification",
         data_format="json",
         json_structure_type="gesund",
@@ -157,13 +158,14 @@ def test_validation_plotmetrics_classification(plot_config):
     results = classification_validation.run()
 
     assert os.path.exists(classification_validation.output_dir) is True
-    assert isinstance(results, ResultDataClassification)
+    assert isinstance(results, ResultDataClassification) is True
 
 
 @pytest.mark.parametrize(
     "plot_config", [{"problem_type": "object_detection"}], indirect=True
 )
 def test_validation_plotmetrics_object_detection(plot_config):
+    from gesund.core._schema import ResultDataObjectDetection
 
     data_dir = "./tests/_data/object_detection"
     obj_det_validation = Validation(
@@ -174,20 +176,22 @@ def test_validation_plotmetrics_object_detection(plot_config):
         data_format="json",
         json_structure_type="gesund",
         metadata_path=f"{data_dir}/test_metadata.json",
-        return_dict=False,
+        return_dict=True,
         display_plots=True,
         store_plots=True,
         plot_config=plot_config,
-        run_validation_only=False,
+        run_validation_only=True,
     )
     results = obj_det_validation.run()
     assert os.path.exists(obj_det_validation.output_dir) is True
+    assert isinstance(results, ResultDataObjectDetection) is True
 
 
 @pytest.mark.parametrize(
     "plot_config", [{"problem_type": "semantic_segmentation"}], indirect=True
 )
 def test_validation_plotmetrics_segmentation(plot_config):
+    from gesund.core._schema import ResultDataSegmentation
     data_dir = "./tests/_data/semantic_segmentation"
     seg_validation = Validation(
         annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
@@ -197,11 +201,13 @@ def test_validation_plotmetrics_segmentation(plot_config):
         data_format="json",
         json_structure_type="gesund",
         metadata_path=f"{data_dir}/test_metadata.json",
-        return_dict=False,
+        return_dict=True,
         display_plots=True,
         store_plots=True,
         plot_config=plot_config,
-        run_validation_only=False,
+        run_validation_only=True,
     )
     results = seg_validation.run()
     assert os.path.exists(seg_validation.output_dir) is True
+    assert isinstance(results, ResultDataSegmentation) is True
+
