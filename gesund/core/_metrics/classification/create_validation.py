@@ -153,7 +153,8 @@ class ValidationCreation:
         :param plot_configs: Configuration dictionary specifying the types of plots to generate and their parameters.
 
         :return: None
-        """
+        """        
+        
         file_name_patterns: Dict[str, Tuple[str, str]] = {
             "class_distributions": ("class_distributions_path", "plot_{}.json"),
             "blind_spot": ("blind_spot_path", "plot_{}_metrics.json"),

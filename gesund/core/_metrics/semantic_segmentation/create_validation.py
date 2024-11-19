@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 from .plots.plot_driver import SemanticSegmentationPlotDriver
-from gesund.metrics.semantic_segmentation.segmentation_metric_plot import (
+from gesund.core._metrics.semantic_segmentation.segmentation_metric_plot import (
     Semantic_Segmentation_Plot,
 )
 
@@ -136,6 +136,7 @@ class ValidationCreation:
 
         :return: None
         """
+        
         file_name_patterns = {
             "violin_graph": ("violin_path", "plot_{}.json"),
             "plot_by_meta_data": (
