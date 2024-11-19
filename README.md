@@ -27,6 +27,71 @@ To use this library, ensure you have the necessary dependencies installed in you
 pip install gesund
 ```
 
+## Basic Usage
+
+```python
+
+# import the library
+from gesund.validation import Validation
+
+# set up the configs
+data_dir = "./tests/_data/classification"
+plot_config = {
+    "classification": {
+        "class_distributions": {
+            "metrics": ["normal", "pneumonia"],
+            "threshold": 10,
+        },
+        "blind_spot": {"class_type": ["Average", "1", "0"]},
+        "performance_by_threshold": {
+            "graph_type": "graph_1",
+            "metrics": [
+                "F1",
+                "Sensitivity",
+                "Specificity",
+                "Precision",
+                "FPR",
+                "FNR",
+            ],
+            "threshold": 0.2,
+        },
+        "roc": {"roc_class": ["normal", "pneumonia"]},
+        "precision_recall": {"pr_class": ["normal", "pneumonia"]},
+        "confidence_histogram": {"metrics": ["TP", "FP"], "threshold": 0.5},
+        "overall_metrics": {"metrics": ["AUC", "Precision"], "threshold": 0.2},
+        "confusion_matrix": {},
+        "prediction_dataset_distribution": {},
+        "most_confused_bar": {},
+        "confidence_histogram_scatter_distribution": {},
+        "lift_chart": {},
+    }
+}
+
+# create a class instance
+classification_validation = Validation(
+    annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
+    predictions_path=f"{data_dir}/gesund_custom_format/prediction.json",
+    problem_type="classification",
+    class_mapping=f"{data_dir}/test_class_mappings.json",
+    data_format="json",
+    json_structure_type="gesund",
+    metadata_path=f"{data_dir}/test_metadata.json",
+    return_dict=True,
+    display_plots=False,
+    store_plots=False,
+    plot_config=plot_config,
+    run_validation_only=True
+)
+
+# run the validation workflow
+results = classification_validation.run()
+
+# explore the results
+print(results)
+
+```
+
+
 ## Code of Conduct
 
 
