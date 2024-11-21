@@ -1,1 +1,1 @@
-from .manager import MetricsManager
+from .manager import MetricManager

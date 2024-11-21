@@ -1,2 +1,3 @@
 from .validation._validation import Validation
-from .metrics.manager import MetricsManager
+from .metrics.manager import MetricManager
+from .plots.manager import PlotManager
