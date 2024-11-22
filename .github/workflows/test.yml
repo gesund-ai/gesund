@@ -3,7 +3,7 @@
 
 name: Test Workflow
 
-on: release
+on: push
 
 jobs:
   build:
