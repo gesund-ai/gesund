@@ -1,7 +1,8 @@
 import os
 import pytest
+import shutil
 
-from gesund.validation import Validation
+from gesund import Validation
 
 
 @pytest.fixture
@@ -85,10 +86,24 @@ def plot_config(request):
     return plot_configs[request.param["problem_type"]]
 
 
+@pytest.fixture(scope="function")
+def setup_and_teardown():
+    # Setup code (optional)
+    print("Setting up...")
+    # ... your setup code here
+
+    yield  # Yield control to the test function
+
+    # Teardown code
+    work_dir = os.getcwd()
+    outputs_dir = os.path.join(work_dir, "outputs")
+    shutil.rmtree(outputs_dir)
+
+
 @pytest.mark.parametrize(
     "plot_config", [{"problem_type": "classification"}], indirect=True
 )
-def test_validation_initialization(plot_config):
+def test_validation_initialization(plot_config, setup_and_teardown):
     from gesund.core import UserInputParams
 
     data_dir = "./tests/_data/classification"
@@ -113,7 +128,7 @@ def test_validation_initialization(plot_config):
 @pytest.mark.parametrize(
     "plot_config", [{"problem_type": "classification"}], indirect=True
 )
-def test_validation_dataload(plot_config):
+def test_validation_dataload(plot_config, setup_and_teardown):
     from gesund.core import UserInputData
 
     data_dir = "./tests/_data/classification"
@@ -137,7 +152,7 @@ def test_validation_dataload(plot_config):
 @pytest.mark.parametrize(
     "plot_config", [{"problem_type": "classification"}], indirect=True
 )
-def test_validation_plotmetrics_classification(plot_config):
+def test_validation_plotmetrics_classification(plot_config, setup_and_teardown):
     from gesund.core import ResultDataClassification
 
     data_dir = "./tests/_data/classification"
@@ -164,7 +179,7 @@ def test_validation_plotmetrics_classification(plot_config):
 @pytest.mark.parametrize(
     "plot_config", [{"problem_type": "object_detection"}], indirect=True
 )
-def test_validation_plotmetrics_object_detection(plot_config):
+def test_validation_plotmetrics_object_detection(plot_config, setup_and_teardown):
     from gesund.core._schema import ResultDataObjectDetection
 
     data_dir = "./tests/_data/object_detection"
@@ -190,7 +205,7 @@ def test_validation_plotmetrics_object_detection(plot_config):
 @pytest.mark.parametrize(
     "plot_config", [{"problem_type": "semantic_segmentation"}], indirect=True
 )
-def test_validation_plotmetrics_segmentation(plot_config):
+def test_validation_plotmetrics_segmentation(plot_config, setup_and_teardown):
     from gesund.core._schema import ResultDataSegmentation
 
     data_dir = "./tests/_data/semantic_segmentation"
