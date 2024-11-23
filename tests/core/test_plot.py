@@ -5,7 +5,7 @@ import os
 from unittest.mock import MagicMock
 from typing import Dict, List, Any
 
-from gesund.core._plot import CommonPlots
+from gesund.plots._plot import CommonPlots
 from gesund.core import UserInputParams, UserInputData
 
 

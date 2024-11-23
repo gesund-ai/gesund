@@ -12,7 +12,7 @@ from gesund.core._schema import (
     ResultDataObjectDetection,
     ResultDataSegmentation,
 )
-from gesund.core._plot import PlotData
+from gesund.plots._plot import PlotData
 from gesund.core._exceptions import MetricCalculationError
 
 
