@@ -298,7 +298,23 @@ class Validation:
         )
         plot_data_executor.plot()
 
-    def run(self) -> Union[None, ResultDataClassification]:
+    def _round_nested_dict(self, data: Union[dict, list, float, int], round_digits: int) -> Union[dict, list, float, int]:
+        """
+        Recursively round numbers in nested dictionaries and lists.
+        
+        :param data: Input data structure (dict, list, or numeric value)
+        :param round_digits: Number of decimal places to round to
+        :return: Data structure with rounded numbers
+        """
+        if isinstance(data, dict):
+            return {k: self._round_nested_dict(v, round_digits) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [self._round_nested_dict(item, round_digits) for item in data]
+        elif isinstance(data, float):
+            return round(data, round_digits)
+        return data
+
+    def run(self, round_digits: Optional[int] = None) -> Union[None, ResultDataClassification]:
         """
         A function to run the validation pipeline
 
@@ -313,6 +329,10 @@ class Validation:
         # run the validation
         results = self._run_validation()
 
+        # Round numbers if specified
+        if round_digits is not None:
+            results = self._round_nested_dict(results, round_digits)
+            
         # format the results
         # results = self._format_results(results)
 
