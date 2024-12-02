@@ -134,6 +134,25 @@ def test_validation_dataload(plot_config):
     assert isinstance(classification_validation.data, UserInputData)
 
 
+def extract_floats(data):
+    """
+    Recursively extract all float values from nested dictionaries and lists.
+    
+    :param data: The data structure to search.
+    :return: A list of float values.
+    """
+    floats = []
+    if isinstance(data, dict):
+        for value in data.values():
+            floats.extend(extract_floats(value))
+    elif isinstance(data, list):
+        for item in data:
+            floats.extend(extract_floats(item))
+    elif isinstance(data, float):
+        floats.append(data)
+    return floats
+
+
 @pytest.mark.parametrize(
     "plot_config", [{"problem_type": "classification"}], indirect=True
 )
@@ -155,10 +174,42 @@ def test_validation_plotmetrics_classification(plot_config):
         plot_config=plot_config,
         run_validation_only=True,
     )
-    results = classification_validation.run()
-
+    
+    results_rounded = classification_validation.run(round_digits=3)
+    results_unrounded = classification_validation.run()
+    
     assert os.path.exists(classification_validation.output_dir) is True
-    assert isinstance(results, ResultDataClassification) is True
+    assert isinstance(results_rounded, ResultDataClassification) is True
+    assert isinstance(results_unrounded, ResultDataClassification) is True
+    
+    def gather_floats(result: ResultDataClassification) -> list:
+        floats = []
+        for field, value in result.model_fields.items():
+            floats.extend(extract_floats(value))
+        return floats
+    
+    rounded_floats = gather_floats(results_rounded)
+    
+    unrounded_floats = gather_floats(results_unrounded)
+    
+    print("Rounded Floats:")
+    for value in rounded_floats:
+        print(value)
+    
+    print("\nUnrounded Floats:")
+    for value in unrounded_floats:
+        print(value)
+    
+    for value in rounded_floats:
+        decimal_part = str(value).split('.')[-1]
+        assert len(decimal_part) <= 3, f"Value {value} not rounded to 3 digits"
+    
+    for value in unrounded_floats:
+        decimal_part = str(value).split('.')[-1]
+        assert len(decimal_part) > 3, f"Value {value} rounded to 3 digits"
+    
+    for value in unrounded_floats:
+        assert value in rounded_floats, f"Value {value} not present in rounded floats"
 
 
 @pytest.mark.parametrize(
