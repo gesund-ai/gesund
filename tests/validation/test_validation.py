@@ -192,14 +192,6 @@ def test_validation_plotmetrics_classification(plot_config):
     
     unrounded_floats = gather_floats(results_unrounded)
     
-    print("Rounded Floats:")
-    for value in rounded_floats:
-        print(value)
-    
-    print("\nUnrounded Floats:")
-    for value in unrounded_floats:
-        print(value)
-    
     for value in rounded_floats:
         decimal_part = str(value).split('.')[-1]
         assert len(decimal_part) <= 3, f"Value {value} not rounded to 3 digits"
