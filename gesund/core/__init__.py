@@ -1,7 +1,5 @@
-from ._plot import PlotData
-from ._converters import *
-from ._metrics import *
-from ._data_loaders import DataLoader
-from ._exceptions import DataLoadError, InputError, MetricCalculationError, PlotError
-from ._plot import PlotData
-from ._schema import UserInputData, UserInputParams, ResultDataClassification
+from ._managers.metric_manager import MetricManager
+from ._managers.plot_manager import PlotManager
+
+metric_manager = MetricManager()
+plot_manager = PlotManager()
