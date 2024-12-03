@@ -14,10 +14,6 @@ class UserInputParams(BaseModel):
     data_format: str
     plot_config: dict
     metadata_path: Optional[str] = None
-    return_dict: Optional[bool] = False
-    display_plots: Optional[bool] = False
-    store_plots: Optional[bool] = False
-    run_validation_only: Optional[bool] = True
 
     allowed_values: ClassVar[dict] = {
         "problem_type": ["classification", "object_detection", "semantic_segmentation"],
@@ -96,37 +92,3 @@ class UserInputData(BaseModel):
     converted_prediction: Optional[Union[List[Dict], Dict]] = None
     converted_annotation: Optional[Union[List[Dict], Dict]] = None
     was_converted: Optional[bool] = False
-
-
-class ResultDataClassification(BaseModel):
-    plot_blind_spot_metrics: Dict
-    plot_class_distributions: Dict
-    plot_class_performance_by_threshold: Dict
-    plot_class_performances: Dict
-    plot_confidence_histogram_scatter_distribution: Dict
-    plot_confusion_matrix: Dict
-    plot_explore_predictions: Dict
-    plot_gtless_confidence_histogram_scatter_distribution: Dict
-    plot_highlighted_overall_metrics: Dict
-    plot_lift_chart: Dict
-    plot_meta_distributions: Dict
-    plot_most_confused_bar: Dict
-    plot_most_confused_class_images: Dict
-    plot_parallel_categorical_analysis: Dict
-    plot_precision_recall_multiclass_statistics: Dict
-    plot_prediction_dataset_distribution: Dict
-    plot_prediction_distribution: Dict
-    plot_roc_multiclass_statistics: Dict
-    plot_softmax_probabilities_distribution: Dict
-    plot_statistics_classbased_table: Dict
-    plot_top_losses: Dict
-    plot_tp_tn_fp_fn: Dict
-    plot_training_validation_comparison_classbased_table: Dict
-
-
-class ResultDataObjectDetection(BaseModel):
-    pass
-
-
-class ResultDataSegmentation(BaseModel):
-    pass
