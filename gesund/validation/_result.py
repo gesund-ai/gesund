@@ -27,7 +27,7 @@ class ValidationResult:
         self.user_params = input_params
         self.result = result
 
-    def save(self, metric_name: str = "all", format: str = "json") -> None:
+    def save(self, metric_name: str = "all", format: str = "json") -> str:
         """
         A function to save the metric in json format
 
@@ -36,7 +36,8 @@ class ValidationResult:
         :param format: data format for the result to save in
         :type format: str
 
-        :return: None
+        :return: location of the json file stored
+        :rtype: str
         """
         pass
 

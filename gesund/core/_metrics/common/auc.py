@@ -43,11 +43,13 @@ class Classification:
 
         # format the data
 
+        # apply metadata if given
+
         # run the calculation logic
         pass
 
 
-class SemanticSegmentation:
+class SemanticSegmentation(Classification):
     pass
 
 
@@ -62,6 +64,12 @@ class PlotAuc:
     def _validate_data(self):
         """
         A function to validate the data required for plotting the AUC.
+        """
+        pass
+
+    def save(self) -> str:
+        """
+        A function to save the plot
         """
         pass
 
