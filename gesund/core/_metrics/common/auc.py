@@ -38,7 +38,6 @@ class Classification:
         :return: calculated metric
         :rtype: dict
         """
-
         # validate the data
 
         # format the data
