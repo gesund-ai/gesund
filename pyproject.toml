@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gesund"
-version = "0.1.7"
+version = "0.1.10"
 authors = [
   { name = "Veysel Koccaman", email = "veysel@gesund.ai" },
   { name = "Hammad Khalid", email = "hammad@gesund.ai" },
@@ -26,6 +26,23 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [
+    "docutils",
+    "requests",
+    "bson",
+    "jsonschema",
+    "scikit-learn",
+    "pandas",
+    "seaborn",
+    "opencv-python",
+    "dictances==1.5.3",
+    "miseval==1.2.2",
+    "numpy==1.21.6",
+    "numba==0.55.2",
+    "tqdm",
+    "pydantic==2.9.2"
+]
+
 
 [project.urls]
 Homepage = "https://github.com/gesund-ai/gesund"
@@ -36,7 +53,7 @@ Documentation = "https://gesund-ai.github.io/"
 test = [ "pytest", "pytest-cov"]
 
 [tool.setuptools.packages.find]
-where = ["gesund"]
+where = ["gesund-src"]
 
 [tool.setuptools.package-data]
 mypkg = ["*.py", "*.json", "*.png"]

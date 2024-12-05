@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(
-    packages=["gesund"],
+    packages=["gesund-src"],
     install_requires=[
         "bson",
         "jsonschema",
