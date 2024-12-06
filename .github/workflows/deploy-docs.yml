@@ -1,5 +1,5 @@
 # This workflow to automatically build and deploy Sphinx documentation to GitHub Pages
-# Triggers on push to refactor/document_automation branch
+# Triggers on push to main branch
 # Steps:
     # 1. Checkout repository
     # 2. Setup Python environment
@@ -13,7 +13,7 @@ name: Deploy Sphinx Documentation
 on:
   push:
     branches:
-      - refactor/document_automation
+      - main
 
 jobs:
   build-and-deploy:
@@ -32,7 +32,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install sphinx
-          pip install -e .
+          pip install .
 
       - name: Build documentation
         run: |
