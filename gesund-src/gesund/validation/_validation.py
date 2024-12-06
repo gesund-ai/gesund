@@ -1,15 +1,53 @@
+from typing import Optional, Union
+import bson
 import os
 import json
-import bson
-from typing import Union, Optional
 
-from gesund.core.schema import UserInputParams, UserInputData
-from gesund.core._exceptions import MetricCalculationError
-from gesund.core._data_loaders import DataLoader
 from gesund.core._converters import ConverterFactory
-from ._result import ValidationResult
-from gesund.core._managers.metric_manager import metric_manager
-from gesund.core._managers.plot_manager import plot_manager
+from gesund.core._data_loaders import DataLoader
+from gesund.core._schema import (
+    UserInputParams,
+    UserInputData,
+    ResultDataClassification,
+    ResultDataObjectDetection,
+    ResultDataSegmentation,
+)
+from gesund.core._plot import PlotData
+from gesund.core._exceptions import MetricCalculationError
+
+
+class ValidationProblemTypeFactory:
+    @classmethod
+    def get_problem_type_factory(cls, problem_type: str):
+        """
+        Return the validation creation class based on the problem_type.
+
+        :param problem_type: Type of problem (e.g., 'classification', 'object_detection').
+        :type problem_type: str
+
+        :return: Validation creation class corresponding to the problem type.
+        :rtype: class
+        """
+        if problem_type == "classification":
+            from gesund.core._metrics.classification.create_validation import (
+                ValidationCreation,
+            )
+
+            return ValidationCreation
+        elif problem_type == "semantic_segmentation":
+            from gesund.core._metrics.semantic_segmentation.create_validation import (
+                ValidationCreation,
+            )
+
+            return ValidationCreation
+        elif problem_type == "object_detection":
+            from gesund.core._metrics.object_detection.create_validation import (
+                ValidationCreation,
+            )
+
+            return ValidationCreation
+        else:
+            raise ValueError(f"Unknown problem type: {problem_type}")
 
 
 class Validation:
@@ -21,8 +59,12 @@ class Validation:
         problem_type: str,
         data_format: str,
         json_structure_type: str,
-        plot_config: str,
+        plot_config: dict,
         metadata_path: Optional[str] = None,
+        return_dict: Optional[bool] = False,
+        display_plots: Optional[bool] = False,
+        store_plots: Optional[bool] = False,
+        run_validation_only: Optional[bool] = False,
     ):
         """
         Initialization function to handle the validation pipeline
@@ -42,12 +84,29 @@ class Validation:
         :param json_structure_type: Data format for the validation (e.g., 'coco', 'yolo', 'gesund').
         :type json_structure_type: str
 
-        :param plot_config: Config for the plotting
+        :param plot_config: The configuration in dictionary format required for plotting
         :type plot_config: dict
 
         :param metadata_path: Path to the metadata file (if available).
         :type metadata_path: str
         :optional metadata_path: true
+
+        :param return_dict: If true then the return the result as dict
+        :type return_dict: bool
+        :optional return_dict: true
+
+        :param display_plots: if true then the plots are displayed
+        :type display_plots: bool
+        :optional display_plots: true
+
+        :param store_plots: if true then the plots are saved in local as png files
+        :type store_plots: bool
+        :optional store_plots: true
+
+        :param run_validation_only: by default true the plots are run
+        :type run_validation_only: bool
+        :optional run_validation_only: true
+
 
         :return: None
         """
@@ -58,9 +117,13 @@ class Validation:
             "metadata_path": metadata_path,
             "problem_type": problem_type,
             "json_structure_type": json_structure_type,
+            "return_dict": return_dict,
+            "display_plots": display_plots,
+            "store_plots": store_plots,
             "data_format": data_format,
             "class_mapping": class_mapping,
             "plot_config": plot_config,
+            "run_validation_only": run_validation_only,
         }
         self.user_params = UserInputParams(**params)
 
@@ -73,6 +136,11 @@ class Validation:
 
         os.makedirs(self.output_dir, exist_ok=True)
         os.makedirs(os.path.join(self.output_dir, "plots"), exist_ok=True)
+        self.problem_type_result_map = {
+            "classification": ResultDataClassification,
+            "object_detection": ResultDataObjectDetection,
+            "semantic_segmentation": ResultDataSegmentation,
+        }
 
     def _load_data(self) -> dict:
         """
@@ -137,38 +205,34 @@ class Validation:
         :return: result dictionary
         :rtype: dict
         """
-        if self.data.was_converted:
-            prediction = self.data.converted_prediction
-            annotation = self.data.converted_annotation
-        else:
-            prediction = self.data.prediction
-            annotation = self.data.annotation
-        metadata = None
-        if self.user_params.metadata_path:
-            metadata = self.data.metadata
+        _validation_class = ValidationProblemTypeFactory().get_problem_type_factory(
+            self.user_params.problem_type
+        )
 
-        results = {}
+        _metric_validation_executor = _validation_class(self.batch_job_id)
         try:
-            for metric_name in metric_manager.get_names(
-                problem_type=self.user_params.problem_type
-            ):
-                _metric_executor = metric_manager[
-                    f"{self.user_params.problem_type}.{metric_name}"
-                ]
-                _result = _metric_executor(
-                    data={
-                        "prediction": prediction,
-                        "ground_truth": annotation,
-                        "metadata": metadata,
-                    },
-                    problem_type=self.user_params.problem_type,
+            if self.data.was_converted:
+                prediction = self.data.converted_prediction
+                annotation = self.data.converted_annotation
+            else:
+                prediction = self.data.prediction
+                annotation = self.data.annotation
+            metadata = None
+            if self.user_params.metadata_path:
+                metadata = self.data.metadata
+            validation_data = (
+                _metric_validation_executor.create_validation_collection_data(
+                    prediction, annotation, metadata
                 )
-                results[metric_name] = _result
+            )
+
+            metrics = _metric_validation_executor.load(
+                validation_data, self.data.class_mapping
+            )
+            return metrics
         except Exception as e:
             print(e)
             raise MetricCalculationError("Error in calculating metrics!")
-
-        return results
 
     def _save_json(self, results) -> None:
         """
@@ -216,7 +280,25 @@ class Validation:
             print("-" * 40)
         print("All Graphs and Plots Metrics saved in JSONs.\n" + "-" * 40)
 
-    def run(self) -> ValidationResult:
+    def _plot_metrics(self, results: dict) -> None:
+        """
+        A function to plot the metrics
+
+        :param results: a dictionary containing the validation metrics
+        :type results: dict
+
+        :return: None
+        """
+        plot_data_executor = PlotData(
+            metrics_result=results,
+            user_params=self.user_params,
+            user_data=self.data,
+            batch_job_id=self.batch_job_id,
+            validation_problem_type_factory=ValidationProblemTypeFactory(),
+        )
+        plot_data_executor.plot()
+
+    def run(self) -> Union[None, ResultDataClassification]:
         """
         A function to run the validation pipeline
 
@@ -231,9 +313,19 @@ class Validation:
         # run the validation
         results = self._run_validation()
 
-        # return the results
-        results = ValidationResult(
-            data=self.data, input_params=self.user_params, result=results
-        )
+        # format the results
+        # results = self._format_results(results)
 
-        return results
+        # store the results
+        self._save_json(results)
+
+        # plot the metrics only if user requires
+        if self.user_params.run_validation_only is False:
+            self._plot_metrics(results)
+
+        # return the results
+        if self.user_params.return_dict:
+            results = self.problem_type_result_map[self.user_params.problem_type](
+                **results
+            )
+            return results

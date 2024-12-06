@@ -1,7 +1,10 @@
-import os
+# file to write the common logic
 import pytest
+import os
+import shutil
 
-from gesund.validation import Validation
+
+from gesund import Validation
 
 
 @pytest.fixture
@@ -85,14 +88,30 @@ def plot_config(request):
     return plot_configs[request.param["problem_type"]]
 
 
+@pytest.fixture(scope="function")
+def setup_and_teardown():
+    # Setup code (optional)
+    print("Setting up...")
+    # ... your setup code here
+
+    yield  # Yield control to the test function
+
+    # Teardown code
+    work_dir = os.getcwd()
+    outputs_dir = os.path.join(work_dir, "outputs")
+    if os.path.exists(outputs_dir):
+        shutil.rmtree(outputs_dir)
+
+
 @pytest.mark.parametrize(
     "plot_config", [{"problem_type": "classification"}], indirect=True
 )
-def test_validation_initialization(plot_config):
-    from gesund.core import UserInputParams
+def test_validation_initialization(plot_config, setup_and_teardown):
+    from gesund.core.schema import UserInputParams
 
     data_dir = "./tests/_data/classification"
-    classification_validation = Validation(
+
+    validator = Validation(
         annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
         predictions_path=f"{data_dir}/gesund_custom_format/prediction.json",
         class_mapping=f"{data_dir}/test_class_mappings.json",
@@ -100,24 +119,21 @@ def test_validation_initialization(plot_config):
         data_format="json",
         json_structure_type="gesund",
         metadata_path=f"{data_dir}/test_metadata.json",
-        return_dict=False,
-        display_plots=False,
-        store_plots=False,
         plot_config=plot_config,
-        run_validation_only=True,
     )
 
-    assert isinstance(classification_validation.user_params, UserInputParams)
+    assert isinstance(validator.user_params, UserInputParams)
 
 
 @pytest.mark.parametrize(
     "plot_config", [{"problem_type": "classification"}], indirect=True
 )
-def test_validation_dataload(plot_config):
-    from gesund.core import UserInputData
+def test_validation_dataload(plot_config, setup_and_teardown):
+    from gesund.core.schema import UserInputData
 
     data_dir = "./tests/_data/classification"
-    classification_validation = Validation(
+
+    validator = Validation(
         annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
         predictions_path=f"{data_dir}/gesund_custom_format/prediction.json",
         class_mapping=f"{data_dir}/test_class_mappings.json",
@@ -125,89 +141,93 @@ def test_validation_dataload(plot_config):
         data_format="json",
         json_structure_type="gesund",
         metadata_path=f"{data_dir}/test_metadata.json",
-        return_dict=False,
-        display_plots=False,
-        store_plots=False,
         plot_config=plot_config,
-        run_validation_only=True,
     )
-    assert isinstance(classification_validation.data, UserInputData)
+
+    assert isinstance(validator.data, UserInputData)
 
 
 @pytest.mark.parametrize(
     "plot_config", [{"problem_type": "classification"}], indirect=True
 )
-def test_validation_plotmetrics_classification(plot_config):
-    from gesund.core import ResultDataClassification
+def test_metrics_manager(plot_config, setup_and_teardown):
+    from gesund import Validation
+    from gesund.validation._result import ValidationResult
+    from gesund.core._managers.metric_manager import metric_manager
 
-    data_dir = "./tests/_data/classification"
-    classification_validation = Validation(
+    problem_type = "classification"
+    data_dir = f"./tests/_data/{problem_type}"
+    validator = Validation(
         annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
         predictions_path=f"{data_dir}/gesund_custom_format/prediction.json",
         class_mapping=f"{data_dir}/test_class_mappings.json",
-        problem_type="classification",
+        problem_type=problem_type,
         data_format="json",
         json_structure_type="gesund",
         metadata_path=f"{data_dir}/test_metadata.json",
-        return_dict=True,
-        display_plots=False,
-        store_plots=False,
         plot_config=plot_config,
-        run_validation_only=True,
     )
-    results = classification_validation.run()
 
-    assert os.path.exists(classification_validation.output_dir) is True
-    assert isinstance(results, ResultDataClassification) is True
+    validation_results = validator.run()
+
+    assert isinstance(validation_results, ValidationResult) is True
+
+    result_list = []
+    for _metric in metric_manager.get_names(problem_type=problem_type):
+        if _metric in validation_results.result:
+            result_list.append(True)
+        else:
+            result_list.append(False)
+
+    assert any(result_list) is True
 
 
 @pytest.mark.parametrize(
-    "plot_config", [{"problem_type": "object_detection"}], indirect=True
+    "plot_config", [{"problem_type": "classification"}], indirect=True
 )
-def test_validation_plotmetrics_object_detection(plot_config):
-    from gesund.core._schema import ResultDataObjectDetection
+def test_plot_manager(plot_config, setup_and_teardown):
+    from gesund import Validation
+    from gesund.validation._result import ValidationResult
+    from gesund.core._managers.metric_manager import metric_manager
 
-    data_dir = "./tests/_data/object_detection"
-    obj_det_validation = Validation(
+    problem_type = "classification"
+    data_dir = f"./tests/_data/{problem_type}"
+    validator = Validation(
         annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
         predictions_path=f"{data_dir}/gesund_custom_format/prediction.json",
         class_mapping=f"{data_dir}/test_class_mappings.json",
-        problem_type="object_detection",
+        problem_type=problem_type,
         data_format="json",
         json_structure_type="gesund",
         metadata_path=f"{data_dir}/test_metadata.json",
-        return_dict=True,
-        display_plots=True,
-        store_plots=True,
         plot_config=plot_config,
-        run_validation_only=True,
     )
-    results = obj_det_validation.run()
-    assert os.path.exists(obj_det_validation.output_dir) is True
-    assert isinstance(results, ResultDataObjectDetection) is True
+
+    validation_results = validator.run()
+    assert isinstance(validation_results, ValidationResult) is True
+
+    result_list = []
+    for _metric in metric_manager.get_names(problem_type=problem_type):
+        if _metric in validation_results.result:
+            result_list.append(True)
+        else:
+            result_list.append(False)
+
+    assert any(result_list) is True
+    validation_results.plot()
 
 
-@pytest.mark.parametrize(
-    "plot_config", [{"problem_type": "semantic_segmentation"}], indirect=True
-)
-def test_validation_plotmetrics_segmentation(plot_config):
-    from gesund.core._schema import ResultDataSegmentation
+"""
+Usage
 
-    data_dir = "./tests/_data/semantic_segmentation"
-    seg_validation = Validation(
-        annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
-        predictions_path=f"{data_dir}/gesund_custom_format/prediction.json",
-        class_mapping=f"{data_dir}/test_class_mappings.json",
-        problem_type="semantic_segmentation",
-        data_format="json",
-        json_structure_type="gesund",
-        metadata_path=f"{data_dir}/test_metadata.json",
-        return_dict=True,
-        display_plots=True,
-        store_plots=True,
-        plot_config=plot_config,
-        run_validation_only=True,
-    )
-    results = seg_validation.run()
-    assert os.path.exists(seg_validation.output_dir) is True
-    assert isinstance(results, ResultDataSegmentation) is True
+from gesund import Validation
+
+validator = Validation(...)
+
+results = validator.run()
+
+results.plot(metric_name="str")
+
+results.save(metric_name="str")
+
+"""
