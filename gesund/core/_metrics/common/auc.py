@@ -1,6 +1,7 @@
 from typing import Union, Callable
 
-from gesund.core import metric_manager, plot_manager
+from gesund.core._managers.metric_manager import metric_manager
+from gesund.core._managers.plot_manager import plot_manager
 
 
 class Classification:

@@ -1,7 +1,8 @@
 from typing import Union, Optional
 
 from gesund.core.schema import UserInputParams, UserInputData
-from gesund.core import plot_manager
+from gesund.core._managers.metric_manager import metric_manager
+from gesund.core._managers.plot_manager import plot_manager
 
 
 class ValidationResult:
@@ -63,3 +64,8 @@ class ValidationResult:
                     f"{self.user_params.problem_type}.{metric_name}"
                 ]
                 _plot_executor(results=self.result, save_plot=save_plot)
+        else:
+            _plot_executor = plot_manager[
+                f"{self.user_params.problem_type}.{metric_name}"
+            ]
+            _plot_executor(results=self.result, save_plot=save_plot)

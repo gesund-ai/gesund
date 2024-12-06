@@ -4,11 +4,12 @@ import bson
 from typing import Union, Optional
 
 from gesund.core.schema import UserInputParams, UserInputData
-from gesund.core import metric_manager
 from gesund.core._exceptions import MetricCalculationError
 from gesund.core._data_loaders import DataLoader
 from gesund.core._converters import ConverterFactory
 from ._result import ValidationResult
+from gesund.core._managers.metric_manager import metric_manager
+from gesund.core._managers.plot_manager import plot_manager
 
 
 class Validation:
@@ -148,14 +149,19 @@ class Validation:
 
         results = {}
         try:
-            for metric_name in metric_manager.get_names(problem_type=self.problem_type):
-                _metric_executor = metric_manager[f"{self.problem_type}.{metric_name}"]
+            for metric_name in metric_manager.get_names(
+                problem_type=self.user_params.problem_type
+            ):
+                _metric_executor = metric_manager[
+                    f"{self.user_params.problem_type}.{metric_name}"
+                ]
                 _result = _metric_executor(
                     data={
                         "prediction": prediction,
                         "ground_truth": annotation,
                         "metadata": metadata,
-                    }
+                    },
+                    problem_type=self.user_params.problem_type,
                 )
                 results[metric_name] = _result
         except Exception as e:
