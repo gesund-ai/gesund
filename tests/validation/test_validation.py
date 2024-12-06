@@ -1,6 +1,8 @@
 # file to write the common logic
 import pytest
 import os
+import shutil
+
 
 from gesund import Validation
 
@@ -97,10 +99,14 @@ def setup_and_teardown():
     # Teardown code
     work_dir = os.getcwd()
     outputs_dir = os.path.join(work_dir, "outputs")
-    shutil.rmtree(outputs_dir)
+    if os.path.exists(outputs_dir):
+        shutil.rmtree(outputs_dir)
 
 
-def test_validation_initialization(plot_config):
+@pytest.mark.parametrize(
+    "plot_config", [{"problem_type": "classification"}], indirect=True
+)
+def test_validation_initialization(plot_config, setup_and_teardown):
     from gesund.core.schema import UserInputParams
 
     data_dir = "./tests/_data/classification"
@@ -113,6 +119,53 @@ def test_validation_initialization(plot_config):
         data_format="json",
         json_structure_type="gesund",
         metadata_path=f"{data_dir}/test_metadata.json",
+        plot_config=plot_config,
     )
 
     assert isinstance(validator.user_params, UserInputParams)
+
+
+@pytest.mark.parametrize(
+    "plot_config", [{"problem_type": "classification"}], indirect=True
+)
+def test_validation_dataload(plot_config, setup_and_teardown):
+    from gesund.core.schema import UserInputData
+
+    data_dir = "./tests/_data/classification"
+
+    validator = Validation(
+        annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
+        predictions_path=f"{data_dir}/gesund_custom_format/prediction.json",
+        class_mapping=f"{data_dir}/test_class_mappings.json",
+        problem_type="classification",
+        data_format="json",
+        json_structure_type="gesund",
+        metadata_path=f"{data_dir}/test_metadata.json",
+        plot_config=plot_config,
+    )
+
+    assert isinstance(validator.data, UserInputData)
+
+
+@pytest.mark.parametrize(
+    "plot_config", [{"problem_type": "classification"}], indirect=True
+)
+def test_metrics_manager(plot_config, setup_and_teardown):
+    from gesund.core import Validation
+
+
+"""
+Usage
+
+from gesund import Validation
+
+validator = Validation(...)
+
+results = validator.run()
+
+results.plot(metric_name="str")
+
+results.save(metric_name="str")
+
+
+"""
