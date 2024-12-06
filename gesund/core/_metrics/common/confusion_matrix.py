@@ -1,16 +1,9 @@
-from typing import Union, Callable, Any, Dict, List, Optional, Tuple
+from typing import Union, Callable, Any, Dict, List, Optional
 from gesund.core import metric_manager, plot_manager
 import numpy as np
 import pandas as pd
 import sklearn
-from sklearn.metrics import (
-    auc as calculate_auc,
-    roc_curve,
-    precision_recall_curve,
-    average_precision_score,
-    matthews_corrcoef,
-)
-from sklearn.preprocessing import label_binarize
+from sklearn.metrics import confusion_matrix as sklearn_confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -18,12 +11,12 @@ import seaborn as sns
 class Classification:
     def _validate_data(self, data: dict) -> bool:
         """
-        Validates the data required for metric calculation and plotting.
+        A function to validate the data that is required for metric calculation and plotting.
 
         :param data: The input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
         :type data: dict
 
-        :return: Status if the data is valid
+        :return: status if the data is valid
         :rtype: bool
         """
         # Basic validation checks
@@ -41,26 +34,24 @@ class Classification:
 
     def apply_metadata(self, data: dict, metadata: dict) -> dict:
         """
-        Applies metadata to the data for metric calculation and plotting.
+        A function to apply the metadata on the data for metric calculation and plotting.
 
-        :param data: The input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
+        :param data: the input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
         :type data: dict
-        :param metadata: The metadata to apply
-        :type metadata: dict
 
-        :return: Filtered dataset
+        :return: filtered dataset
         :rtype: dict
         """
         return data
 
     def calculate(self, data: dict) -> dict:
         """
-        Calculates the AUC metric for the given dataset.
+        A function to calculate the confusion matrix for given dataset
 
         :param data: The input data required for calculation and plotting {"prediction":, "ground_truth": , "metadata":}
         :type data: dict
 
-        :return: Calculated metric results
+        :return: calculated metric
         :rtype: dict
         """
         # Validate the data
@@ -68,14 +59,14 @@ class Classification:
 
         # Extract predictions and ground truth
         true = np.array(data["ground_truth"])
-        pred_logits = np.array(data["prediction"])
+        pred_categorical = np.array(data["prediction"])
         metadata = data.get("metadata", None)
 
         # Apply metadata if given
         if metadata is not None:
             data = self.apply_metadata(data, metadata)
             true = np.array(data["ground_truth"])
-            pred_logits = np.array(data["prediction"])
+            pred_categorical = np.array(data["prediction"])
 
         # Get class mappings if provided, else infer from data
         class_mappings = data.get("class_mappings", None)
@@ -83,29 +74,15 @@ class Classification:
             class_order = [int(i) for i in list(class_mappings.keys())]
         else:
             # Infer class order from data
-            classes = np.unique(true)
+            classes = np.unique(np.concatenate((true, pred_categorical)))
             class_order = classes.tolist()
             class_mappings = {int(i): str(i) for i in class_order}
 
-        # Binarize the output for multiclass
-        y_true = label_binarize(true, classes=class_order)
-        if len(class_order) == 2:
-            y_true = np.hstack((1 - y_true, y_true))
-
-        # Calculate ROC and AUC
-        aucs = {}
-        fpr = {}
-        tpr = {}
-        for idx, class_idx in enumerate(class_order):
-            fpr[class_idx], tpr[class_idx], _ = roc_curve(
-                y_true[:, idx], pred_logits[:, idx]
-            )
-            aucs[class_idx] = calculate_auc(fpr[class_idx], tpr[class_idx])
+        # Run the calculation logic
+        cm = sklearn_confusion_matrix(true, pred_categorical, labels=class_order)
 
         result = {
-            "fpr": fpr,
-            "tpr": tpr,
-            "aucs": aucs,
+            "confusion_matrix": cm,
             "class_mappings": class_mappings,
             "class_order": class_order,
         }
@@ -121,27 +98,23 @@ class ObjectDetection:
     pass
 
 
-class PlotAuc:
+class PlotConfusionMatrix:
     def __init__(self, data: dict):
         self.data = data
-        self.fpr = data["fpr"]
-        self.tpr = data["tpr"]
-        self.aucs = data["aucs"]
+        self.confusion_matrix = data["confusion_matrix"]
         self.class_mappings = data["class_mappings"]
         self.class_order = data["class_order"]
 
     def _validate_data(self):
         """
-        Validates the data required for plotting the AUC.
+        A function to validate the data required for plotting the confusion matrix.
         """
-        required_keys = ["fpr", "tpr", "aucs"]
-        for key in required_keys:
-            if key not in self.data:
-                raise ValueError(f"Data must contain '{key}'.")
+        if "confusion_matrix" not in self.data:
+            raise ValueError("Data must contain 'confusion_matrix'.")
 
-    def save(self, filepath: str = "auc_plot.png") -> str:
+    def save(self, filepath: str = "confusion_matrix.png") -> str:
         """
-        Saves the plot to a file.
+        A function to save the plot
 
         :param filepath: Path where the plot image will be saved
         :type filepath: str
@@ -154,24 +127,21 @@ class PlotAuc:
 
     def plot(self):
         """
-        Plots the AUC curves.
+        Logic to plot the confusion matrix
         """
         # Validate the data
         self._validate_data()
 
+        df_cm = pd.DataFrame(
+            self.confusion_matrix,
+            index=[self.class_mappings[i] for i in self.class_order],
+            columns=[self.class_mappings[i] for i in self.class_order],
+        )
         plt.figure(figsize=(10, 7))
-        for class_idx in self.class_order:
-            plt.plot(
-                self.fpr[class_idx],
-                self.tpr[class_idx],
-                label=f"Class {self.class_mappings[class_idx]} (AUC = {self.aucs[class_idx]:.2f})",
-            )
-
-        plt.plot([0, 1], [0, 1], "k--")
-        plt.xlabel("False Positive Rate")
-        plt.ylabel("True Positive Rate")
-        plt.title("Receiver Operating Characteristic (ROC) Curves")
-        plt.legend(loc="lower right")
+        sns.heatmap(df_cm, annot=True, fmt="g", cmap="Blues")
+        plt.ylabel("True label")
+        plt.xlabel("Predicted label")
+        plt.title("Confusion Matrix")
         plt.show()
 
 
@@ -182,17 +152,17 @@ problem_type_map = {
 }
 
 
-@metric_manager.register("classification.auc")
-def calculate_auc_metric(data: dict, problem_type: str):
+@metric_manager.register("classification.confusion_matrix")
+def calculate_confusion_matrix(data: dict, problem_type: str):
     """
-    A wrapper function to calculate the AUC metric.
+    A wrapper function
 
-    :param data: Dictionary of data: {"prediction": , "ground_truth": }
+    :param data: dictionary of data: {"prediction": , "ground_truth": }
     :type data: dict
-    :param problem_type: Type of the problem
+    :param problem_type: type of the problem
     :type problem_type: str
 
-    :return: Dict of calculated results
+    :return: dict of calculated results
     :rtype: dict
     """
     _metric_calculator = problem_type_map[problem_type]()
@@ -200,20 +170,20 @@ def calculate_auc_metric(data: dict, problem_type: str):
     return result
 
 
-@plot_manager.register("classification.auc")
-def plot_auc(results: dict, save_plot: bool) -> Union[str, None]:
+@plot_manager.register("classification.confusion_matrix")
+def plot_confusion_matrix(results: dict, save_plot: bool) -> Union[str, None]:
     """
-    A wrapper function to plot the AUC curves.
+    A wrapper function
 
-    :param results: Dictionary of the results
+    :param results: dictionary of the results
     :type results: dict
-    :param save_plot: Boolean value to save plot
+    :param save_plot: boolean value to save plot
     :type save_plot: bool
 
     :return: None or path to the saved plot
     :rtype: Union[str, None]
     """
-    plotter = PlotAuc(data=results)
+    plotter = PlotConfusionMatrix(data=results)
     plotter.plot()
     if save_plot:
         return plotter.save()
