@@ -5,8 +5,9 @@
     # 2. Setup Python environment
     # 3. Install Sphinx and project dependencies
     # 4. Build HTML documentation
-    # 5. Deploy to GitHub Pages branch
-    # 6. Cleanup build artifacts
+    # 5. Redirect index to api.html
+    # 6. Deploy to GitHub Pages branch
+    # 7. Cleanup build artifacts
 
     name: Deploy Sphinx Documentation
 
@@ -38,6 +39,10 @@
             run: |
               cd docs
               make html
+
+          - name: Redirect index to api.html
+            run: |
+              echo '<meta http-equiv="refresh" content="0; url=api.html" />' > docs/_build/html/index.html
 
           - name: Deploy to GitHub Pages
             uses: peaceiris/actions-gh-pages@v3
