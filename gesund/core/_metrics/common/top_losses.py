@@ -1,8 +1,10 @@
 from typing import Union, Any, Dict, List, Optional
-from gesund.core import metric_manager, plot_manager
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+
+from gesund.core import metric_manager, plot_manager
 
 
 class Classification:

@@ -1,5 +1,5 @@
 from typing import Union, Any, Dict, List, Optional
-from gesund.core import metric_manager, plot_manager
+
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -13,6 +13,8 @@ from sklearn.metrics import (
     recall_score,
     matthews_corrcoef,
 )
+
+from gesund.core import metric_manager, plot_manager
 
 
 class Classification:

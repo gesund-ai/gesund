@@ -1,11 +1,13 @@
 from typing import Union, Callable, Any, Dict, List, Optional
-from gesund.core import metric_manager, plot_manager
+
 import numpy as np
 import pandas as pd
 import sklearn
 from sklearn.metrics import confusion_matrix as sklearn_confusion_matrix
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+from gesund.core import metric_manager, plot_manager
 
 
 class Classification:
