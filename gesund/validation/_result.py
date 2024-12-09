@@ -43,7 +43,10 @@ class ValidationResult:
         pass
 
     def plot(
-        self, metric_name: str = "all", save_plot: bool = False
+        self,
+        metric_name: str = "all",
+        save_plot: bool = False,
+        file_name: str = "plot.png",
     ) -> Union[str, None]:
         """
         A functon to plot the given metric
@@ -52,6 +55,8 @@ class ValidationResult:
         :type metric_name: str
         :param save_plot: True if the plot is to be saved
         :type save_plot: bool
+        :param file_name: Plot file name
+        :type file_name: str
 
         :return: path of the plot if saved
         :rtype: str
@@ -63,9 +68,13 @@ class ValidationResult:
                 _plot_executor = plot_manager[
                     f"{self.user_params.problem_type}.{metric_name}"
                 ]
-                _plot_executor(results=self.result, save_plot=save_plot)
+                _plot_executor(
+                    results=self.result, save_plot=save_plot, file_name=file_name
+                )
         else:
             _plot_executor = plot_manager[
                 f"{self.user_params.problem_type}.{metric_name}"
             ]
-            _plot_executor(results=self.result, save_plot=save_plot)
+            _plot_executor(
+                results=self.result, save_plot=save_plot, file_name=file_name
+            )

@@ -1,52 +1,106 @@
-from typing import Union, Callable
+from typing import Union
+import os
 
-from gesund.core._managers.metric_manager import metric_manager
-from gesund.core._managers.plot_manager import plot_manager
+import numpy as np
+from sklearn.metrics import auc, roc_curve
+from sklearn.preprocessing import label_binarize
+import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+
+from gesund.core import metric_manager, plot_manager
 
 
 class Classification:
     def _validate_data(self, data: dict) -> bool:
         """
-        A function to validate the data that is required for metric calculation and plotting.
+        Validates the data required for metric calculation and plotting.
 
-        :param data: The input data required for calculation,  {"prediction":, "ground_truth": , "metadata":}
+        :param data: The input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
         :type data: dict
 
-        :return: status if the data is valid
+        :return: Status if the data is valid
         :rtype: bool
         """
-        pass
+        # Basic validation checks
+        if not isinstance(data, dict):
+            raise ValueError("Data must be a dictionary.")
+        required_keys = ["prediction", "ground_truth"]
+        for key in required_keys:
+            if key not in data:
+                raise ValueError(f"Data must contain '{key}'.")
+
+        if len(data["prediction"]) != len(data["ground_truth"]):
+            raise ValueError("Prediction and ground_truth must have the same length.")
+
+        return True
 
     def apply_metadata(self, data: dict, metadata: dict) -> dict:
         """
-        A function to apply the metadata on the data for metric calculation and plotting.
+        Applies metadata to the data for metric calculation and plotting.
 
-        :param data: the input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
+        :param data: The input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
         :type data: dict
+        :param metadata: The metadata to apply
+        :type metadata: dict
 
-        :return: filtered dataset
+        :return: Filtered dataset
         :rtype: dict
         """
-        pass
+        return data
 
     def calculate(self, data: dict) -> dict:
         """
-        A function to calculate the AUC metric for given dataset
+        Calculates the AUC metric for the given dataset.
 
-        :param data: The input data required for calculation and plotting  {"prediction":, "ground_truth": , "metadata":}
+        :param data: The input data required for calculation and plotting
+                     {"prediction":, "ground_truth": , "metadata":, "class_mappings":}
         :type data: dict
 
-        :return: calculated metric
+        :return: Calculated metric results
         :rtype: dict
         """
-        # validate the data
+        # Validate the data
+        self._validate_data(data)
 
-        # format the data
+        # Extract predictions and ground truth
+        true = np.array(data["ground_truth"])
+        pred_logits = np.array(data["prediction"])
+        metadata = data.get("metadata", None)
 
-        # apply metadata if given
+        # Apply metadata if given
+        if metadata is not None:
+            data = self.apply_metadata(data, metadata)
+            true = np.array(data["ground_truth"])
+            pred_logits = np.array(data["prediction"])
 
-        # run the calculation logic
-        pass
+        # Get class mappings if provided, else infer from data
+        class_mappings = data.get("class_mappings")
+        class_order = [int(i) for i in list(class_mappings.keys())]
+
+        # Binarize the output for multiclass
+        y_true = label_binarize(true, classes=class_order)
+        if len(class_order) == 2:
+            y_true = np.hstack((1 - y_true, y_true))
+
+        # Calculate ROC and AUC
+        aucs = {}
+        fpr = {}
+        tpr = {}
+        for idx, class_idx in enumerate(class_order):
+            fpr[class_idx], tpr[class_idx], _ = roc_curve(
+                y_true[:, idx], pred_logits[:, idx]
+            )
+            aucs[class_idx] = auc(fpr[class_idx], tpr[class_idx])
+
+        result = {
+            "fpr": fpr,
+            "tpr": tpr,
+            "aucs": aucs,
+            "class_mappings": class_mappings,
+            "class_order": class_order,
+        }
+
+        return result
 
 
 class SemanticSegmentation(Classification):
@@ -58,30 +112,61 @@ class ObjectDetection:
 
 
 class PlotAuc:
-    def __init__(self, data: Union[dict, list]):
+    def __init__(self, data: dict):
         self.data = data
+        self.fpr = data["fpr"]
+        self.tpr = data["tpr"]
+        self.aucs = data["aucs"]
+        self.class_mappings = data["class_mappings"]
+        self.class_order = data["class_order"]
 
     def _validate_data(self):
         """
-        A function to validate the data required for plotting the AUC.
+        Validates the data required for plotting the AUC.
         """
-        pass
+        required_keys = ["fpr", "tpr", "aucs"]
+        for key in required_keys:
+            if key not in self.data:
+                raise ValueError(f"Data must contain '{key}'.")
 
-    def save(self) -> str:
+    def save(self, fig: Figure, filename: str = "auc_plot.png") -> str:
         """
-        A function to save the plot
-        """
-        pass
+        Saves the plot to a file.
 
-    def plot(self):
-        """
-        Logic to plot the AUC
-        """
+        :param filename: Path where the plot image will be saved
+        :type filename: str
 
-        # validate the data
+        :return: Path where the plot image is saved
+        :rtype: str
+        """
+        dir_path = "plots"
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        filepath = f"{dir_path}/{filename}"
+        fig.savefig(filepath, format="png")
+        return filepath
 
-        # run the plotting logic
-        pass
+    def plot(self) -> Figure:
+        """
+        Plots the AUC curves.
+        """
+        # Validate the data
+        self._validate_data()
+
+        fig, ax = plt.subplots(figsize=(10, 7))
+        for class_idx in self.class_order:
+            plt.plot(
+                self.fpr[class_idx],
+                self.tpr[class_idx],
+                label=f"Class {self.class_mappings[class_idx]} (AUC = {self.aucs[class_idx]:.2f})",
+            )
+
+        ax.plot([0, 1], [0, 1], "k--")
+        ax.set_xlabel("False Positive Rate")
+        ax.set_ylabel("True Positive Rate")
+        ax.set_title("Receiver Operating Characteristic (ROC) Curves")
+        ax.legend(loc="lower right")
+        return fig
 
 
 problem_type_map = {
@@ -92,17 +177,17 @@ problem_type_map = {
 
 
 @metric_manager.register("classification.auc")
-def calculate_auc(data: dict, problem_type: str):
+def calculate_auc_metric(data: dict, problem_type: str):
     """
-    A wrapper function
+    A wrapper function to calculate the AUC metric.
 
-    :param data: dictionary of data: {"prediction": , "ground_truth": }
-    :type data: Union[str, list]
-    :param problem_type: type of the problem
+    :param data: Dictionary of data: {"prediction": , "ground_truth": }
+    :type data: dict
+    :param problem_type: Type of the problem
     :type problem_type: str
 
-    :return : dict or list of calculated results
-    :rtype: Union[dict, list]
+    :return: Dict of calculated results
+    :rtype: dict
     """
     _metric_calculator = problem_type_map[problem_type]()
     result = _metric_calculator.calculate(data)
@@ -110,19 +195,23 @@ def calculate_auc(data: dict, problem_type: str):
 
 
 @plot_manager.register("classification.auc")
-def plot_auc(results: Union[dict, list], save_plot: bool) -> Union[str, None]:
+def plot_auc(results: dict, save_plot: bool, file_name: str) -> Union[str, None]:
     """
-    A wrapper function
+    A wrapper function to plot the AUC curves.
 
-    :param results: list or dictionary of the results
-    :type results: Union[dict, list]
-    :param save_plot: boolean value if save plot
+    :param results: Dictionary of the results
+    :type results: dict
+    :param save_plot: Boolean value to save plot
     :type save_plot: bool
+    :param file_name: name of the file
+    :type file_name: str
 
-    :return: None or string of the path
+    :return: None or path to the saved plot
     :rtype: Union[str, None]
     """
     plotter = PlotAuc(data=results)
-    plotter.plot()
+    fig = plotter.plot()
     if save_plot:
-        return plotter.save()
+        return plotter.save(fig, filename=file_name)
+    else:
+        plt.show()

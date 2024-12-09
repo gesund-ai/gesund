@@ -160,6 +160,7 @@ class Validation:
                         "prediction": prediction,
                         "ground_truth": annotation,
                         "metadata": metadata,
+                        "class_mapping": self.data.class_mapping,
                     },
                     problem_type=self.user_params.problem_type,
                 )
