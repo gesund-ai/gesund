@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import sklearn
 from sklearn.metrics import (
-    auc as calculate_auc,
+    auc as sklearn_auc,
     roc_curve,
     precision_recall_curve,
     average_precision_score,
@@ -102,7 +102,7 @@ class Classification:
             fpr[class_idx], tpr[class_idx], _ = roc_curve(
                 y_true[:, idx], pred_logits[:, idx]
             )
-            aucs[class_idx] = calculate_auc(fpr[class_idx], tpr[class_idx])
+            aucs[class_idx] = sklearn_auc(fpr[class_idx], tpr[class_idx])
 
         result = {
             "fpr": fpr,
