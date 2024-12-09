@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 from sklearn.metrics import (
     confusion_matrix,
     roc_auc_score,
@@ -166,24 +167,36 @@ class PlotStatsTables:
             if key not in self.data:
                 raise ValueError(f"Data must contain '{key}'.")
 
-    def save(self, filepath: str = "stats_tables.png") -> str:
+    def save(self, figure: Figure, filepath: str = "stats_tables.png") -> str:
         """
-        Saves the plot to a file.
+        Saves the specified figure to a file.
+
+        Args:
+            figure: The matplotlib Figure object to save
+            filepath: The path where to save the figure
+
+        Returns:
+            str: The filepath where the figure was saved
         """
-        plt.savefig(filepath)
+        figure.savefig(filepath)
         return filepath
 
-    def plot(self):
+    def plot(self) -> List[Figure]:
         """
-        Plots the stats tables.
+        Creates the stats tables plots.
+
+        Returns:
+            List[Figure]: List containing the confusion matrix and metrics figures
         """
         self._validate_data()
+        figures = []
 
         # Plot confusion matrix
-        plt.figure(figsize=(8, 6))
-        cm = self.confusion_matrix
+        cm_fig = plt.figure(figsize=(8, 6))
+        figures.append(cm_fig)
+
         sns.heatmap(
-            cm,
+            self.confusion_matrix,
             annot=True,
             fmt="d",
             cmap="Blues",
@@ -193,7 +206,7 @@ class PlotStatsTables:
         plt.xlabel("Predicted Labels")
         plt.ylabel("True Labels")
         plt.title("Confusion Matrix")
-        plt.show()
+        plt.close(cm_fig)
 
         # Plot per-class metrics
         metrics_df = pd.DataFrame(self.per_class_metrics).T
@@ -203,15 +216,16 @@ class PlotStatsTables:
             id_vars="index", var_name="Metric", value_name="Value"
         )
 
-        plt.figure(figsize=(10, 6))
+        metrics_fig = plt.figure(figsize=(10, 6))
+        figures.append(metrics_fig)
+
         sns.barplot(data=metrics_df, x="index", y="Value", hue="Metric", palette="Set2")
         plt.xlabel("Classes")
         plt.ylabel("Metric Value")
         plt.title("Per-Class Metrics")
         plt.legend(title="Metric")
-        plt.show()
+        plt.close(metrics_fig)
 
-        # Display overall metrics
         print("Overall Metrics:")
         for metric, value in self.overall_metrics.items():
             print(
@@ -219,6 +233,8 @@ class PlotStatsTables:
                 if isinstance(value, float)
                 else f"{metric}: {value}"
             )
+
+        return figures
 
 
 class SemanticSegmentation(Classification):
@@ -252,6 +268,9 @@ def plot_stats_tables(results: dict, save_plot: bool) -> Union[str, None]:
     Plots the stats tables.
     """
     plotter = PlotStatsTables(data=results)
-    plotter.plot()
+    figures = plotter.plot()
     if save_plot:
-        return plotter.save()
+        for fig in figures:
+            plotter.save(fig)
+
+    return None

@@ -12,7 +12,7 @@ from sklearn.metrics import (
 )
 from sklearn.preprocessing import label_binarize
 import matplotlib.pyplot as plt
-import seaborn as sns
+from matplotlib.figure import Figure
 
 from gesund.core import metric_manager, plot_manager
 
@@ -141,27 +141,31 @@ class PlotAuc:
             if key not in self.data:
                 raise ValueError(f"Data must contain '{key}'.")
 
-    def save(self, filepath: str = "auc_plot.png") -> str:
+    def save(self, fig: Figure, filepath: str = "auc_plot.png") -> str:
         """
         Saves the plot to a file.
 
+        :param fig: Matplotlib figure object to save
+        :type fig: Figure
         :param filepath: Path where the plot image will be saved
         :type filepath: str
 
         :return: Path where the plot image is saved
         :rtype: str
         """
-        plt.savefig(filepath)
+        fig.savefig(filepath)
         return filepath
 
-    def plot(self):
+    def plot(self) -> Figure:
         """
         Plots the AUC curves.
+
+        :return: Matplotlib Figure object
+        :rtype: Figure
         """
-        # Validate the data
         self._validate_data()
 
-        plt.figure(figsize=(10, 7))
+        fig = plt.figure(figsize=(10, 7))
         for class_idx in self.class_order:
             plt.plot(
                 self.fpr[class_idx],
@@ -174,7 +178,8 @@ class PlotAuc:
         plt.ylabel("True Positive Rate")
         plt.title("Receiver Operating Characteristic (ROC) Curves")
         plt.legend(loc="lower right")
-        plt.show()
+
+        return fig
 
 
 problem_type_map = {
@@ -203,7 +208,7 @@ def calculate_auc_metric(data: dict, problem_type: str):
 
 
 @plot_manager.register("classification.auc")
-def plot_auc(results: dict, save_plot: bool) -> Union[str, None]:
+def plot_auc(results: dict, save_plot: bool) -> Union[str, Figure]:
     """
     A wrapper function to plot the AUC curves.
 
@@ -212,10 +217,13 @@ def plot_auc(results: dict, save_plot: bool) -> Union[str, None]:
     :param save_plot: Boolean value to save plot
     :type save_plot: bool
 
-    :return: None or path to the saved plot
-    :rtype: Union[str, None]
+    :return: Figure object or path to the saved plot
+    :rtype: Union[str, Figure]
     """
     plotter = PlotAuc(data=results)
-    plotter.plot()
+    fig = plotter.plot()
+
     if save_plot:
-        return plotter.save()
+        return plotter.save(fig)
+
+    return fig

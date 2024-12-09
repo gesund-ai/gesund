@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 from sklearn.metrics import (
     confusion_matrix,
     roc_auc_score,
@@ -166,21 +167,39 @@ class PlotStatsTables:
             if key not in self.data:
                 raise ValueError(f"Data must contain '{key}'.")
 
-    def save(self, filepath: str = "stats_tables.png") -> str:
+    def save(self, figs: List[Figure], filepaths: List[str] = None) -> List[str]:
         """
-        Saves the plot to a file.
-        """
-        plt.savefig(filepath)
-        return filepath
+        Saves the plots to files.
 
-    def plot(self):
+        :param figs: List of Matplotlib figure objects to save
+        :type figs: List[Figure]
+        :param filepaths: List of paths where the plot images will be saved
+        :type filepaths: List[str]
+
+        :return: List of paths where the plot images are saved
+        :rtype: List[str]
         """
-        Plots the stats tables.
+        if filepaths is None:
+            filepaths = ["confusion_matrix.png", "per_class_metrics.png"]
+
+        saved_paths = []
+        for fig, filepath in zip(figs, filepaths):
+            fig.savefig(filepath)
+            saved_paths.append(filepath)
+        return saved_paths
+
+    def plot(self) -> List[Figure]:
+        """
+        Plots the stats tables and returns the figure objects.
+
+        :return: List of Matplotlib Figure objects [confusion_matrix, per_class_metrics]
+        :rtype: List[Figure]
         """
         self._validate_data()
+        figures = []
 
         # Plot confusion matrix
-        plt.figure(figsize=(8, 6))
+        fig_cm = plt.figure(figsize=(8, 6))
         cm = self.confusion_matrix
         sns.heatmap(
             cm,
@@ -193,7 +212,7 @@ class PlotStatsTables:
         plt.xlabel("Predicted Labels")
         plt.ylabel("True Labels")
         plt.title("Confusion Matrix")
-        plt.show()
+        figures.append(fig_cm)
 
         # Plot per-class metrics
         metrics_df = pd.DataFrame(self.per_class_metrics).T
@@ -203,13 +222,13 @@ class PlotStatsTables:
             id_vars="index", var_name="Metric", value_name="Value"
         )
 
-        plt.figure(figsize=(10, 6))
+        fig_metrics = plt.figure(figsize=(10, 6))
         sns.barplot(data=metrics_df, x="index", y="Value", hue="Metric", palette="Set2")
         plt.xlabel("Classes")
         plt.ylabel("Metric Value")
         plt.title("Per-Class Metrics")
         plt.legend(title="Metric")
-        plt.show()
+        figures.append(fig_metrics)
 
         # Display overall metrics
         print("Overall Metrics:")
@@ -219,6 +238,8 @@ class PlotStatsTables:
                 if isinstance(value, float)
                 else f"{metric}: {value}"
             )
+
+        return figures
 
 
 class SemanticSegmentation(Classification):
@@ -247,11 +268,21 @@ def calculate_stats_tables(data: dict, problem_type: str):
 
 
 @plot_manager.register("classification.stats_tables")
-def plot_stats_tables(results: dict, save_plot: bool) -> Union[str, None]:
+def plot_stats_tables(results: dict, save_plot: bool) -> Union[List[str], List[Figure]]:
     """
     Plots the stats tables.
+
+    :param results: Dictionary of the results
+    :type results: dict
+    :param save_plot: Boolean value to save plots
+    :type save_plot: bool
+
+    :return: List of figure objects or paths to the saved plots
+    :rtype: Union[List[str], List[Figure]]
     """
     plotter = PlotStatsTables(data=results)
-    plotter.plot()
+    figs = plotter.plot()
     if save_plot:
-        return plotter.save()
+        return plotter.save(figs)
+
+    return figs

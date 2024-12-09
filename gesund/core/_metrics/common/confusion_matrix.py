@@ -5,6 +5,7 @@ import pandas as pd
 import sklearn
 from sklearn.metrics import confusion_matrix as sklearn_confusion_matrix
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import seaborn as sns
 
 from gesund.core import metric_manager, plot_manager
@@ -18,7 +19,7 @@ class Classification:
         :param data: The input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
         :type data: dict
 
-        :return: status if the data is valid
+        :return: Status if the data is valid
         :rtype: bool
         """
         # Basic validation checks
@@ -38,22 +39,24 @@ class Classification:
         """
         A function to apply the metadata on the data for metric calculation and plotting.
 
-        :param data: the input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
+        :param data: The input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
         :type data: dict
+        :param metadata: The metadata to apply
+        :type metadata: dict
 
-        :return: filtered dataset
+        :return: Filtered dataset
         :rtype: dict
         """
         return data
 
     def calculate(self, data: dict) -> dict:
         """
-        A function to calculate the confusion matrix for given dataset
+        A function to calculate the confusion matrix for the given dataset.
 
         :param data: The input data required for calculation and plotting {"prediction":, "ground_truth": , "metadata":}
         :type data: dict
 
-        :return: calculated metric
+        :return: Calculated metric
         :rtype: dict
         """
         # Validate the data
@@ -114,37 +117,43 @@ class PlotConfusionMatrix:
         if "confusion_matrix" not in self.data:
             raise ValueError("Data must contain 'confusion_matrix'.")
 
-    def save(self, filepath: str = "confusion_matrix.png") -> str:
+    def save(self, fig: Figure, filepath: str = "confusion_matrix.png") -> str:
         """
-        A function to save the plot
+        A function to save the plot.
 
+        :param fig: Matplotlib figure object to save
+        :type fig: Figure
         :param filepath: Path where the plot image will be saved
         :type filepath: str
 
         :return: Path where the plot image is saved
         :rtype: str
         """
-        plt.savefig(filepath)
+        fig.savefig(filepath)
         return filepath
 
-    def plot(self):
+    def plot(self) -> Figure:
         """
-        Logic to plot the confusion matrix
+        Logic to plot the confusion matrix.
+
+        :return: Matplotlib Figure object
+        :rtype: Figure
         """
         # Validate the data
         self._validate_data()
 
+        fig = plt.figure(figsize=(10, 7))
         df_cm = pd.DataFrame(
             self.confusion_matrix,
             index=[self.class_mappings[i] for i in self.class_order],
             columns=[self.class_mappings[i] for i in self.class_order],
         )
-        plt.figure(figsize=(10, 7))
         sns.heatmap(df_cm, annot=True, fmt="g", cmap="Blues")
         plt.ylabel("True label")
         plt.xlabel("Predicted label")
         plt.title("Confusion Matrix")
-        plt.show()
+
+        return fig
 
 
 problem_type_map = {
@@ -157,14 +166,14 @@ problem_type_map = {
 @metric_manager.register("classification.confusion_matrix")
 def calculate_confusion_matrix(data: dict, problem_type: str):
     """
-    A wrapper function
+    A wrapper function.
 
-    :param data: dictionary of data: {"prediction": , "ground_truth": }
+    :param data: Dictionary of data: {"prediction": , "ground_truth": }
     :type data: dict
-    :param problem_type: type of the problem
+    :param problem_type: Type of the problem
     :type problem_type: str
 
-    :return: dict of calculated results
+    :return: Dict of calculated results
     :rtype: dict
     """
     _metric_calculator = problem_type_map[problem_type]()
@@ -173,19 +182,22 @@ def calculate_confusion_matrix(data: dict, problem_type: str):
 
 
 @plot_manager.register("classification.confusion_matrix")
-def plot_confusion_matrix(results: dict, save_plot: bool) -> Union[str, None]:
+def plot_confusion_matrix(results: dict, save_plot: bool) -> Union[str, Figure]:
     """
-    A wrapper function
+    A wrapper function.
 
-    :param results: dictionary of the results
+    :param results: Dictionary of the results
     :type results: dict
-    :param save_plot: boolean value to save plot
+    :param save_plot: Boolean value to save plot
     :type save_plot: bool
 
-    :return: None or path to the saved plot
-    :rtype: Union[str, None]
+    :return: Figure object or path to the saved plot
+    :rtype: Union[str, Figure]
     """
     plotter = PlotConfusionMatrix(data=results)
-    plotter.plot()
+    fig = plotter.plot()
+
     if save_plot:
-        return plotter.save()
+        return plotter.save(fig)
+
+    return fig

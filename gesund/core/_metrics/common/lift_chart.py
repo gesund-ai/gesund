@@ -3,6 +3,7 @@ from typing import Union, Callable, Any, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 
 from gesund.core import metric_manager, plot_manager
 
@@ -204,21 +205,32 @@ class PlotLiftChart:
         if "lift_points" not in self.data:
             raise ValueError("Data must contain 'lift_points'.")
 
-    def save(self, filepath: str = "lift_chart.png") -> str:
+    def save(self, fig: Figure, filepath: str = "lift_chart.png") -> str:
         """
         Saves the plot to a file.
+
+        :param fig: Matplotlib figure object to save
+        :type fig: Figure
+        :param filepath: Path where the plot image will be saved
+        :type filepath: str
+
+        :return: Path where the plot image is saved
+        :rtype: str
         """
-        plt.savefig(filepath)
+        fig.savefig(filepath)
         return filepath
 
-    def plot(self):
+    def plot(self) -> Figure:
         """
         Plots the Lift Chart.
+
+        :return: Matplotlib Figure object
+        :rtype: Figure
         """
         # Validate the data
         self._validate_data()
 
-        plt.figure(figsize=(10, 7))
+        fig = plt.figure(figsize=(10, 7))
         for class_name, points in self.lift_points.items():
             x = [p["x"] for p in points]
             y = [p["y"] for p in points]
@@ -229,7 +241,8 @@ class PlotLiftChart:
         plt.title("Lift Chart")
         plt.legend()
         plt.grid(True)
-        plt.show()
+
+        return fig
 
 
 class SemanticSegmentation(Classification):
@@ -251,6 +264,14 @@ problem_type_map = {
 def calculate_lift_chart_metric(data: dict, problem_type: str):
     """
     A wrapper function to calculate the Lift Chart metric.
+
+    :param data: Dictionary of data: {"prediction": , "ground_truth": }
+    :type data: dict
+    :param problem_type: Type of the problem
+    :type problem_type: str
+
+    :return: Dict of calculated results
+    :rtype: dict
     """
     _metric_calculator = problem_type_map[problem_type]()
     result = _metric_calculator.calculate(data)
@@ -258,11 +279,22 @@ def calculate_lift_chart_metric(data: dict, problem_type: str):
 
 
 @plot_manager.register("classification.lift_chart")
-def plot_lift_chart(results: dict, save_plot: bool) -> Union[str, None]:
+def plot_lift_chart(results: dict, save_plot: bool) -> Union[str, Figure]:
     """
     A wrapper function to plot the Lift Chart.
+
+    :param results: Dictionary of the results
+    :type results: dict
+    :param save_plot: Boolean value to save plot
+    :type save_plot: bool
+
+    :return: Figure object or path to the saved plot
+    :rtype: Union[str, Figure]
     """
     plotter = PlotLiftChart(data=results)
-    plotter.plot()
+    fig = plotter.plot()
+
     if save_plot:
-        return plotter.save()
+        return plotter.save(fig)
+
+    return fig

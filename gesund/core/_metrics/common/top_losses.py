@@ -3,6 +3,7 @@ from typing import Union, Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 
 from gesund.core import metric_manager, plot_manager
 
@@ -123,24 +124,28 @@ class PlotTopLosses:
         if "top_losses" not in self.data:
             raise ValueError("Data must contain 'top_losses'.")
 
-    def save(self, filepath: str = "top_losses.png") -> str:
+    def save(self, figure: Figure, filepath: str = "top_losses.png") -> str:
         """
         Saves the plot to a file.
 
+        :param figure: The matplotlib Figure object to save
+        :type figure: Figure
         :param filepath: Path where the plot image will be saved
         :type filepath: str
         :return: Path where the plot image is saved
         :rtype: str
         """
-        plt.savefig(filepath)
+        figure.savefig(filepath)
         return filepath
 
-    def plot(self, top_k: int = 9):
+    def plot(self, top_k: int = 9) -> Figure:
         """
         Plots the top losses.
 
         :param top_k: Number of top losses to display
         :type top_k: int
+        :return: Matplotlib Figure object
+        :rtype: Figure
         """
         # Validate the data
         self._validate_data()
@@ -174,20 +179,18 @@ class PlotTopLosses:
         )
 
         # Plotting
-        plt.figure(figsize=(12, 6))
-        bars = plt.bar(
-            plot_data["Index"].astype(str), plot_data["Loss"], color="salmon"
-        )
-        plt.xlabel("Sample Index")
-        plt.ylabel("Loss")
-        plt.title("Top Losses")
+        fig, ax = plt.subplots(figsize=(12, 6))
+        bars = ax.bar(plot_data["Index"].astype(str), plot_data["Loss"], color="salmon")
+        ax.set_xlabel("Sample Index")
+        ax.set_ylabel("Loss")
+        ax.set_title("Top Losses")
 
         # Annotate bars with Ground Truth and Prediction
         for bar, gt, pred in zip(
             bars, plot_data["Ground Truth"], plot_data["Prediction"]
         ):
             height = bar.get_height()
-            plt.text(
+            ax.text(
                 bar.get_x() + bar.get_width() / 2,
                 height + 0.01,
                 f"True: {gt}\nPred: {pred}",
@@ -198,14 +201,15 @@ class PlotTopLosses:
 
         plt.xticks(rotation=90)
         plt.tight_layout()
-        plt.show()
+
+        return fig
 
 
 class SemanticSegmentation(Classification):
     pass
 
 
-class ObjectDetection:
+class ObjectDetection(Classification):
     pass
 
 
@@ -246,6 +250,8 @@ def plot_top_losses(results: dict, save_plot: bool) -> Union[str, None]:
     :rtype: Union[str, None]
     """
     plotter = PlotTopLosses(data=results)
-    plotter.plot()
+    figure = plotter.plot()
     if save_plot:
-        return plotter.save()
+        return plotter.save(figure)
+
+    return None

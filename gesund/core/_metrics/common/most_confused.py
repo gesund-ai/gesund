@@ -5,6 +5,7 @@ import pandas as pd
 import sklearn
 from sklearn.metrics import confusion_matrix
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 import seaborn as sns
 
 from gesund.core import metric_manager, plot_manager
@@ -87,24 +88,39 @@ class PlotMostConfused:
         if "confused_pairs" not in self.data:
             raise ValueError("Data must contain 'confused_pairs'.")
 
-    def save(self, filepath: str = "most_confused.png") -> str:
+    def save(self, fig: Figure, filepath: str = "most_confused.png") -> str:
         """
         Saves the plot to a file.
+
+        :param fig: Matplotlib figure object to save
+        :type fig: Figure
+        :param filepath: Path where the plot image will be saved
+        :type filepath: str
+
+        :return: Path where the plot image is saved
+        :rtype: str
         """
-        plt.savefig(filepath)
+        fig.savefig(filepath)
         return filepath
 
-    def plot(self, top_k: int = 5):
+    def plot(self, top_k: int = 5) -> Figure:
         """
-        Plots the most confused classes as a bar chart.
+        Plots the most confused classes as a bar chart and returns the figure object.
+
+        :param top_k: Number of top confused pairs to display
+        :type top_k: int
+
+        :return: Matplotlib Figure object
+        :rtype: Figure
         """
         self._validate_data()
         df = pd.DataFrame(self.confused_pairs[:top_k])
-        plt.figure(figsize=(10, 6))
+
+        fig = plt.figure(figsize=(10, 6))
         sns.barplot(x="count", y=df.index, data=df, orient="h")
         plt.yticks(
-            ticks=df.index,
-            labels=[
+            df.index,
+            [
                 f"True: {row['true']} | Predicted: {row['predicted']}"
                 for _, row in df.iterrows()
             ],
@@ -113,7 +129,8 @@ class PlotMostConfused:
         plt.ylabel("Confusion Pairs")
         plt.title("Most Confused Classes")
         plt.tight_layout()
-        plt.show()
+
+        return fig
 
 
 class SemanticSegmentation(Classification):
@@ -135,6 +152,14 @@ problem_type_map = {
 def calculate_most_confused_metric(data: dict, problem_type: str):
     """
     Calculates the most confused classes metric.
+
+    :param data: Dictionary of data: {"prediction": , "ground_truth": }
+    :type data: dict
+    :param problem_type: Type of the problem
+    :type problem_type: str
+
+    :return: Calculated results
+    :rtype: dict
     """
     metric_calculator = problem_type_map[problem_type]()
     result = metric_calculator.calculate(data)
@@ -142,11 +167,22 @@ def calculate_most_confused_metric(data: dict, problem_type: str):
 
 
 @plot_manager.register("classification.most_confused")
-def plot_most_confused(results: dict, save_plot: bool) -> Union[str, None]:
+def plot_most_confused(results: dict, save_plot: bool) -> Union[str, Figure]:
     """
     Plots the most confused classes.
+
+    :param results: Dictionary of the results
+    :type results: dict
+    :param save_plot: Boolean value to save plot
+    :type save_plot: bool
+
+    :return: Figure object or path to the saved plot
+    :rtype: Union[str, Figure]
     """
     plotter = PlotMostConfused(data=results)
-    plotter.plot()
+    fig = plotter.plot()
+
     if save_plot:
-        return plotter.save()
+        return plotter.save(fig)
+
+    return fig
