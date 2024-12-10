@@ -2,12 +2,29 @@ from typing import Union
 import os
 
 import numpy as np
+import pandas as pd
 from sklearn.metrics import auc, roc_curve
 from sklearn.preprocessing import label_binarize
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
+import seaborn as sns
 
 from gesund.core import metric_manager, plot_manager
+
+
+def categorize_age(age):
+    if age < 18:
+        return "Child"
+    elif 18 <= age < 30:
+        return "Young Adult"
+    elif 30 <= age < 60:
+        return "Adult"
+    else:
+        return "Senior"
+
+
+COHORT_SIZE_LIMIT = 2
+DEBUG = True
 
 
 class Classification:
@@ -32,21 +49,141 @@ class Classification:
         if len(data["prediction"]) != len(data["ground_truth"]):
             raise ValueError("Prediction and ground_truth must have the same length.")
 
+        # check for image ids samples in the ground truth and prediction
+        if (
+            len(
+                set(list(data["prediction"].keys())).difference(
+                    set(list(data["ground_truth"].keys()))
+                )
+            )
+            > 0
+        ):
+            raise ValueError("Prediction and ground truth samples does not match.")
+
+        # if metadata is given then need to check if the metadata fields are present for all the
+        # images ids if not then simply state a warning and not apply a
+
         return True
 
-    def apply_metadata(self, data: dict, metadata: dict) -> dict:
+    def __preprocess(self, data: dict, get_logits=False) -> tuple:
+        """
+        Preprocesses the data
+
+        :param data: dictionary containing the data prediction, ground truth, metadata
+        :type data: dict
+        :param get_logits: in case of multi class classification set to True
+        :type get_logits: boolean
+
+        :return: data tuple
+        :rtype: tuple
+        """
+        prediction, ground_truth = [], []
+        for image_id in data["ground_truth"]:
+            sample_gt = data["ground_truth"][image_id]
+            sample_pred = data["prediction"][image_id]
+            ground_truth.append(sample_gt["annotation"][0]["label"])
+
+            if get_logits:
+                prediction.append(sample_pred["logits"])
+            else:
+                prediction.append(sample_pred["prediction_class"])
+        return (np.asarray(prediction), np.asarray(ground_truth))
+
+    def apply_metadata(self, data: dict) -> dict:
         """
         Applies metadata to the data for metric calculation and plotting.
 
         :param data: The input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
         :type data: dict
-        :param metadata: The metadata to apply
-        :type metadata: dict
 
         :return: Filtered dataset
         :rtype: dict
         """
+        # TODO:: This function could be global to be applied across metrics
+
+        # convert the metadata into pandas dataframe for better access
+        df: pd.DataFrame = pd.DataFrame.from_records(data["metadata"])
+        cohorts_data = {}
+
+        # collect only the metadata columns
+        metadata_columns = df.columns.tolist()
+        metadata_columns.remove("image_id")
+        lower_case = {i: i.lower() for i in metadata_columns}
+        df = df.rename(columns=lower_case)
+
+        # categorize age in metadata
+        if "age" in list(lower_case.values()):
+            df["age"] = df["age"].apply(categorize_age)
+
+        # loop over group by to form cohorts with unique metadata
+        for grp, subset_data in df.groupby(list(lower_case.values())):
+            grp_str = ",".join([str(i) for i in grp])
+
+            # it seems that
+            if subset_data.shape[0] < COHORT_SIZE_LIMIT:
+                print(
+                    f"Warning - grp excluded - {grp_str} cohort size < {COHORT_SIZE_LIMIT}"
+                )
+            else:
+                image_ids = set(subset_data["image_id"].to_list())
+                filtered_data = {
+                    "prediction": {
+                        i: data["prediction"][i]
+                        for i in data["prediction"]
+                        if i in image_ids
+                    },
+                    "ground_truth": {
+                        i: data["ground_truth"][i]
+                        for i in data["ground_truth"]
+                        if i in image_ids
+                    },
+                    "metadata": subset_data,
+                    "class_mapping": data["class_mapping"],
+                }
+                cohorts_data[grp_str] = filtered_data
+
         return data
+
+    def __calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
+        """
+        A function to calculate the metrics
+
+        :param data: data dictionary containing data
+        :type data: dict
+        :param class_mapping: a dictionary with class mapping labels
+        :type class_mapping: dict
+
+        :return: results calculated
+        :rtype: dict
+        """
+        class_order = [int(i) for i in list(class_mapping.keys())]
+
+        # Calculate ROC and AUC
+        # TODO: class wise auc and roc
+
+        if len(class_order) > 2:
+            # implementation of multi class classification
+            # logits are required for multi class classification
+            prediction, ground_truth = self.__preprocess(data, get_logits=True)
+            # TODO: multi class auc - roc calculation
+
+        else:
+            prediction, ground_truth = self.__preprocess(data)
+            fpr, tpr, thresholds = roc_curve(prediction, ground_truth)
+            auc_score = auc(fpr, tpr)
+            fpr = [float(round(value, 4)) for value in fpr]
+            tpr = [float(round(value, 4)) for value in tpr]
+
+        result = {
+            "fpr": fpr,
+            "tpr": tpr,
+            "auc": auc_score,
+            "class_mapping": class_mapping,
+            "class_order": class_order,
+            "thresholds": thresholds,
+        }
+
+        return result
 
     def calculate(self, data: dict) -> dict:
         """
@@ -59,46 +196,31 @@ class Classification:
         :return: Calculated metric results
         :rtype: dict
         """
+        result = {}
+
         # Validate the data
         self._validate_data(data)
+        metadata = data.get("metadata")
 
-        # Extract predictions and ground truth
-        true = np.array(data["ground_truth"])
-        pred_logits = np.array(data["prediction"])
-        metadata = data.get("metadata", None)
+        # enforce metadata turn off until more solid understanding of cohort creation
+        if DEBUG:
+            metadata = None
 
         # Apply metadata if given
-        if metadata is not None:
-            data = self.apply_metadata(data, metadata)
-            true = np.array(data["ground_truth"])
-            pred_logits = np.array(data["prediction"])
+        if metadata:
+            # when the metadata is applied it would stratify the data based on combination
+            # to form cohorts
+            # the validation is calculated on the cohorts
+            cohort_data = self.apply_metadata(data)
 
-        # Get class mappings if provided, else infer from data
-        class_mappings = data.get("class_mappings")
-        class_order = [int(i) for i in list(class_mappings.keys())]
-
-        # Binarize the output for multiclass
-        y_true = label_binarize(true, classes=class_order)
-        if len(class_order) == 2:
-            y_true = np.hstack((1 - y_true, y_true))
-
-        # Calculate ROC and AUC
-        aucs = {}
-        fpr = {}
-        tpr = {}
-        for idx, class_idx in enumerate(class_order):
-            fpr[class_idx], tpr[class_idx], _ = roc_curve(
-                y_true[:, idx], pred_logits[:, idx]
-            )
-            aucs[class_idx] = auc(fpr[class_idx], tpr[class_idx])
-
-        result = {
-            "fpr": fpr,
-            "tpr": tpr,
-            "aucs": aucs,
-            "class_mappings": class_mappings,
-            "class_order": class_order,
-        }
+        # preprocess the data
+        if metadata:
+            for _cohort_key in cohort_data:
+                result[_cohort_key] = self.__calculate_metrics(
+                    cohort_data[_cohort_key], data.get("class_mapping")
+                )
+        else:
+            result = self.__calculate_metrics(data, data.get("class_mapping"))
 
         return result
 
@@ -116,20 +238,20 @@ class PlotAuc:
         self.data = data
         self.fpr = data["fpr"]
         self.tpr = data["tpr"]
-        self.aucs = data["aucs"]
-        self.class_mappings = data["class_mappings"]
+        self.aucs = data["auc"]
+        self.class_mappings = data["class_mapping"]
         self.class_order = data["class_order"]
 
     def _validate_data(self):
         """
         Validates the data required for plotting the AUC.
         """
-        required_keys = ["fpr", "tpr", "aucs"]
+        required_keys = ["fpr", "tpr", "auc"]
         for key in required_keys:
             if key not in self.data:
                 raise ValueError(f"Data must contain '{key}'.")
 
-    def save(self, fig: Figure, filename: str = "auc_plot.png") -> str:
+    def save(self, fig: Figure, filename: str) -> str:
         """
         Saves the plot to a file.
 
@@ -150,21 +272,24 @@ class PlotAuc:
         """
         Plots the AUC curves.
         """
+        sns.set_style("whitegrid")
         # Validate the data
         self._validate_data()
 
         fig, ax = plt.subplots(figsize=(10, 7))
-        for class_idx in self.class_order:
-            plt.plot(
-                self.fpr[class_idx],
-                self.tpr[class_idx],
-                label=f"Class {self.class_mappings[class_idx]} (AUC = {self.aucs[class_idx]:.2f})",
-            )
-
-        ax.plot([0, 1], [0, 1], "k--")
-        ax.set_xlabel("False Positive Rate")
-        ax.set_ylabel("True Positive Rate")
-        ax.set_title("Receiver Operating Characteristic (ROC) Curves")
+        # TODO: Class wise plot auc-roc
+        sns.lineplot(x=self.fpr, y=self.tpr, ax=ax)
+        # ax.plot(self.fpr, self.tpr, "k--")
+        ax.set_xlabel(
+            "False Positive Rate", fontdict={"fontsize": 14, "fontweight": "medium"}
+        )
+        ax.set_ylabel(
+            "True Positive Rate", fontdict={"fontsize": 14, "fontweight": "medium"}
+        )
+        ax.set_title(
+            "Receiver Operating Characteristic (ROC) Curves",
+            fontdict={"fontsize": 16, "fontweight": "medium"},
+        )
         ax.legend(loc="lower right")
         return fig
 
@@ -195,7 +320,9 @@ def calculate_auc_metric(data: dict, problem_type: str):
 
 
 @plot_manager.register("classification.auc")
-def plot_auc(results: dict, save_plot: bool, file_name: str) -> Union[str, None]:
+def plot_auc(
+    results: dict, save_plot: bool, file_name: str = "auc_plot.png"
+) -> Union[str, None]:
     """
     A wrapper function to plot the AUC curves.
 

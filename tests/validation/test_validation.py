@@ -1,5 +1,6 @@
 # file to write the common logic
 import pytest
+import os
 
 from gesund import Validation
 
@@ -65,7 +66,7 @@ def test_metrics_manager(plot_config, setup_and_teardown):
         problem_type=problem_type,
         data_format="json",
         json_structure_type="gesund",
-        metadata_path=f"{data_dir}/test_metadata.json",
+        # metadata_path=f"{data_dir}/test_metadata_new.json",
         plot_config=plot_config,
     )
 
@@ -100,7 +101,7 @@ def test_plot_manager(plot_config, setup_and_teardown):
         problem_type=problem_type,
         data_format="json",
         json_structure_type="gesund",
-        metadata_path=f"{data_dir}/test_metadata.json",
+        metadata_path=f"{data_dir}/test_metadata_new.json",
         plot_config=plot_config,
     )
 
@@ -115,7 +116,9 @@ def test_plot_manager(plot_config, setup_and_teardown):
             result_list.append(False)
 
     assert any(result_list) is True
-    validation_results.plot()
+
+    validation_results.plot(save_plot=True)
+    assert os.path.exists("plots/auc_plot.png") is True
 
 
 """
