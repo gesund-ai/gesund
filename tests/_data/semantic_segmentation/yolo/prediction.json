@@ -1,0 +1,218 @@
+[
+    {
+      "image_id": 1,
+      "category_id": "category1",
+      "predictions": [
+        {
+          "class": 0,
+          "segmentation": [
+            {"x": 0.1, "y": 0.2},
+            {"x": 0.2, "y": 0.3},
+            {"x": 0.3, "y": 0.4}
+          ],
+          "score": 1.0
+        },
+        {
+          "class": 1,
+          "segmentation": [
+            {"x": 0.5, "y": 0.5},
+            {"x": 0.6, "y": 0.6},
+            {"x": 0.7, "y": 0.7}
+          ],
+          "score": 1.0
+        }
+      ]
+    },
+    {
+      "image_id": 2,
+      "category_id": "category2",
+      "predictions": [
+        {
+          "class": 2,
+          "segmentation": [
+            {"x": 0.8, "y": 0.1},
+            {"x": 0.9, "y": 0.2},
+            {"x": 1.0, "y": 0.3}
+          ],
+          "score": 0.9
+        },
+        {
+          "class": 3,
+          "segmentation": [
+            {"x": 0.2, "y": 0.4},
+            {"x": 0.3, "y": 0.5},
+            {"x": 0.4, "y": 0.6}
+          ],
+          "score": 0.8
+        }
+      ]
+    },
+    {
+      "image_id": 3,
+      "category_id": "category1",
+      "predictions": [
+        {
+          "class": 0,
+          "segmentation": [
+            {"x": 0.5, "y": 0.1},
+            {"x": 0.6, "y": 0.2},
+            {"x": 0.7, "y": 0.3}
+          ],
+          "score": 0.7
+        },
+        {
+          "class": 1,
+          "segmentation": [
+            {"x": 0.1, "y": 0.4},
+            {"x": 0.2, "y": 0.5},
+            {"x": 0.3, "y": 0.6}
+          ],
+          "score": 0.6
+        }
+      ]
+    },
+    {
+      "image_id": 4,
+      "category_id": "category2",
+      "predictions": [
+        {
+          "class": 2,
+          "segmentation": [
+            {"x": 0.3, "y": 0.1},
+            {"x": 0.4, "y": 0.2},
+            {"x": 0.5, "y": 0.3}
+          ],
+          "score": 0.5
+        },
+        {
+          "class": 3,
+          "segmentation": [
+            {"x": 0.7, "y": 0.4},
+            {"x": 0.8, "y": 0.5},
+            {"x": 0.9, "y": 0.6}
+          ],
+          "score": 0.4
+        }
+      ]
+    },
+    {
+      "image_id": 5,
+      "category_id": "category1",
+      "predictions": [
+        {
+          "class": 0,
+          "segmentation": [
+            {"x": 0.9, "y": 0.1},
+            {"x": 1.0, "y": 0.2},
+            {"x": 0.1, "y": 0.3}
+          ],
+          "score": 0.3
+        },
+        {
+          "class": 1,
+          "segmentation": [
+            {"x": 0.5, "y": 0.4},
+            {"x": 0.6, "y": 0.5},
+            {"x": 0.7, "y": 0.6}
+          ],
+          "score": 0.2
+        }
+      ]
+    },
+    {
+      "image_id": 6,
+      "category_id": "category2",
+      "predictions": [
+        {
+          "class": 2,
+          "segmentation": [
+            {"x": 0.1, "y": 0.1},
+            {"x": 0.2, "y": 0.2},
+            {"x": 0.3, "y": 0.3}
+          ],
+          "score": 0.1
+        },
+        {
+          "class": 3,
+          "segmentation": [
+            {"x": 0.5, "y": 0.4},
+            {"x": 0.6, "y": 0.5},
+            {"x": 0.7, "y": 0.6}
+          ],
+          "score": 0.0
+        }
+      ]
+    },
+    {
+      "image_id": 7,
+      "category_id": "category1",
+      "predictions": [
+        {
+          "class": 0,
+          "segmentation": [
+            {"x": 0.3, "y": 0.1},
+            {"x": 0.4, "y": 0.2},
+            {"x": 0.5, "y": 0.3}
+          ],
+          "score": 1.0
+        },
+        {
+          "class": 1,
+          "segmentation": [
+            {"x": 0.7, "y": 0.4},
+            {"x": 0.8, "y": 0.5},
+            {"x": 0.9, "y": 0.6}
+          ],
+          "score": 0.9
+        }
+      ]
+    },
+    {
+      "image_id": 8,
+      "category_id": "category2",
+      "predictions": [
+        {
+          "class": 2,
+          "segmentation": [
+            {"x": 0.5, "y": 0.1},
+            {"x": 0.6, "y": 0.2},
+            {"x": 0.7, "y": 0.3}
+          ],
+          "score": 0.8
+        },
+        {
+          "class": 3,
+          "segmentation": [
+            {"x": 0.1, "y": 0.4},
+            {"x": 0.2, "y": 0.5},
+            {"x": 0.3, "y": 0.6}
+          ],
+          "score": 0.7
+        }
+      ]
+    },
+    {
+      "image_id": 9,
+      "category_id": "category1",
+      "predictions": [
+        {
+          "class": 0,
+          "segmentation": [
+            {"x": 0.7, "y": 0.1},
+            {"x": 0.8, "y": 0.2},
+            {"x": 0.9, "y": 0.3}
+          ],
+          "score": 0.6
+        },
+        {
+          "class": 1,
+          "segmentation": [
+            {"x": 0.3, "y": 0.4},
+            {"x": 0.4, "y": 0.5},
+            {"x": 0.5, "y": 0.6}
+          ],
+          "score": 0.5
+        }
+      ]
+    }
+]

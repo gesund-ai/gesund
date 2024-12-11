@@ -4,11 +4,12 @@ import bson
 from typing import Union, Optional
 
 from gesund.core.schema import UserInputParams, UserInputData
-from gesund.core import metric_manager
 from gesund.core._exceptions import MetricCalculationError
 from gesund.core._data_loaders import DataLoader
 from gesund.core._converters import ConverterFactory
 from ._result import ValidationResult
+from gesund.core._managers.metric_manager import metric_manager
+from gesund.core._managers.plot_manager import plot_manager
 
 
 class Validation:
@@ -20,6 +21,7 @@ class Validation:
         problem_type: str,
         data_format: str,
         json_structure_type: str,
+        plot_config: str,
         metadata_path: Optional[str] = None,
     ):
         """
@@ -40,6 +42,9 @@ class Validation:
         :param json_structure_type: Data format for the validation (e.g., 'coco', 'yolo', 'gesund').
         :type json_structure_type: str
 
+        :param plot_config: Config for the plotting
+        :type plot_config: dict
+
         :param metadata_path: Path to the metadata file (if available).
         :type metadata_path: str
         :optional metadata_path: true
@@ -55,6 +60,7 @@ class Validation:
             "json_structure_type": json_structure_type,
             "data_format": data_format,
             "class_mapping": class_mapping,
+            "plot_config": plot_config,
         }
         self.user_params = UserInputParams(**params)
 
@@ -143,14 +149,20 @@ class Validation:
 
         results = {}
         try:
-            for metric_name in metric_manager.get_names(problem_type=self.problem_type):
-                _metric_executor = metric_manager[f"{self.problem_type}.{metric_name}"]
+            for metric_name in metric_manager.get_names(
+                problem_type=self.user_params.problem_type
+            ):
+                _metric_executor = metric_manager[
+                    f"{self.user_params.problem_type}.{metric_name}"
+                ]
                 _result = _metric_executor(
                     data={
                         "prediction": prediction,
                         "ground_truth": annotation,
                         "metadata": metadata,
-                    }
+                        "class_mapping": self.data.class_mapping,
+                    },
+                    problem_type=self.user_params.problem_type,
                 )
                 results[metric_name] = _result
         except Exception as e:
@@ -226,20 +238,3 @@ class Validation:
         )
 
         return results
-
-
-"""
-Usage
-
-from gesund import Validation
-
-validator = Validation(...)
-
-results = validator.run()
-
-results.plot(metric_name="str")
-
-results.save(metric_name="str")
-
-
-"""

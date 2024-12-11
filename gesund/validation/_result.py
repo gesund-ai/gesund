@@ -1,7 +1,8 @@
 from typing import Union, Optional
 
 from gesund.core.schema import UserInputParams, UserInputData
-from gesund.core import plot_manager
+from gesund.core._managers.metric_manager import metric_manager
+from gesund.core._managers.plot_manager import plot_manager
 
 
 class ValidationResult:
@@ -51,15 +52,22 @@ class ValidationResult:
         :type metric_name: str
         :param save_plot: True if the plot is to be saved
         :type save_plot: bool
+        :param file_name: Plot file name
+        :type file_name: str
 
         :return: path of the plot if saved
         :rtype: str
         """
         if metric_name == "all":
-            for metric_name in plot_manager.get_names(
+            for _metric in plot_manager.get_names(
                 problem_type=self.user_params.problem_type
             ):
                 _plot_executor = plot_manager[
-                    f"{self.user_params.problem_type}.{metric_name}"
+                    f"{self.user_params.problem_type}.{_metric}"
                 ]
-                _plot_executor(results=self.result, save_plot=save_plot)
+                _plot_executor(results=self.result[_metric], save_plot=save_plot)
+        else:
+            _plot_executor = plot_manager[
+                f"{self.user_params.problem_type}.{metric_name}"
+            ]
+            _plot_executor(results=self.result, save_plot=save_plot)

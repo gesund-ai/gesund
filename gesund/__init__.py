@@ -1,2 +1,1 @@
-from .validation import Validation
-from .validation import Plot
+from gesund.validation._validation import Validation

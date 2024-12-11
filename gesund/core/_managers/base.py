@@ -12,8 +12,8 @@ class GenericPMManager(Generic[T]):
     """
 
     def __init__(self):
-        self.__store: Dict[str, T] = {}
-        self.__allowed_registerations = [
+        self._store: Dict[str, T] = {}
+        self._allowed_registerations = [
             "classification",
             "semantic_segmentation",
             "instance_segmentation",
@@ -34,18 +34,18 @@ class GenericPMManager(Generic[T]):
         def decorator(func: T) -> T:
             if "." in name:
                 _k1, _k2 = name.split(".")
-                if _k1 not in self.__allowed_registerations:
+                if _k1 not in self._allowed_registerations:
                     raise RegistrationNotAllowed(
-                        f"{_k1} not allowed, only allowed {','.join(self.__allowed_registerations)}"
+                        f"{_k1} not allowed, only allowed {','.join(self._allowed_registerations)}"
                     )
 
-                if _k1 in self.__store:
-                    self.__store[_k1][_k2] = func
+                if _k1 in self._store:
+                    self._store[_k1][_k2] = func
                 else:
-                    self.__store[_k1] = {}
-                    self.__store[_k1][_k2] = func
+                    self._store[_k1] = {}
+                    self._store[_k1][_k2] = func
             else:
-                self.__store[name] = func
+                self._store[name] = func
             return func
 
         return decorator
@@ -60,8 +60,8 @@ class GenericPMManager(Generic[T]):
         :return: A list of registered names.
         """
         if problem_type:
-            return list(self.__store[problem_type].keys())
-        return list(self.__store.keys())
+            return list(self._store[problem_type].keys())
+        return list(self._store.keys())
 
     def __getitem__(self, key: str) -> Callable:
         """
@@ -77,9 +77,9 @@ class GenericPMManager(Generic[T]):
         try:
             if "." in key:
                 _k1, _k2 = key.split(".")
-                return self.__store[_k1][_k2]
+                return self._store[_k1][_k2]
             else:
-                return self.__store[key]
+                return self._store[key]
         except Exception as e:
             print(e)
             raise FunctionNotFoundError(f"{key} not registered")
