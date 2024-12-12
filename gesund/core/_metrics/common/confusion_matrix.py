@@ -103,7 +103,7 @@ class Classification:
         df = df.rename(columns=lower_case)
 
         if "age" in list(lower_case.values()):
-            df["age"] = df["age"].astype(categorize_age)
+            df["age"] = df["age"].apply(categorize_age)
 
         for grp, subset_data in df.groupby(list(lower_case.values())):
             grp_str = ",".join([str(i) for i in grp])
@@ -180,8 +180,6 @@ class Classification:
 
         if metadata:
             cohort_data = self.apply_metadata(data)
-
-        if metadata:
             for _cohort_key in cohort_data:
                 result[_cohort_key] = self.__calculate_metrics(
                     cohort_data[_cohort_key], data.get("class_mapping")

@@ -1,4 +1,5 @@
-from typing import Union, Any, Dict, List, Optional
+import os
+from typing import Union, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -17,65 +18,160 @@ from sklearn.metrics import (
 
 from gesund.core import metric_manager, plot_manager
 
+COHORT_SIZE_LIMIT = 2
+
+
+def categorize_age(age):
+    if age < 18:
+        return "Child"
+    elif 18 <= age < 30:
+        return "Young Adult"
+    elif 30 <= age < 60:
+        return "Adult"
+    else:
+        return "Senior"
+
 
 class Classification:
     def _validate_data(self, data: dict) -> bool:
         """
-        Validates the data required for metric calculation and plotting.
+        A function to validate the data that is required for metric calculation and plotting.
+
+        :param data: The input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
+        :type data: dict
+
+        :return: Status if the data is valid
+        :rtype: bool
         """
+        # Basic validation checks
         if not isinstance(data, dict):
             raise ValueError("Data must be a dictionary.")
         required_keys = ["prediction", "ground_truth"]
         for key in required_keys:
             if key not in data:
                 raise ValueError(f"Data must contain '{key}'.")
+
         if len(data["prediction"]) != len(data["ground_truth"]):
-            raise ValueError(
-                "Prediction and ground_truth must have the same number of samples."
+            raise ValueError("Prediction and ground_truth must have the same length.")
+
+        if (
+            len(
+                set(list(data["prediction"].keys())).difference(
+                    set(list(data["ground_truth"].keys()))
+                )
             )
+            > 0
+        ):
+            raise ValueError("Prediction and ground_truth must have the same keys.")
+
         return True
 
-    def apply_metadata(self, data: dict, metadata: dict) -> dict:
+    def __preprocess(self, data: dict, get_logits=False):
         """
-        Applies metadata to filter the data for calculation and plotting.
+        Preprocesses the data
+
+        :param data: dictionary containing the data prediction, ground truth, metadata
+        :type data: dict
+        :param get_logits: in case of multi class classification set to True
+        :type get_logits: boolean
+
+        :return: data tuple
+        :rtype: tuple
         """
+        prediction, ground_truth = [], []
+        for image_id in data["ground_truth"]:
+            sample_gt = data["ground_truth"][image_id]
+            sample_pred = data["prediction"][image_id]
+            ground_truth.append(sample_gt["annotation"][0]["label"])
+
+            if get_logits:
+                prediction.append(sample_pred["logits"])
+            else:
+                prediction.append(sample_pred["prediction_class"])
+        return (np.asarray(prediction), np.asarray(ground_truth))
+
+    def apply_metadata(self, data: dict) -> dict:
+        """
+        Applies metadata to the data for metric calculation and plotting.
+
+        :param data: The input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
+        :type data: dict
+
+        :return: Filtered dataset
+        :rtype: dict
+        """
+        # TODO:: This function could be global to be applied across metrics
+
+        df: pd.DataFrame = pd.DataFrame.from_records(data["metadata"])
+        cohorts_data = {}
+
+        metadata_columns = df.columns.tolist()
+        metadata_columns.remove("image_id")
+        lower_case = {i: i.lower() for i in metadata_columns}
+        df = df.rename(columns=lower_case)
+
+        if "age" in list(lower_case.values()):
+            df["age"] = df["age"].apply(categorize_age)
+
+        for grp, subset_data in df.groupby(list(lower_case.values())):
+            grp_str = ",".join([str(i) for i in grp])
+
+            if subset_data.shape[0] < COHORT_SIZE_LIMIT:
+                print(
+                    f"Warning - grp excluded - {grp_str} cohort size < {COHORT_SIZE_LIMIT}"
+                )
+            else:
+                image_ids = set(subset_data["image_id"].to_list())
+                filtered_data = {
+                    "prediction": {
+                        i: data["prediction"][i]
+                        for i in data["prediction"]
+                        if i in image_ids
+                    },
+                    "ground_truth": {
+                        i: data["ground_truth"][i]
+                        for i in data["ground_truth"]
+                        if i in image_ids
+                    },
+                    "metadata": subset_data,
+                    "class_mapping": data["class_mapping"],
+                }
+                cohorts_data[grp_str] = filtered_data
+
         return data
 
-    def calculate(self, data: dict) -> dict:
+    def __calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
         """
-        Calculates statistical tables for the given dataset.
-        """
-        # Validate the data
-        self._validate_data(data)
+        A function to calculate the metrics
 
-        # Extract data
+        :param data: data dictionary containing data
+        :type data: dict
+        :param class_mapping: a dictionary with class mapping labels
+        :type class_mapping: dict
+
+        :return: results calculated
+        :rtype: dict
+        """
+        class_order = [int(i) for i in class_mapping.keys()]
+        class_labels = [class_mapping[str(k)] for k in class_order]
+
         true = np.array(data["ground_truth"])
         pred_categorical = np.array(data["prediction"])
         pred_logits = data.get("pred_logits", None)
-        metadata = data.get("metadata", None)
-        class_mappings = data.get("class_mappings", None)
 
-        # Apply metadata if provided
-        if metadata is not None:
-            data = self.apply_metadata(data, metadata)
-            true = np.array(data["ground_truth"])
-            pred_categorical = np.array(data["prediction"])
-
-        # Handle class mappings
-        if class_mappings:
-            classes = [int(k) for k in class_mappings.keys()]
-            class_labels = [class_mappings[str(k)] for k in classes]
+        if len(class_order) > 2:
+            prediction, ground_truth = self.__preprocess(data, get_logits=True)
+            pred_logits = prediction
+            pred_categorical = np.argmax(prediction, axis=1)
         else:
-            classes = np.unique(true)
-            class_labels = [str(k) for k in classes]
-            class_mappings = {k: str(k) for k in classes}
+            prediction, ground_truth = self.__preprocess(data)
+            pred_categorical = prediction
+            pred_logits = None
+        true = ground_truth
 
-        # Calculate confusion matrix
-        cm = confusion_matrix(true, pred_categorical, labels=classes)
-
-        # Calculate per-class statistics
+        cm = confusion_matrix(true, pred_categorical, labels=class_order)
         per_class_metrics = {}
-        for idx, cls in enumerate(classes):
+        for idx, cls in enumerate(class_order):
             tp = cm[idx, idx]
             fn = cm[idx, :].sum() - tp
             fp = cm[:, idx].sum() - tp
@@ -93,7 +189,7 @@ class Classification:
                 (true == cls).astype(int), (pred_categorical == cls).astype(int)
             )
 
-            per_class_metrics[class_mappings[str(cls)]] = {
+            per_class_metrics[class_mapping[str(cls)]] = {
                 "TP": tp,
                 "TN": tn,
                 "FP": fp,
@@ -144,6 +240,34 @@ class Classification:
 
         return result
 
+    def calculate(self, data: dict) -> dict:
+        """
+        Calculates the lift chart for the given data.
+
+        :param data: The input data required for calculation and plotting
+                     {"prediction":, "ground_truth": , "metadata":, "class_mappings":}
+        :type data: dict
+
+        :return: Calculated metric results
+        :rtype: dict
+        """
+        result = {}
+
+        # Validate the data
+        self._validate_data(data)
+        metadata = data.get("metadata")
+
+        if metadata:
+            cohort_data = self.apply_metadata(data)
+            for _cohort_key in cohort_data:
+                result[_cohort_key] = self.__calculate_metrics(
+                    cohort_data[_cohort_key], data.get("class_mapping")
+                )
+        else:
+            result = self.__calculate_metrics(data, data.get("class_mapping"))
+
+        return result
+
 
 class PlotStatsTables:
     def __init__(self, data: dict):
@@ -167,26 +291,27 @@ class PlotStatsTables:
             if key not in self.data:
                 raise ValueError(f"Data must contain '{key}'.")
 
-    def save(self, figs: List[Figure], filepaths: List[str] = None) -> List[str]:
+    def save(self, figs: List[Figure], filenames: List[str]) -> List[str]:
         """
-        Saves the plots to files.
+        Saves multiple Matplotlib Figure objects to files.
 
-        :param figs: List of Matplotlib figure objects to save
+        :param figs: List of Matplotlib Figure objects to save
         :type figs: List[Figure]
-        :param filepaths: List of paths where the plot images will be saved
-        :type filepaths: List[str]
+        :param filenames: List of filenames where the plot images will be saved
+        :type filenames: List[str]
 
-        :return: List of paths where the plot images are saved
+        :return: List of file paths where the plot images are saved
         :rtype: List[str]
         """
-        if filepaths is None:
-            filepaths = ["confusion_matrix.png", "per_class_metrics.png"]
-
-        saved_paths = []
-        for fig, filepath in zip(figs, filepaths):
-            fig.savefig(filepath)
-            saved_paths.append(filepath)
-        return saved_paths
+        filepaths = []
+        dir_path = "plots"
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        for fig, filename in zip(figs, filenames):
+            filepath = os.path.join(dir_path, filename)
+            fig.savefig(filepath, format="png")
+            filepaths.append(filepath)
+        return filepaths
 
     def plot(self) -> List[Figure]:
         """
@@ -199,7 +324,7 @@ class PlotStatsTables:
         figures = []
 
         # Plot confusion matrix
-        fig_cm = plt.figure(figsize=(8, 6))
+        fig_cm, ax_cm = plt.subplots(figsize=(8, 6))
         cm = self.confusion_matrix
         sns.heatmap(
             cm,
@@ -209,9 +334,9 @@ class PlotStatsTables:
             xticklabels=self.classes,
             yticklabels=self.classes,
         )
-        plt.xlabel("Predicted Labels")
-        plt.ylabel("True Labels")
-        plt.title("Confusion Matrix")
+        ax_cm.set_xlabel("Predicted Labels")
+        ax_cm.set_ylabel("True Labels")
+        ax_cm.set_title("Confusion Matrix")
         figures.append(fig_cm)
 
         # Plot per-class metrics
@@ -222,12 +347,12 @@ class PlotStatsTables:
             id_vars="index", var_name="Metric", value_name="Value"
         )
 
-        fig_metrics = plt.figure(figsize=(10, 6))
+        fig_metrics, ax_metrics = plt.subplots(figsize=(10, 6))
         sns.barplot(data=metrics_df, x="index", y="Value", hue="Metric", palette="Set2")
-        plt.xlabel("Classes")
-        plt.ylabel("Metric Value")
-        plt.title("Per-Class Metrics")
-        plt.legend(title="Metric")
+        ax_metrics.set_xlabel("Classes")
+        ax_metrics.set_ylabel("Metric Value")
+        ax_metrics.set_title("Per-Class Metrics")
+        ax_metrics.legend(title="Metric")
         figures.append(fig_metrics)
 
         # Display overall metrics
@@ -283,6 +408,7 @@ def plot_stats_tables(results: dict, save_plot: bool) -> Union[List[str], List[F
     plotter = PlotStatsTables(data=results)
     figs = plotter.plot()
     if save_plot:
-        return plotter.save(figs)
-
-    return figs
+        filenames = [f"plot_{i}.png" for i in range(len(figs))]
+        return plotter.save(figs, filenames=filenames)
+    else:
+        plt.show()
