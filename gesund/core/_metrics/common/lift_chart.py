@@ -398,7 +398,7 @@ def calculate_lift_chart_metric(data: dict, problem_type: str):
 
 
 @plot_manager.register("classification.lift_chart")
-def plot_confusion_matrix(
+def plot_lift_chart(
     results: dict, save_plot: bool, file_name: str = "lift_chart.png"
 ) -> Union[str, None]:
     """
