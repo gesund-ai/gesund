@@ -11,6 +11,7 @@ from matplotlib.figure import Figure
 from gesund.core import metric_manager, plot_manager
 
 COHORT_SIZE_LIMIT = 2
+DEBUG = True
 
 
 def categorize_age(age):
@@ -178,6 +179,9 @@ class Classification:
         self._validate_data(data)
         metadata = data.get("metadata")
 
+        if DEBUG:
+            metadata = None
+
         if metadata:
             cohort_data = self.apply_metadata(data)
             for _cohort_key in cohort_data:
@@ -202,7 +206,7 @@ class PlotConfusionMatrix:
     def __init__(self, data: dict):
         self.data = data
         self.confusion_matrix = data["confusion_matrix"]
-        self.class_mappings = data["class_mappings"]
+        self.class_mapping = data["class_mapping"]
         self.class_order = data["class_order"]
 
     def _validate_data(self):
@@ -211,6 +215,9 @@ class PlotConfusionMatrix:
         """
         if "confusion_matrix" not in self.data:
             raise ValueError("Data must contain 'confusion_matrix'.")
+
+        # TODO: require more through validationg for the data structure that is required for plotting
+        # the confusion matrix
 
     def save(self, fig: Figure, filename: str) -> str:
         """
@@ -238,17 +245,26 @@ class PlotConfusionMatrix:
         """
         # Validate the data
         self._validate_data()
-
         fig, ax = plt.subplots(figsize=(10, 7))
         df_cm = pd.DataFrame(
             self.confusion_matrix,
-            index=[self.class_mappings[i] for i in self.class_order],
-            columns=[self.class_mappings[i] for i in self.class_order],
+            index=[self.class_mapping[str(i)] for i in self.class_order],
+            columns=[self.class_mapping[str(i)] for i in self.class_order],
         )
-        sns.heatmap(df_cm, annot=True, fmt="g", cmap="Blues")
-        ax.set_ylabel("True label")
-        ax.set_xlabel("Predicted label")
-        ax.set_title("Confusion Matrix")
+        sns.heatmap(
+            df_cm,
+            annot=True,
+            fmt="g",
+            cmap=sns.dark_palette(color="#79C", as_cmap=True),
+            ax=ax,
+        )
+        ax.set_ylabel("True label", fontdict={"fontsize": 14, "fontweight": "medium"})
+        ax.set_xlabel(
+            "Predicted label", fontdict={"fontsize": 14, "fontweight": "medium"}
+        )
+        ax.set_title(
+            "Confusion Matrix", fontdict={"fontsize": 16, "fontweight": "medium"}
+        )
         return fig
 
 

@@ -10,6 +10,7 @@ from sklearn.metrics import roc_curve
 from gesund.core import metric_manager, plot_manager
 
 COHORT_SIZE_LIMIT = 2
+DEBUG = True
 
 
 def categorize_age(age):
@@ -194,6 +195,9 @@ class Classification:
         # Validate the data
         self._validate_data(data)
         metadata = data.get("metadata")
+
+        if DEBUG:
+            metadata = None
 
         if metadata:
             cohort_data = self.apply_metadata(data)

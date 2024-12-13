@@ -9,6 +9,7 @@ from matplotlib.figure import Figure
 from gesund.core import metric_manager, plot_manager
 
 COHORT_SIZE_LIMIT = 2
+DEBUG = True
 
 
 def categorize_age(age):
@@ -150,12 +151,9 @@ class Classification:
             prediction, ground_truth = self.__preprocess(data)
 
         # TODO: Check the prev code for the below
-
-        data = self.apply_metadata(data, metadata)
         predictions = pd.DataFrame(data["prediction"])
         ground_truth = pd.Series(data["ground_truth"])
         loss = pd.Series(data["loss"])
-        metadata = pd.DataFrame(data.get("metadata", {}))
 
         meta_pred_true = pd.DataFrame(
             {"pred_categorical": predictions.idxmax(axis=1), "true": ground_truth}
@@ -170,7 +168,6 @@ class Classification:
             "meta_pred_true": meta_pred_true,
             "predictions": predictions,
             "loss": loss,
-            "metadata": metadata,
             "class_mapping": class_mapping,
         }
 
@@ -192,6 +189,9 @@ class Classification:
         # Validate the data
         self._validate_data(data)
         metadata = data.get("metadata")
+
+        if DEBUG:
+            metadata = None
 
         if metadata:
             cohort_data = self.apply_metadata(data)

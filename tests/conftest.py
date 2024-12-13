@@ -100,6 +100,6 @@ def setup_and_teardown():
         shutil.rmtree(outputs_dir)
 
     # remove plots folder
-    plots_dir = os.path.join(work_dir, "plots")
-    if os.path.exists(plots_dir):
-        shutil.rmtree(plots_dir)
+    # plots_dir = os.path.join(work_dir, "plots")
+    # if os.path.exists(plots_dir):
+    #     shutil.rmtree(plots_dir)

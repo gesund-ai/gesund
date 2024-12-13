@@ -23,8 +23,9 @@ def categorize_age(age):
         return "Senior"
 
 
-COHORT_SIZE_LIMIT = 2
-DEBUG = True
+COHORT_SIZE_LIMIT = 30
+DEBUG = False
+MAX_COHORT = 10
 
 
 class Classification:
@@ -321,7 +322,7 @@ def calculate_auc_metric(data: dict, problem_type: str):
 
 @plot_manager.register("classification.auc")
 def plot_auc(
-    results: dict, save_plot: bool, file_name: str = "auc_plot.png"
+    results: dict, save_plot: bool, file_name: str = "auc.png"
 ) -> Union[str, None]:
     """
     A wrapper function to plot the AUC curves.

@@ -70,4 +70,4 @@ class ValidationResult:
             _plot_executor = plot_manager[
                 f"{self.user_params.problem_type}.{metric_name}"
             ]
-            _plot_executor(results=self.result, save_plot=save_plot)
+            _plot_executor(results=self.result[metric_name], save_plot=save_plot)
