@@ -3,13 +3,25 @@ import json
 import bson
 from typing import Union, Optional
 
+import pandas as pd
+
 from gesund.core.schema import UserInputParams, UserInputData
 from gesund.core._exceptions import MetricCalculationError
 from gesund.core._data_loaders import DataLoader
 from gesund.core._converters import ConverterFactory
 from ._result import ValidationResult
 from gesund.core._managers.metric_manager import metric_manager
-from gesund.core._managers.plot_manager import plot_manager
+
+
+def categorize_age(age):
+    if age < 18:
+        return "Child"
+    elif 18 <= age < 30:
+        return "Young Adult"
+    elif 30 <= age < 60:
+        return "Adult"
+    else:
+        return "Senior"
 
 
 class Validation:
@@ -74,6 +86,15 @@ class Validation:
         os.makedirs(self.output_dir, exist_ok=True)
         os.makedirs(os.path.join(self.output_dir, "plots"), exist_ok=True)
 
+        # cohort parameters
+        self.cohort_params = {
+            "max_num_cohort": 10,
+            "min_cohort_size": 33,
+            "cohort_map": {},
+        }
+
+        self.debug_mode = False
+
     def _load_data(self) -> dict:
         """
         A Function to load the JSON files
@@ -100,6 +121,62 @@ class Validation:
             self._convert_data(data)
 
         self.data = UserInputData(**data)
+
+    def apply_metadata(self, prediction: dict, annotation: dict) -> dict:
+        """
+        A function to create cohorts as per the metadata
+
+        :param prediction: structure containing the prediction data
+        :type prediction: dict
+        :param annotation: structure containing the annotation data
+        :type annotation: dict
+
+        :return: Filtered dataset
+        :rtype: dict
+        """
+        # convert the metadata into pandas dataframe for better access
+        df: pd.DataFrame = pd.DataFrame.from_records(self.data.metadata)
+        cohorts_data = {}
+        cohort_id_map = {}
+
+        # collect only the metadata columns
+        metadata_columns = df.columns.tolist()
+        metadata_columns.remove("image_id")
+        lower_case = {i: i.lower() for i in metadata_columns}
+        df = df.rename(columns=lower_case)
+
+        # categorize age in metadata
+        if "age" in list(lower_case.values()):
+            df["age"] = df["age"].apply(categorize_age)
+
+        # loop over group by to form cohorts with unique metadata
+        _id = 0
+        for grp, subset_data in df.groupby(list(lower_case.values())):
+            grp_str = ",".join([str(i) for i in grp])
+            cohort_id = _id + 1
+            cohort_id_map[cohort_id] = grp_str
+
+            # it seems that
+            if subset_data.shape[0] < self.cohort_params["min_cohort_size"]:
+                print(
+                    f"Warning - grp excluded - {grp_str} cohort size < {self.cohort_params['min_cohort_size']}"
+                )
+            else:
+                image_ids = set(subset_data["image_id"].to_list())
+                filtered_data = {
+                    "prediction": {
+                        i: prediction[i] for i in prediction if i in image_ids
+                    },
+                    "ground_truth": {
+                        i: annotation[i] for i in annotation if i in image_ids
+                    },
+                    "metadata": subset_data,
+                    "class_mapping": self.data.class_mapping,
+                }
+                cohorts_data[cohort_id] = filtered_data
+
+        self.cohort_params["cohort_map"] = cohort_id_map
+        return cohorts_data
 
     def _convert_data(self, data):
         """
@@ -128,7 +205,7 @@ class Validation:
         data["was_converted"] = True
         return data
 
-    def _run_validation(self) -> dict:
+    def _run_validation(self, data: dict) -> dict:
         """
         A function to run the validation
 
@@ -137,16 +214,6 @@ class Validation:
         :return: result dictionary
         :rtype: dict
         """
-        if self.data.was_converted:
-            prediction = self.data.converted_prediction
-            annotation = self.data.converted_annotation
-        else:
-            prediction = self.data.prediction
-            annotation = self.data.annotation
-        metadata = None
-        if self.user_params.metadata_path:
-            metadata = self.data.metadata
-
         results = {}
         try:
             for metric_name in metric_manager.get_names(
@@ -156,12 +223,7 @@ class Validation:
                 print("Running ", key_name, "." * 5)
                 _metric_executor = metric_manager[key_name]
                 _result = _metric_executor(
-                    data={
-                        "prediction": prediction,
-                        "ground_truth": annotation,
-                        "metadata": metadata,
-                        "class_mapping": self.data.class_mapping,
-                    },
+                    data=data,
                     problem_type=self.user_params.problem_type,
                 )
                 results[metric_name] = _result
@@ -228,13 +290,37 @@ class Validation:
         :rtype:
         """
         results = {}
+        cohorts = None
+
+        # the data is assigned to local veriables to later pass on to functions as parameters
+        # eventhough the data is stored in class attribute, for better code clarity
+        if self.data.was_converted:
+            prediction = self.data.converted_prediction
+            annotation = self.data.converted_annotation
+        else:
+            prediction = self.data.prediction
+            annotation = self.data.annotation
+
+        # if the metadata is made available then the data is divided into cohorts as per the metadata
+        if self.user_params.metadata_path:
+            cohorts = self.apply_metadata(prediction, annotation)
 
         # run the validation
-        results = self._run_validation()
+        if cohorts:
+            for _cohort_id in cohorts:
+                data = cohorts[_cohort_id]
+                results[_cohort_id] = self._run_validation(data)
+        else:
+            results = self._run_validation(
+                data={
+                    "prediction": prediction,
+                    "annotation": annotation,
+                    "metadata": self.data.metadata,
+                    "class_mapping": self.data.class_mapping,
+                }
+            )
 
         # return the results
-        results = ValidationResult(
+        return ValidationResult(
             data=self.data, input_params=self.user_params, result=results
         )
-
-        return results

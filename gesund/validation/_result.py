@@ -43,7 +43,10 @@ class ValidationResult:
         pass
 
     def plot(
-        self, metric_name: str = "all", save_plot: bool = False
+        self,
+        metric_name: str = "all",
+        save_plot: bool = False,
+        cohort_id: Optional[str] = None,
     ) -> Union[str, None]:
         """
         A functon to plot the given metric
@@ -65,9 +68,22 @@ class ValidationResult:
                 _plot_executor = plot_manager[
                     f"{self.user_params.problem_type}.{_metric}"
                 ]
-                _plot_executor(results=self.result[_metric], save_plot=save_plot)
+
+                if cohort_id:
+                    result = self.result[cohort_id][_metric]
+                else:
+                    result = self.result[_metric]
+
+                _plot_executor(results=result, save_plot=save_plot)
         else:
             _plot_executor = plot_manager[
                 f"{self.user_params.problem_type}.{metric_name}"
             ]
-            _plot_executor(results=self.result[metric_name], save_plot=save_plot)
+
+            if cohort_id:
+                result = self.result[cohort_id][metric_name]
+            else:
+                result = self.result[metric_name]
+
+            _plot_executor(results=result, save_plot=save_plot)
+
