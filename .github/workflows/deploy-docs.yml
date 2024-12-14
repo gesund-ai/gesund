@@ -1,0 +1,62 @@
+# This workflow to automatically build and deploy Sphinx documentation to GitHub Pages
+# Triggers on push to main branch
+# Steps:
+    # 1. Checkout repository
+    # 2. Setup Python environment
+    # 3. Install Sphinx and project dependencies
+    # 4. Build HTML documentation
+    # 5. Deploy to GitHub Pages branch
+    # 6. Cleanup build artifacts
+
+name: Deploy Sphinx Documentation
+
+on:
+  push:
+    branches:
+      - main
+      - refactor/document_automation
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install sphinx sphinx-rtd-theme sphinx-autodoc-typehints myst-parser
+          pip install -e .
+
+      - name: Build documentation
+        run: |
+          cd docs
+          make clean
+          make html
+        continue-on-error: false
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/_build
+          publish_branch: gh-pages
+          force_orphan: true
+          enable_jekyll: false
+
+      - name: Cleanup build files
+        if: always()
+        run: |
+          rm -rf docs/_build/
