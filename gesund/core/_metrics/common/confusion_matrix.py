@@ -1,5 +1,5 @@
 import os
-from typing import Union
+from typing import Union, Optional
 
 import numpy as np
 import pandas as pd
@@ -83,56 +83,6 @@ class Classification:
                 prediction.append(sample_pred["prediction_class"])
         return (np.asarray(prediction), np.asarray(ground_truth))
 
-    def apply_metadata(self, data: dict) -> dict:
-        """
-        Applies metadata to the data for metric calculation and plotting.
-
-        :param data: The input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
-        :type data: dict
-
-        :return: Filtered dataset
-        :rtype: dict
-        """
-        # TODO:: This function could be global to be applied across metrics
-
-        df: pd.DataFrame = pd.DataFrame.from_records(data["metadata"])
-        cohorts_data = {}
-
-        metadata_columns = df.columns.tolist()
-        metadata_columns.remove("image_id")
-        lower_case = {i: i.lower() for i in metadata_columns}
-        df = df.rename(columns=lower_case)
-
-        if "age" in list(lower_case.values()):
-            df["age"] = df["age"].apply(categorize_age)
-
-        for grp, subset_data in df.groupby(list(lower_case.values())):
-            grp_str = ",".join([str(i) for i in grp])
-
-            if subset_data.shape[0] < COHORT_SIZE_LIMIT:
-                print(
-                    f"Warning - grp excluded - {grp_str} cohort size < {COHORT_SIZE_LIMIT}"
-                )
-            else:
-                image_ids = set(subset_data["image_id"].to_list())
-                filtered_data = {
-                    "prediction": {
-                        i: data["prediction"][i]
-                        for i in data["prediction"]
-                        if i in image_ids
-                    },
-                    "ground_truth": {
-                        i: data["ground_truth"][i]
-                        for i in data["ground_truth"]
-                        if i in image_ids
-                    },
-                    "metadata": subset_data,
-                    "class_mapping": data["class_mapping"],
-                }
-                cohorts_data[grp_str] = filtered_data
-
-        return data
-
     def __calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
         """
         A function to calculate the metrics
@@ -177,19 +127,9 @@ class Classification:
 
         # Validate the data
         self._validate_data(data)
-        metadata = data.get("metadata")
 
-        if DEBUG:
-            metadata = None
-
-        if metadata:
-            cohort_data = self.apply_metadata(data)
-            for _cohort_key in cohort_data:
-                result[_cohort_key] = self.__calculate_metrics(
-                    cohort_data[_cohort_key], data.get("class_mapping")
-                )
-        else:
-            result = self.__calculate_metrics(data, data.get("class_mapping"))
+        # calculaee the metrics
+        result = self.__calculate_metrics(data, data.get("class_mapping"))
 
         return result
 
@@ -203,11 +143,12 @@ class ObjectDetection:
 
 
 class PlotConfusionMatrix:
-    def __init__(self, data: dict):
+    def __init__(self, data: dict, cohort_id: Optional[int] = None):
         self.data = data
         self.confusion_matrix = data["confusion_matrix"]
         self.class_mapping = data["class_mapping"]
         self.class_order = data["class_order"]
+        self.cohort_id = cohort_id
 
     def _validate_data(self):
         """
@@ -232,7 +173,12 @@ class PlotConfusionMatrix:
         dir_path = "plots"
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
-        filepath = f"{dir_path}/{filename}"
+
+        if self.cohort_id:
+            filepath = f"{dir_path}/{self.cohort_id}_{filename}"
+        else:
+            filepath = f"{dir_path}/{filename}"
+
         fig.savefig(filepath, format="png")
         return filepath
 
@@ -262,9 +208,13 @@ class PlotConfusionMatrix:
         ax.set_xlabel(
             "Predicted label", fontdict={"fontsize": 14, "fontweight": "medium"}
         )
-        ax.set_title(
-            "Confusion Matrix", fontdict={"fontsize": 16, "fontweight": "medium"}
-        )
+
+        if self.cohort_id:
+            title_str = f"Confusion matrix : cohort - {self.cohort_id}"
+        else:
+            title_str = "Confusion matrix"
+
+        ax.set_title(title_str, fontdict={"fontsize": 16, "fontweight": "medium"})
         return fig
 
 
@@ -295,7 +245,10 @@ def calculate_confusion_matrix(data: dict, problem_type: str):
 
 @plot_manager.register("classification.confusion_matrix")
 def plot_confusion_matrix(
-    results: dict, save_plot: bool, file_name: str = "confusion_matrix.png"
+    results: dict,
+    save_plot: bool,
+    file_name: str = "confusion_matrix.png",
+    cohort_id: Optional[int] = None,
 ) -> Union[str, None]:
     """
     A wrapper function to plot the confusion matrix.
@@ -306,11 +259,13 @@ def plot_confusion_matrix(
     :type save_plot: bool
     :param file_name: Name of the file to save the plot
     :type file_name: str
+    :param cohort_id: id of the cohort
+    :type cohort_id: int
 
     :return: None or path to the saved plot
     :rtype: Union[str, None]
     """
-    plotter = PlotConfusionMatrix(data=results)
+    plotter = PlotConfusionMatrix(data=results, cohort_id=cohort_id)
     fig = plotter.plot()
     if save_plot:
         return plotter.save(fig, filename=file_name)

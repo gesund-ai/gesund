@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Optional
 import os
 
 import numpy as np
@@ -10,6 +10,7 @@ from matplotlib.figure import Figure
 import seaborn as sns
 
 from gesund.core import metric_manager, plot_manager
+
 
 class Classification:
     def _validate_data(self, data: dict) -> bool:
@@ -142,13 +143,14 @@ class ObjectDetection:
 
 
 class PlotAuc:
-    def __init__(self, data: dict):
+    def __init__(self, data: dict, cohort_id: Optional[int] = None):
         self.data = data
         self.fpr = data["fpr"]
         self.tpr = data["tpr"]
         self.aucs = data["auc"]
         self.class_mappings = data["class_mapping"]
         self.class_order = data["class_order"]
+        self.cohort_id = cohort_id
 
     def _validate_data(self):
         """
@@ -172,7 +174,11 @@ class PlotAuc:
         dir_path = "plots"
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
-        filepath = f"{dir_path}/{filename}"
+
+        if self.cohort_id:
+            filepath = f"{dir_path}/{self.cohort_id}_{filename}"
+        else:
+            filepath = f"{dir_path}/{filename}"
         fig.savefig(filepath, format="png")
         return filepath
 
@@ -194,8 +200,13 @@ class PlotAuc:
         ax.set_ylabel(
             "True Positive Rate", fontdict={"fontsize": 14, "fontweight": "medium"}
         )
+        if self.cohort_id:
+            title_str = f"Receiver Operating Characteristic (ROC) Curve : cohort - {self.cohort_id}"
+        else:
+            title_str = "Receiver Operating Characteristic (ROC) Curve"
+
         ax.set_title(
-            "Receiver Operating Characteristic (ROC) Curves",
+            title_str,
             fontdict={"fontsize": 16, "fontweight": "medium"},
         )
         ax.legend(loc="lower right")
@@ -229,7 +240,10 @@ def calculate_auc_metric(data: dict, problem_type: str):
 
 @plot_manager.register("classification.auc")
 def plot_auc(
-    results: dict, save_plot: bool, file_name: str = "auc.png"
+    results: dict,
+    save_plot: bool,
+    file_name: str = "auc.png",
+    cohort_id: Optional[int] = None,
 ) -> Union[str, None]:
     """
     A wrapper function to plot the AUC curves.
@@ -240,11 +254,13 @@ def plot_auc(
     :type save_plot: bool
     :param file_name: name of the file
     :type file_name: str
+    :param cohort_id: id of the cohort
+    :type cohort_id: int
 
     :return: None or path to the saved plot
     :rtype: Union[str, None]
     """
-    plotter = PlotAuc(data=results)
+    plotter = PlotAuc(data=results, cohort_id=cohort_id)
     fig = plotter.plot()
     if save_plot:
         return plotter.save(fig, filename=file_name)

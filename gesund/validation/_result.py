@@ -1,7 +1,6 @@
-from typing import Union, Optional
+from typing import Union, Optional, Callable
 
 from gesund.core.schema import UserInputParams, UserInputData
-from gesund.core._managers.metric_manager import metric_manager
 from gesund.core._managers.plot_manager import plot_manager
 
 
@@ -11,22 +10,30 @@ class ValidationResult:
         data: UserInputData,
         input_params: UserInputParams,
         result: Union[dict, list],
+        cohort_args: Optional[dict] = {},
+        plot_args: Optional[dict] = {},
     ) -> None:
         """
         A function to initialize the resultant data
 
         :param data: the data loaded by the validation class
-        :type data:
-        :param input_params:
-        :type input_params:
-        :param result:
-        :type result:
+        :type data: UserInputData
+        :param input_params: the user input provided by the user inputs
+        :type input_params: UserInputParams
+        :param result: result from validation execution
+        :type result: Union[dict, list]
+        :param cohort_args: user arguments for cohort creation
+        :type cohort_args: dict
+        :param  plot_args: user arguments for plotting
+        :type plot_args: dict
 
         :return: None
         """
         self.data = data
         self.user_params = input_params
         self.result = result
+        self.cohort_args = cohort_args
+        self.plot_args = plot_args
 
     def save(self, metric_name: str = "all", format: str = "json") -> str:
         """
@@ -42,11 +49,48 @@ class ValidationResult:
         """
         pass
 
+    def _run_plot_executor(
+        self,
+        plot_executor: Callable,
+        metric_name: str,
+        save_plot: bool,
+        cohort_id: Optional[int] = None,
+    ) -> None:
+        """
+        A function to run the plot executor
+
+        :param plot_executor: The registered function required for executing the function
+        :type plot_executor: Callable
+        :param metric_name: name of the metric to be plotted
+        :type metric_name: str
+        :param save_plot: boolean value of the metric to be saved
+        :type save_plot: bool
+        :param cohort_id: the id of the cohort if applicable
+        :type cohort_id: int
+
+        """
+        # cohort wise plotting is only possible when the cohort map is populated
+        # if it is not populated then it is considered as a whole data
+        if self.cohort_args["cohort_map"]:
+            if cohort_id:
+                result = self.result[cohort_id][metric_name]
+                plot_executor(results=result, save_plot=save_plot, cohort_id=cohort_id)
+            else:
+                for _cohort_id in self.cohort_args["cohort_map"]:
+                    result = self.result[_cohort_id][metric_name]
+                    plot_executor(
+                        results=result, save_plot=save_plot, cohort_id=_cohort_id
+                    )
+        else:
+            result = self.result[metric_name]
+            plot_executor(results=result, save_plot=save_plot)
+
     def plot(
         self,
         metric_name: str = "all",
         save_plot: bool = False,
-        cohort_id: Optional[str] = None,
+        file_name: Optional[str] = None,
+        cohort_id: Optional[int] = None,
     ) -> Union[str, None]:
         """
         A functon to plot the given metric
@@ -57,6 +101,8 @@ class ValidationResult:
         :type save_plot: bool
         :param file_name: Plot file name
         :type file_name: str
+        :param cohort_id: id of the data cohort if applicable
+        :type cohort_id: int
 
         :return: path of the plot if saved
         :rtype: str
@@ -68,22 +114,9 @@ class ValidationResult:
                 _plot_executor = plot_manager[
                     f"{self.user_params.problem_type}.{_metric}"
                 ]
-
-                if cohort_id:
-                    result = self.result[cohort_id][_metric]
-                else:
-                    result = self.result[_metric]
-
-                _plot_executor(results=result, save_plot=save_plot)
+                self._run_plot_executor(_plot_executor, _metric, save_plot, cohort_id)
         else:
             _plot_executor = plot_manager[
                 f"{self.user_params.problem_type}.{metric_name}"
             ]
-
-            if cohort_id:
-                result = self.result[cohort_id][metric_name]
-            else:
-                result = self.result[metric_name]
-
-            _plot_executor(results=result, save_plot=save_plot)
-
+            self._run_plot_executor(_plot_executor, metric_name, save_plot, cohort_id)

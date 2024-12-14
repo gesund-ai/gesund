@@ -35,31 +35,31 @@ class Validation:
         json_structure_type: str,
         plot_config: str,
         metadata_path: Optional[str] = None,
+        cohort_args: Optional[dict] = {},
+        plot_args: Optional[dict] = {},
     ):
         """
         Initialization function to handle the validation pipeline
 
         :param annotations_path: Path to the JSON file containing the annotations data.
         :type annotations_path: str
-
         :param predictions_path: Path to the JSON file containing the predictions data.
         :type predictions_path: str
-
         :param class_mappings: Path to the JSON file containing class mappings or a dictionary file.
         :type class_mappings: Union[str, dict]
-
         :param problem_type: Type of problem (e.g., 'classification', 'object_detection').
         :type problem_type: str
-
         :param json_structure_type: Data format for the validation (e.g., 'coco', 'yolo', 'gesund').
         :type json_structure_type: str
-
         :param plot_config: Config for the plotting
         :type plot_config: dict
-
         :param metadata_path: Path to the metadata file (if available).
         :type metadata_path: str
         :optional metadata_path: true
+        :param cohort_args: arguments supplied for cohort analysis
+        :type cohort_args: dict
+        :param plot_args: arguments supplied for cohort analysis
+        :type plot_args: dict
 
         :return: None
         """
@@ -89,9 +89,13 @@ class Validation:
         # cohort parameters
         self.cohort_params = {
             "max_num_cohort": 10,
-            "min_cohort_size": 33,
+            "min_cohort_size": 0,
             "cohort_map": {},
         }
+        if cohort_args:
+            self.cohort_params.update(cohort_args)
+
+        self.plot_args = plot_args
 
         self.debug_mode = False
 
@@ -150,11 +154,11 @@ class Validation:
             df["age"] = df["age"].apply(categorize_age)
 
         # loop over group by to form cohorts with unique metadata
-        _id = 0
+        cohort_id = 0
         for grp, subset_data in df.groupby(list(lower_case.values())):
             grp_str = ",".join([str(i) for i in grp])
-            cohort_id = _id + 1
-            cohort_id_map[cohort_id] = grp_str
+            cohort_id = cohort_id + 1
+            cohort_id_map[cohort_id] = {"group": grp_str, "size": subset_data.shape[0]}
 
             # it seems that
             if subset_data.shape[0] < self.cohort_params["min_cohort_size"]:
@@ -322,5 +326,9 @@ class Validation:
 
         # return the results
         return ValidationResult(
-            data=self.data, input_params=self.user_params, result=results
+            data=self.data,
+            input_params=self.user_params,
+            result=results,
+            plot_args=self.plot_args,
+            cohort_args=self.cohort_params,
         )

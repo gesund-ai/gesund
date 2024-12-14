@@ -123,9 +123,13 @@ def test_plot_manager(plot_config, setup_and_teardown):
 
 
 @pytest.mark.parametrize(
-    "plot_config", [{"problem_type": "classification"}], indirect=True
+    "plot_config, metric_name",
+    [
+        ({"problem_type": "classification"}, "auc"),
+        ({"problem_type": "classification"}, "confusion_matrix"),
+    ],
 )
-def test_plot_manager_single_metric(plot_config, setup_and_teardown):
+def test_plot_manager_single_metric(plot_config, metric_name, setup_and_teardown):
     from gesund import Validation
     from gesund.validation._result import ValidationResult
     from gesund.core._managers.metric_manager import metric_manager
@@ -142,17 +146,17 @@ def test_plot_manager_single_metric(plot_config, setup_and_teardown):
         json_structure_type="gesund",
         metadata_path=f"{data_dir}/test_metadata_new.json",
         plot_config=plot_config,
+        cohort_args={"selection_criteria": "random"},
     )
 
-    metric_name = "confusion_matrix"
     validation_results = validator.run()
     assert isinstance(validation_results, ValidationResult) is True
 
     assert metric_name in metric_manager.get_names(problem_type=problem_type)
     assert metric_name in plot_manager.get_names(problem_type=problem_type)
 
-    validation_results.plot(metric_name=metric_name, save_plot=True)
-    assert os.path.exists(f"plots/{metric_name}.png") is True
+    validation_results.plot(metric_name=metric_name, save_plot=True, cohort_id=1)
+    assert os.path.exists(f"plots/1_{metric_name}.png") is True
 
 
 """
