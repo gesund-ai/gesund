@@ -1,10 +1,10 @@
-
 from typing import Union
 import os
 
 import numpy as np
 import pandas as pd
-#TODO 1: check if the methods has specific imports
+
+# TODO 1: check if the methods has specific imports
 
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
@@ -23,8 +23,10 @@ DEBUG = True
 class Classification:
     pass
 
+
 class SemanticSegmentation(Classification):
     pass
+
 
 class ObjectDetection:
     def _validate_data(self, data: dict) -> bool:
@@ -107,7 +109,7 @@ class ObjectDetection:
         df = df.rename(columns=lower_case)
 
         # categorize age in metadata
-        #TODO: check if the method is available
+        # TODO: check if the method is available
 
         # if "age" in list(lower_case.values()):
         #     df["age"] = df["age"].apply(categorize_age)
@@ -162,9 +164,9 @@ class ObjectDetection:
 
         else:
             prediction, ground_truth = self.__preprocess(data)
-            
-            #TODO: check if the methods for that script are available
-        
+
+            # TODO: check if the methods for that script are available
+
         return data
 
     def calculate(self, data: dict) -> dict:
@@ -196,15 +198,14 @@ class ObjectDetection:
         return result
 
 
-
 class PlotAveragePrecision:
     def __init__(self, data: dict):
-        #TODO: check if the methods have specific initializations
+        # TODO: check if the methods have specific initializations
         self.data = data
         pass
 
     def _validate_data(self):
-        #TODO: check if the methods have specific validations naming in the script
+        # TODO: check if the methods have specific validations naming in the script
         """
         Validates the data required for plotting.
         """
@@ -228,7 +229,7 @@ class PlotAveragePrecision:
         return filepath
 
     def plot(self) -> Figure:
-        #TODO: check if the methods have specific plotting methods
+        # TODO: check if the methods have specific plotting methods
         """
         Plots the metrics.
         """
