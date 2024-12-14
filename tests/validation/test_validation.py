@@ -128,6 +128,7 @@ def test_plot_manager(plot_config, setup_and_teardown):
         ({"problem_type": "classification"}, "lift_chart", None),
         ({"problem_type": "classification"}, "auc", None),
         ({"problem_type": "classification"}, "confusion_matrix", None),
+        ({"problem_type": "classification"}, "most_confused", None),
     ],
 )
 def test_plot_manager_single_metric(

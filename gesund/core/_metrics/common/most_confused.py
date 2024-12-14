@@ -10,20 +10,6 @@ import seaborn as sns
 
 from gesund.core import metric_manager, plot_manager
 
-COHORT_SIZE_LIMIT = 2
-DEBUG = True
-
-
-def categorize_age(age):
-    if age < 18:
-        return "Child"
-    elif 18 <= age < 30:
-        return "Young Adult"
-    elif 30 <= age < 60:
-        return "Adult"
-    else:
-        return "Senior"
-
 
 class Classification:
     def _validate_data(self, data: dict) -> bool:
@@ -83,56 +69,6 @@ class Classification:
                 prediction.append(sample_pred["prediction_class"])
         return (np.asarray(prediction), np.asarray(ground_truth))
 
-    def apply_metadata(self, data: dict) -> dict:
-        """
-        Applies metadata to the data for metric calculation and plotting.
-
-        :param data: The input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
-        :type data: dict
-
-        :return: Filtered dataset
-        :rtype: dict
-        """
-        # TODO:: This function could be global to be applied across metrics
-
-        df: pd.DataFrame = pd.DataFrame.from_records(data["metadata"])
-        cohorts_data = {}
-
-        metadata_columns = df.columns.tolist()
-        metadata_columns.remove("image_id")
-        lower_case = {i: i.lower() for i in metadata_columns}
-        df = df.rename(columns=lower_case)
-
-        if "age" in list(lower_case.values()):
-            df["age"] = df["age"].apply(categorize_age)
-
-        for grp, subset_data in df.groupby(list(lower_case.values())):
-            grp_str = ",".join([str(i) for i in grp])
-
-            if subset_data.shape[0] < COHORT_SIZE_LIMIT:
-                print(
-                    f"Warning - grp excluded - {grp_str} cohort size < {COHORT_SIZE_LIMIT}"
-                )
-            else:
-                image_ids = set(subset_data["image_id"].to_list())
-                filtered_data = {
-                    "prediction": {
-                        i: data["prediction"][i]
-                        for i in data["prediction"]
-                        if i in image_ids
-                    },
-                    "ground_truth": {
-                        i: data["ground_truth"][i]
-                        for i in data["ground_truth"]
-                        if i in image_ids
-                    },
-                    "metadata": subset_data,
-                    "class_mapping": data["class_mapping"],
-                }
-                cohorts_data[grp_str] = filtered_data
-
-        return data
-
     def __calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
         """
         A function to calculate the metrics
@@ -159,8 +95,8 @@ class Classification:
                 if i != j and cm[i, j] > 0:
                     confused_pairs.append(
                         {
-                            "true": class_mapping[actual_class],
-                            "predicted": class_mapping[pred_class],
+                            "true": class_mapping[str(actual_class)],
+                            "predicted": class_mapping[str(pred_class)],
                             "count": cm[i, j],
                         }
                     )
@@ -178,7 +114,7 @@ class Classification:
         Calculates the lift chart for the given data.
 
         :param data: The input data required for calculation and plotting
-                     {"prediction":, "ground_truth": , "metadata":, "class_mappings":}
+                     {"prediction":, "ground_truth": , "metadata":, "class_mapping":}
         :type data: dict
 
         :return: Calculated metric results
@@ -188,20 +124,9 @@ class Classification:
 
         # Validate the data
         self._validate_data(data)
-        metadata = data.get("metadata")
 
-        if DEBUG:
-            metadata = None
-
-        if metadata:
-            cohort_data = self.apply_metadata(data)
-            for _cohort_key in cohort_data:
-                result[_cohort_key] = self.__calculate_metrics(
-                    cohort_data[_cohort_key], data.get("class_mapping")
-                )
-        else:
-            result = self.__calculate_metrics(data, data.get("class_mapping"))
-
+        # calculate the metrics
+        result = self.__calculate_metrics(data, data.get("class_mapping"))
         return result
 
 
@@ -214,9 +139,10 @@ class ObjectDetection:
 
 
 class PlotMostConfused:
-    def __init__(self, data: dict):
+    def __init__(self, data: dict, cohort_id: Optional[int] = None):
         self.data = data
         self.confused_pairs = data["confused_pairs"]
+        self.cohort_id = cohort_id
 
     def _validate_data(self):
         """
@@ -238,7 +164,12 @@ class PlotMostConfused:
         dir_path = "plots"
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
-        filepath = f"{dir_path}/{filename}"
+
+        if self.cohort_id:
+            filepath = f"{dir_path}/{self.cohort_id}_{filename}"
+        else:
+            filepath = f"{dir_path}/{filename}"
+
         fig.savefig(filepath, format="png")
         return filepath
 
@@ -252,7 +183,11 @@ class PlotMostConfused:
         :return: Matplotlib Figure object
         :rtype: Figure
         """
+        sns.set_style("whitegrid")
+
+        # validate the data
         self._validate_data()
+
         df = pd.DataFrame(self.confused_pairs[:top_k])
 
         fig, ax = plt.subplots(figsize=(10, 6))
@@ -264,11 +199,18 @@ class PlotMostConfused:
                 for _, row in df.iterrows()
             ]
         )
-        ax.set_xlabel("Count")
-        ax.set_ylabel("Confusion Pairs")
-        ax.set_title("Most Confused Classes")
-        fig.tight_layout()
+        ax.set_xlabel("Count", fontdict={"fontsize": 14, "fontweight": "medium"})
+        ax.set_ylabel(
+            "Confusion Pairs", fontdict={"fontsize": 14, "fontweight": "medium"}
+        )
 
+        if self.cohort_id:
+            title_str = f"Most Confused Classes : cohort - {self.cohort_id}"
+        else:
+            title_str = "Most Confused Classes"
+
+        ax.set_title(title_str, fontdict={"fontsize": 16, "fontweight": "medium"})
+        fig.tight_layout()
         return fig
 
 
@@ -299,7 +241,10 @@ def calculate_most_confused_metric(data: dict, problem_type: str):
 
 @plot_manager.register("classification.most_confused")
 def plot_most_confused(
-    results: dict, save_plot: bool, file_name: str = "most_confused.png"
+    results: dict,
+    save_plot: bool,
+    file_name: str = "most_confused.png",
+    cohort_id: Optional[int] = None,
 ) -> Union[str, None]:
     """
     A wrapper function to plot the lift chart.
@@ -310,11 +255,13 @@ def plot_most_confused(
     :type save_plot: bool
     :param file_name: Name of the file to save the plot
     :type file_name: str
+    :param cohort_id: id of the cohort
+    :type cohort_id: int
 
     :return: None or path to the saved plot
     :rtype: Union[str, None]
     """
-    plotter = PlotMostConfused(data=results)
+    plotter = PlotMostConfused(data=results, cohort_id=cohort_id)
     fig = plotter.plot()
     if save_plot:
         return plotter.save(fig, filename=file_name)
