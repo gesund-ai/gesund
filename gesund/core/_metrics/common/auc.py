@@ -12,27 +12,12 @@ import seaborn as sns
 from gesund.core import metric_manager, plot_manager
 
 
-def categorize_age(age):
-    if age < 18:
-        return "Child"
-    elif 18 <= age < 30:
-        return "Young Adult"
-    elif 30 <= age < 60:
-        return "Adult"
-    else:
-        return "Senior"
-
-
-COHORT_SIZE_LIMIT = 2
-DEBUG = True
-
-
 class Classification:
     def _validate_data(self, data: dict) -> bool:
         """
         Validates the data required for metric calculation and plotting.
 
-        :param data: The input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
+        :param data: The input data required for calculation, {"prediction":, "ground_truth": }
         :type data: dict
 
         :return: Status if the data is valid
@@ -60,16 +45,13 @@ class Classification:
         ):
             raise ValueError("Prediction and ground truth samples does not match.")
 
-        # if metadata is given then need to check if the metadata fields are present for all the
-        # images ids if not then simply state a warning and not apply a
-
         return True
 
     def __preprocess(self, data: dict, get_logits=False) -> tuple:
         """
         Preprocesses the data
 
-        :param data: dictionary containing the data prediction, ground truth, metadata
+        :param data: dictionary containing the data prediction, ground truth
         :type data: dict
         :param get_logits: in case of multi class classification set to True
         :type get_logits: boolean
@@ -88,61 +70,6 @@ class Classification:
             else:
                 prediction.append(sample_pred["prediction_class"])
         return (np.asarray(prediction), np.asarray(ground_truth))
-
-    def apply_metadata(self, data: dict) -> dict:
-        """
-        Applies metadata to the data for metric calculation and plotting.
-
-        :param data: The input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
-        :type data: dict
-
-        :return: Filtered dataset
-        :rtype: dict
-        """
-        # TODO:: This function could be global to be applied across metrics
-
-        # convert the metadata into pandas dataframe for better access
-        df: pd.DataFrame = pd.DataFrame.from_records(data["metadata"])
-        cohorts_data = {}
-
-        # collect only the metadata columns
-        metadata_columns = df.columns.tolist()
-        metadata_columns.remove("image_id")
-        lower_case = {i: i.lower() for i in metadata_columns}
-        df = df.rename(columns=lower_case)
-
-        # categorize age in metadata
-        if "age" in list(lower_case.values()):
-            df["age"] = df["age"].apply(categorize_age)
-
-        # loop over group by to form cohorts with unique metadata
-        for grp, subset_data in df.groupby(list(lower_case.values())):
-            grp_str = ",".join([str(i) for i in grp])
-
-            # it seems that
-            if subset_data.shape[0] < COHORT_SIZE_LIMIT:
-                print(
-                    f"Warning - grp excluded - {grp_str} cohort size < {COHORT_SIZE_LIMIT}"
-                )
-            else:
-                image_ids = set(subset_data["image_id"].to_list())
-                filtered_data = {
-                    "prediction": {
-                        i: data["prediction"][i]
-                        for i in data["prediction"]
-                        if i in image_ids
-                    },
-                    "ground_truth": {
-                        i: data["ground_truth"][i]
-                        for i in data["ground_truth"]
-                        if i in image_ids
-                    },
-                    "metadata": subset_data,
-                    "class_mapping": data["class_mapping"],
-                }
-                cohorts_data[grp_str] = filtered_data
-
-        return data
 
     def __calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
         """
@@ -190,7 +117,7 @@ class Classification:
         Calculates the AUC metric for the given dataset.
 
         :param data: The input data required for calculation and plotting
-                     {"prediction":, "ground_truth": , "metadata":, "class_mappings":}
+                     {"prediction":, "ground_truth": , "class_mappings":}
         :type data: dict
 
         :return: Calculated metric results
@@ -200,27 +127,9 @@ class Classification:
 
         # Validate the data
         self._validate_data(data)
-        metadata = data.get("metadata")
 
-        # enforce metadata turn off until more solid understanding of cohort creation
-        if DEBUG:
-            metadata = None
-
-        # Apply metadata if given
-        if metadata:
-            # when the metadata is applied it would stratify the data based on combination
-            # to form cohorts
-            # the validation is calculated on the cohorts
-            cohort_data = self.apply_metadata(data)
-
-        # preprocess the data
-        if metadata:
-            for _cohort_key in cohort_data:
-                result[_cohort_key] = self.__calculate_metrics(
-                    cohort_data[_cohort_key], data.get("class_mapping")
-                )
-        else:
-            result = self.__calculate_metrics(data, data.get("class_mapping"))
+        # calculate results
+        result = self.__calculate_metrics(data, data.get("class_mapping"))
 
         return result
 
@@ -306,7 +215,7 @@ def calculate_auc_metric(data: dict, problem_type: str):
     """
     A wrapper function to calculate the AUC metric.
 
-    :param data: Dictionary of data: {"prediction": , "ground_truth": }
+    :param data: Dictionary of data: {"prediction": , "ground_truth": , 'metadata': , 'class_mapping': }
     :type data: dict
     :param problem_type: Type of the problem
     :type problem_type: str
