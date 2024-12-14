@@ -129,6 +129,7 @@ def test_plot_manager(plot_config, setup_and_teardown):
         ({"problem_type": "classification"}, "auc", None),
         ({"problem_type": "classification"}, "confusion_matrix", None),
         ({"problem_type": "classification"}, "most_confused", None),
+        ({"problem_type": "classification"}, "stats_tables", None),
     ],
 )
 def test_plot_manager_single_metric(
@@ -163,12 +164,15 @@ def test_plot_manager_single_metric(
         metric_name=metric_name, save_plot=True, cohort_id=cohort_id
     )
 
-    if cohort_id:
-        path_to_check = f"plots/{cohort_id}_{metric_name}.png"
+    if metric_name == "stats_tables":
+        assert os.path.exists("plots/plot_0.png")
     else:
-        path_to_check = f"plots/{metric_name}.png"
+        if cohort_id:
+            path_to_check = f"plots/{cohort_id}_{metric_name}.png"
+        else:
+            path_to_check = f"plots/{metric_name}.png"
 
-    assert os.path.exists(path_to_check) is True
+        assert os.path.exists(path_to_check) is True
 
 
 """

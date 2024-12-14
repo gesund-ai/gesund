@@ -18,20 +18,6 @@ from sklearn.metrics import (
 
 from gesund.core import metric_manager, plot_manager
 
-COHORT_SIZE_LIMIT = 2
-DEBUG = True
-
-
-def categorize_age(age):
-    if age < 18:
-        return "Child"
-    elif 18 <= age < 30:
-        return "Young Adult"
-    elif 30 <= age < 60:
-        return "Adult"
-    else:
-        return "Senior"
-
 
 class Classification:
     def _validate_data(self, data: dict) -> bool:
@@ -91,56 +77,6 @@ class Classification:
                 prediction.append(sample_pred["prediction_class"])
         return (np.asarray(prediction), np.asarray(ground_truth))
 
-    def apply_metadata(self, data: dict) -> dict:
-        """
-        Applies metadata to the data for metric calculation and plotting.
-
-        :param data: The input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
-        :type data: dict
-
-        :return: Filtered dataset
-        :rtype: dict
-        """
-        # TODO:: This function could be global to be applied across metrics
-
-        df: pd.DataFrame = pd.DataFrame.from_records(data["metadata"])
-        cohorts_data = {}
-
-        metadata_columns = df.columns.tolist()
-        metadata_columns.remove("image_id")
-        lower_case = {i: i.lower() for i in metadata_columns}
-        df = df.rename(columns=lower_case)
-
-        if "age" in list(lower_case.values()):
-            df["age"] = df["age"].apply(categorize_age)
-
-        for grp, subset_data in df.groupby(list(lower_case.values())):
-            grp_str = ",".join([str(i) for i in grp])
-
-            if subset_data.shape[0] < COHORT_SIZE_LIMIT:
-                print(
-                    f"Warning - grp excluded - {grp_str} cohort size < {COHORT_SIZE_LIMIT}"
-                )
-            else:
-                image_ids = set(subset_data["image_id"].to_list())
-                filtered_data = {
-                    "prediction": {
-                        i: data["prediction"][i]
-                        for i in data["prediction"]
-                        if i in image_ids
-                    },
-                    "ground_truth": {
-                        i: data["ground_truth"][i]
-                        for i in data["ground_truth"]
-                        if i in image_ids
-                    },
-                    "metadata": subset_data,
-                    "class_mapping": data["class_mapping"],
-                }
-                cohorts_data[grp_str] = filtered_data
-
-        return data
-
     def __calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
         """
         A function to calculate the metrics
@@ -168,11 +104,11 @@ class Classification:
             prediction, ground_truth = self.__preprocess(data)
             pred_categorical = prediction
             pred_logits = None
-        true = ground_truth
 
+        true = ground_truth
         cm = confusion_matrix(true, pred_categorical, labels=class_order)
         per_class_metrics = {}
-        for idx, cls in enumerate(class_order):
+        for idx, _cls in enumerate(class_order):
             tp = cm[idx, idx]
             fn = cm[idx, :].sum() - tp
             fp = cm[:, idx].sum() - tp
@@ -187,10 +123,10 @@ class Classification:
                 else 0
             )
             mcc = matthews_corrcoef(
-                (true == cls).astype(int), (pred_categorical == cls).astype(int)
+                (true == _cls).astype(int), (pred_categorical == _cls).astype(int)
             )
 
-            per_class_metrics[class_mapping[str(cls)]] = {
+            per_class_metrics[class_mapping[str(_cls)]] = {
                 "TP": tp,
                 "TN": tn,
                 "FP": fp,
@@ -256,30 +192,20 @@ class Classification:
 
         # Validate the data
         self._validate_data(data)
-        metadata = data.get("metadata")
 
-        if DEBUG:
-            metadata = None
-
-        if metadata:
-            cohort_data = self.apply_metadata(data)
-            for _cohort_key in cohort_data:
-                result[_cohort_key] = self.__calculate_metrics(
-                    cohort_data[_cohort_key], data.get("class_mapping")
-                )
-        else:
-            result = self.__calculate_metrics(data, data.get("class_mapping"))
-
+        # calculate the result
+        result = self.__calculate_metrics(data, data.get("class_mapping"))
         return result
 
 
 class PlotStatsTables:
-    def __init__(self, data: dict):
+    def __init__(self, data: dict, cohort_id: Optional[int] = None):
         self.data = data
         self.per_class_metrics = data["per_class_metrics"]
         self.overall_metrics = data["overall_metrics"]
         self.confusion_matrix = data["confusion_matrix"]
         self.classes = data["classes"]
+        self.cohort_id = cohort_id
 
     def _validate_data(self):
         """
@@ -311,10 +237,16 @@ class PlotStatsTables:
         dir_path = "plots"
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
+
         for fig, filename in zip(figs, filenames):
-            filepath = os.path.join(dir_path, filename)
+            if self.cohort_id:
+                filepath = f"{dir_path}/{self.cohort_id}_{filename}"
+            else:
+                filepath = f"{dir_path}/{filename}"
+
             fig.savefig(filepath, format="png")
             filepaths.append(filepath)
+
         return filepaths
 
     def plot(self) -> List[Figure]:
@@ -324,6 +256,9 @@ class PlotStatsTables:
         :return: List of Matplotlib Figure objects [confusion_matrix, per_class_metrics]
         :rtype: List[Figure]
         """
+        sns.set_style("whitegrid")
+
+        # validate data
         self._validate_data()
         figures = []
 
@@ -337,10 +272,21 @@ class PlotStatsTables:
             cmap="Blues",
             xticklabels=self.classes,
             yticklabels=self.classes,
+            ax=ax_cm,
         )
-        ax_cm.set_xlabel("Predicted Labels")
-        ax_cm.set_ylabel("True Labels")
-        ax_cm.set_title("Confusion Matrix")
+        ax_cm.set_xlabel(
+            "Predicted Labels", fontdict={"fontsize": 14, "fontweight": "medium"}
+        )
+        ax_cm.set_ylabel(
+            "True Labels", fontdict={"fontsize": 14, "fontweight": "medium"}
+        )
+
+        if self.cohort_id:
+            title_str = f"Confusion Matrix : cohort - {self.cohort_id}"
+        else:
+            title_str = "Confusion Matrix"
+
+        ax_cm.set_title(title_str)
         figures.append(fig_cm)
 
         # Plot per-class metrics
@@ -352,22 +298,40 @@ class PlotStatsTables:
         )
 
         fig_metrics, ax_metrics = plt.subplots(figsize=(10, 6))
-        sns.barplot(data=metrics_df, x="index", y="Value", hue="Metric", palette="Set2")
-        ax_metrics.set_xlabel("Classes")
-        ax_metrics.set_ylabel("Metric Value")
-        ax_metrics.set_title("Per-Class Metrics")
+        sns.barplot(
+            data=metrics_df,
+            x="index",
+            y="Value",
+            hue="Metric",
+            palette="Set2",
+            ax=ax_metrics,
+        )
+        ax_metrics.set_xlabel(
+            "Classes", fontdict={"fontsize": 14, "fontweight": "medium"}
+        )
+        ax_metrics.set_ylabel(
+            "Metric Value", fontdict={"fontsize": 14, "fontweight": "medium"}
+        )
+
+        if self.cohort_id:
+            title_str = f"Per-Class Metrics : cohort - {self.cohort_id}"
+        else:
+            title_str = "Per-Class Metrics"
+
+        ax_metrics.set_title(
+            title_str, fontdict={"fontsize": 16, "fontweight": "medium"}
+        )
         ax_metrics.legend(title="Metric")
         figures.append(fig_metrics)
 
         # Display overall metrics
-        print("Overall Metrics:")
-        for metric, value in self.overall_metrics.items():
-            print(
-                f"{metric}: {value:.4f}"
-                if isinstance(value, float)
-                else f"{metric}: {value}"
-            )
-
+        # print("Overall Metrics:")
+        # for metric, value in self.overall_metrics.items():
+        #     print(
+        #         f"{metric}: {value:.4f}"
+        #         if isinstance(value, float)
+        #         else f"{metric}: {value}"
+        #     )
         return figures
 
 
