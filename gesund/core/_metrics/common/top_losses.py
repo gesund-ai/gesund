@@ -3,13 +3,15 @@ import os
 
 import numpy as np
 import pandas as pd
-#TODO 1: check if the methods has specific imports
+
+# TODO 1: check if the methods has specific imports
 
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import seaborn as sns
 
 from gesund.core import metric_manager, plot_manager
+
 
 
 class Classification:
@@ -241,11 +243,16 @@ class PlotTopLosses:
         return fig
 
 
+
 class SemanticSegmentation(Classification):
     pass
 
 
 class ObjectDetection(Classification):
+    pass
+
+
+class PlotAveragePrecision:
     pass
 
 
@@ -255,18 +262,22 @@ problem_type_map = {
     "object_detection": ObjectDetection,
 }
 
+
 @metric_manager.register("object_detection.top_losses")
 def calculate_top_losses(data: dict, problem_type: str):
     pass
 
 
-
 @plot_manager.register("object_detection.top_losses")
 def plot_top_losses(
+<<<<<<< HEAD
     results: dict,
     save_plot: bool,
     file_name: str = "top_losses.png",
     cohort_id: Optional[int] = None,
+=======
+    results: dict, save_plot: bool, file_name: str = "top_losses.png"
+>>>>>>> init:add top_losses module for object detection metrics and plotting
 ) -> Union[str, None]:
     """
     A wrapper function to plot the top losses chart.
