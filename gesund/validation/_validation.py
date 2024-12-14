@@ -318,7 +318,7 @@ class Validation:
             results = self._run_validation(
                 data={
                     "prediction": prediction,
-                    "annotation": annotation,
+                    "ground_truth": annotation,
                     "metadata": self.data.metadata,
                     "class_mapping": self.data.class_mapping,
                 }
