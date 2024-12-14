@@ -219,9 +219,9 @@ class Validation:
             for metric_name in metric_manager.get_names(
                 problem_type=self.user_params.problem_type
             ):
-                _metric_executor = metric_manager[
-                    f"{self.user_params.problem_type}.{metric_name}"
-                ]
+                key_name = f"{self.user_params.problem_type}.{metric_name}"
+                print("Running ", key_name, "." * 5)
+                _metric_executor = metric_manager[key_name]
                 _result = _metric_executor(
                     data=data,
                     problem_type=self.user_params.problem_type,

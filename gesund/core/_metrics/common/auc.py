@@ -11,7 +11,6 @@ import seaborn as sns
 
 from gesund.core import metric_manager, plot_manager
 
-
 class Classification:
     def _validate_data(self, data: dict) -> bool:
         """
@@ -230,7 +229,7 @@ def calculate_auc_metric(data: dict, problem_type: str):
 
 @plot_manager.register("classification.auc")
 def plot_auc(
-    results: dict, save_plot: bool, file_name: str = "auc_plot.png"
+    results: dict, save_plot: bool, file_name: str = "auc.png"
 ) -> Union[str, None]:
     """
     A wrapper function to plot the AUC curves.

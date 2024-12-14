@@ -86,3 +86,4 @@ class ValidationResult:
                 result = self.result[metric_name]
 
             _plot_executor(results=result, save_plot=save_plot)
+
