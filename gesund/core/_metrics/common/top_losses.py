@@ -1,8 +1,10 @@
-import os
 from typing import Union, Optional
+import os
 
 import numpy as np
 import pandas as pd
+#TODO 1: check if the methods has specific imports
+
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import seaborn as sns
@@ -253,25 +255,13 @@ problem_type_map = {
     "object_detection": ObjectDetection,
 }
 
-
-@metric_manager.register("classification.top_losses")
+@metric_manager.register("object_detection.top_losses")
 def calculate_top_losses(data: dict, problem_type: str):
-    """
-    A wrapper function to calculate the top losses metric.
-
-    :param data: Dictionary of data: {"prediction": , "ground_truth": , "loss": }
-    :type data: dict
-    :param problem_type: Type of the problem
-    :type problem_type: str
-    :return: Calculated results
-    :rtype: dict
-    """
-    metric_calculator = problem_type_map[problem_type]()
-    result = metric_calculator.calculate(data)
-    return result
+    pass
 
 
-@plot_manager.register("classification.top_losses")
+
+@plot_manager.register("object_detection.top_losses")
 def plot_top_losses(
     results: dict,
     save_plot: bool,
