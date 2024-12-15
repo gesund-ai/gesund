@@ -37,6 +37,7 @@ class Validation:
         metadata_path: Optional[str] = None,
         cohort_args: Optional[dict] = {},
         plot_args: Optional[dict] = {},
+        metric_args: Optional[dict] = {},
     ):
         """
         Initialization function to handle the validation pipeline
@@ -60,6 +61,8 @@ class Validation:
         :type cohort_args: dict
         :param plot_args: arguments supplied for cohort analysis
         :type plot_args: dict
+        :param metric_args: arguments supplied for validation metrics
+        :type metric_args: dict
 
         :return: None
         """
@@ -96,6 +99,7 @@ class Validation:
             self.cohort_params.update(cohort_args)
 
         self.plot_args = plot_args
+        self.metric_args = metric_args
 
         self.debug_mode = False
 
@@ -227,8 +231,7 @@ class Validation:
                 print("Running ", key_name, "." * 5)
                 _metric_executor = metric_manager[key_name]
                 _result = _metric_executor(
-                    data=data,
-                    problem_type=self.user_params.problem_type,
+                    data=data, problem_type=self.user_params.problem_type
                 )
                 results[metric_name] = _result
         except Exception as e:
@@ -313,6 +316,7 @@ class Validation:
         if cohorts:
             for _cohort_id in cohorts:
                 data = cohorts[_cohort_id]
+                data["metric_args"] = self.metric_args
                 results[_cohort_id] = self._run_validation(data)
         else:
             results = self._run_validation(
@@ -321,6 +325,7 @@ class Validation:
                     "ground_truth": annotation,
                     "metadata": self.data.metadata,
                     "class_mapping": self.data.class_mapping,
+                    "metric_args": self.metric_args,
                 }
             )
 

@@ -74,7 +74,8 @@ class Classification:
 
         return (np.asarray(prediction), np.asarray(ground_truth), image_id_list)
 
-    def _softmax(self, logits) -> np.ndarray:
+    @staticmethod
+    def _softmax(logits) -> np.ndarray:
         """
         A function to calculate the softmax
 

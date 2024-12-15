@@ -5,7 +5,15 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import Figure
-from sklearn.metrics import roc_curve
+from sklearn.metrics import (
+    f1_score,
+    precision_score,
+    recall_score,
+    confusion_matrix,
+    matthews_corrcoef,
+    roc_curve,
+)
+import seaborn as sns
 
 from gesund.core import metric_manager, plot_manager
 
@@ -68,6 +76,43 @@ class Classification:
                 prediction.append(sample_pred["prediction_class"])
         return (np.asarray(prediction), np.asarray(ground_truth))
 
+    @staticmethod
+    def _apply_threshold(
+        threshold: float, y_true: np.ndarray, y_pred: np.ndarray
+    ) -> pd.DataFrame:
+        """
+        A function to apply threshold
+
+        :param threshold: The threshold value to be applied
+        :type threshold: float
+        :param y_true: the ground truth values in numpy array
+        :type y_true: np.ndarray
+        :param y_pred: the probabilites in numpy array
+        :type y_pred: np.ndarray
+
+        :return: results calculated and composed in dataframe
+        :rtype: pd.DataFrame
+        """
+        predicted = (y_pred >= threshold).astype(int)
+
+        # calculate the confusion matrix
+        tn, fp, fn, tp = confusion_matrix(y_true, predicted).ravel()
+
+        # calculate the metrics
+        metrics = {}
+        metrics["f1_score"] = f1_score(y_true, predicted)
+        metrics["precision"] = precision_score(y_true, predicted)
+        metrics["sensitivity"] = recall_score(y_true, predicted)
+        metrics["specificity"] = round(tn / (tn + fp), 4)
+        metrics["mcc"] = matthews_corrcoef(y_true, predicted)
+        metrics["fpr"] = round(fp / (fp + tn), 4)
+        metrics["fnr"] = round(fn / (fn + tp), 4)
+
+        metrics = {i: [metrics[i]] for i in metrics}
+        metrics["threshold"] = [threshold]
+        metrics = pd.DataFrame(metrics)
+        return metrics
+
     def __calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
         """
         A function to calculate the metrics
@@ -80,29 +125,37 @@ class Classification:
         :return: results calculated
         :rtype: dict
         """
-        class_order = [int(i) for i in class_mapping.keys()]
+        from gesund.core._metrics.common.top_losses import Classification
 
-        if len(class_order) > 2:
-            prediction, ground_truth = self.__preprocess(data, get_logits=True)
+        prediction, ground_truth = self.__preprocess(data, get_logits=True)
+        pred_gt_df = pd.DataFrame(prediction)
+
+        # softmax is applied to make the logits aka the raw outputs of the model
+        # comparable and to sum upto 1
+        probabilities = Classification._softmax(prediction)
+        pred_gt_df["probabilities"] = probabilities[:, 1]
+        pred_gt_df["ground_truth"] = ground_truth
+
+        thresholds = data["metric_args"]["threshold"]
+        th_result = pd.DataFrame()
+        if isinstance(thresholds, list):
+            for _threshold in thresholds:
+                _result = self._apply_threshold(
+                    threshold=_threshold,
+                    y_true=pred_gt_df["ground_truth"],
+                    y_pred=pred_gt_df["probabilities"],
+                )
+
+                th_result = pd.concat([th_result, _result], axis=0, ignore_index=True)
         else:
-            prediction, ground_truth = self.__preprocess(data)
+            _result = self._apply_threshold(
+                threshold=thresholds,
+                y_true=pred_gt_df["ground_truth"],
+                y_pred=pred_gt_df["probabilities"],
+            )
+            th_result = pd.concat([th_result, _result], axis=0, ignore_index=True)
 
-        fpr, tpr, thresholds = roc_curve(ground_truth, prediction)
-
-        # Calculate optimal threshold using Youden's J statistic
-        youden_j = tpr - fpr
-        optimal_idx = np.argmax(youden_j)
-        optimal_threshold = thresholds[optimal_idx]
-
-        result = {
-            "fpr": fpr,
-            "tpr": tpr,
-            "thresholds": thresholds,
-            "optimal_threshold": optimal_threshold,
-            "optimal_fpr": fpr[optimal_idx],
-            "optimal_tpr": tpr[optimal_idx],
-        }
-
+        result = {"threshold_result": th_result, "pred_gt_data": pred_gt_df}
         return result
 
     def calculate(self, data: dict) -> dict:
@@ -128,27 +181,15 @@ class Classification:
 
 
 class PlotThreshold:
-    def __init__(self, data: dict):
+    def __init__(self, data: dict, cohort_id: Optional[int] = None):
         self.data = data
-        self.fpr = data["fpr"]
-        self.tpr = data["tpr"]
-        self.thresholds = data["thresholds"]
-        self.optimal_threshold = data["optimal_threshold"]
-        self.optimal_fpr = data["optimal_fpr"]
-        self.optimal_tpr = data["optimal_tpr"]
+        self.cohort_id = cohort_id
 
     def _validate_data(self):
         """
         Validates the data required for plotting the threshold.
         """
-        required_keys = [
-            "fpr",
-            "tpr",
-            "thresholds",
-            "optimal_threshold",
-            "optimal_fpr",
-            "optimal_tpr",
-        ]
+        required_keys = ["threshold_result"]
         for key in required_keys:
             if key not in self.data:
                 raise ValueError(f"Data must contain '{key}'.")
@@ -166,33 +207,52 @@ class PlotThreshold:
         dir_path = "plots"
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
-        filepath = f"{dir_path}/{filename}"
+
+        if self.cohort_id:
+            filepath = f"{dir_path}/{self.cohort_id}_{filename}"
+        else:
+            filepath = f"{dir_path}/{filename}"
+
         fig.savefig(filepath, format="png")
         return filepath
 
+    def plot(self) -> Figure:
+        """
+        Plots the ROC Curve with the optimal threshold highlighted.
+        """
+        sns.set_style("whitegrid")
 
-def plot(self) -> Figure:
-    """
-    Plots the ROC Curve with the optimal threshold highlighted.
-    """
-    self._validate_data()
-    fig, ax = plt.subplots(figsize=(10, 7))
-    ax.plot(self.fpr, self.tpr, label="ROC Curve")
-    ax.plot([0, 1], [0, 1], "k--", label="Random Chance")
-    # Highlight the optimal threshold point
-    ax.scatter(
-        self.optimal_fpr,
-        self.optimal_tpr,
-        s=100,
-        c="red",
-        label=f"Optimal Threshold: {self.optimal_threshold:.2f}",
-    )
-    ax.set_xlabel("False Positive Rate")
-    ax.set_ylabel("True Positive Rate")
-    ax.set_title("ROC Curve with Optimal Threshold")
-    ax.legend(loc="lower right")
-    ax.grid(True)
-    return fig
+        self._validate_data()
+        fig, ax = plt.subplots(figsize=(10, 7))
+        plot_data = pd.melt(
+            self.data["threshold_result"],
+            id_vars=["threshold"],
+            var_name="metric",
+            value_name="value",
+        )
+
+        sns.barplot(
+            x="metric",
+            y="value",
+            hue="threshold",
+            data=plot_data,
+            ax=ax,
+            palette="pastel",
+        )
+        ax.set_xlabel("Metric", fontdict={"fontsize": 14, "fontweight": "medium"})
+        ax.set_ylabel("Value", fontdict={"fontsize": 14, "fontweight": "medium"})
+
+        if self.cohort_id:
+            title_str = f"Threshold adjusted metrics : cohort - {self.cohort_id}"
+        else:
+            title_str = "Threshold adjusted metrics"
+
+        ax.set_title(
+            title_str,
+            fontdict={"fontsize": 16, "fontweight": "medium"},
+        )
+        ax.legend(loc="lower right")
+        return fig
 
 
 class SemanticSegmentation(Classification):

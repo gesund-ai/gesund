@@ -131,6 +131,7 @@ def test_plot_manager(plot_config, setup_and_teardown):
         ({"problem_type": "classification"}, "most_confused", None),
         ({"problem_type": "classification"}, "stats_tables", None),
         ({"problem_type": "classification"}, "top_losses", None),
+        ({"problem_type": "classification"}, "threshold", None),
     ],
 )
 def test_plot_manager_single_metric(
@@ -153,6 +154,7 @@ def test_plot_manager_single_metric(
         # metadata_path=f"{data_dir}/test_metadata_new.json",
         plot_config=plot_config,
         cohort_args={"selection_criteria": "random"},
+        metric_args={"threshold": [0.25, 0.5, 0.75]},
     )
 
     validation_results = validator.run()

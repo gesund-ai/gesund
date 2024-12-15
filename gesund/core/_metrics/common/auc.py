@@ -193,7 +193,6 @@ class PlotAuc:
         fig, ax = plt.subplots(figsize=(10, 7))
         # TODO: Class wise plot auc-roc
         sns.lineplot(x=self.fpr, y=self.tpr, ax=ax)
-        # ax.plot(self.fpr, self.tpr, "k--")
         ax.set_xlabel(
             "False Positive Rate", fontdict={"fontsize": 14, "fontweight": "medium"}
         )
