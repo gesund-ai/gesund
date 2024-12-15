@@ -7,3 +7,5 @@ from ._metrics.common import (
     most_confused,
     stats_tables,
 )
+from ._metrics.common import average_precision
+from ._metrics.common import top_losses
