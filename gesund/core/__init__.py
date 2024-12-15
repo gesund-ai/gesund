@@ -6,4 +6,5 @@ from ._metrics.common import (
     lift_chart,
     most_confused,
     stats_tables,
+    top_losses,
 )

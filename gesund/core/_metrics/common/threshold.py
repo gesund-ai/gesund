@@ -9,20 +9,6 @@ from sklearn.metrics import roc_curve
 
 from gesund.core import metric_manager, plot_manager
 
-COHORT_SIZE_LIMIT = 2
-DEBUG = True
-
-
-def categorize_age(age):
-    if age < 18:
-        return "Child"
-    elif 18 <= age < 30:
-        return "Young Adult"
-    elif 30 <= age < 60:
-        return "Adult"
-    else:
-        return "Senior"
-
 
 class Classification:
     def _validate_data(self, data: dict) -> bool:
@@ -82,56 +68,6 @@ class Classification:
                 prediction.append(sample_pred["prediction_class"])
         return (np.asarray(prediction), np.asarray(ground_truth))
 
-    def apply_metadata(self, data: dict) -> dict:
-        """
-        Applies metadata to the data for metric calculation and plotting.
-
-        :param data: The input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
-        :type data: dict
-
-        :return: Filtered dataset
-        :rtype: dict
-        """
-        # TODO:: This function could be global to be applied across metrics
-
-        df: pd.DataFrame = pd.DataFrame.from_records(data["metadata"])
-        cohorts_data = {}
-
-        metadata_columns = df.columns.tolist()
-        metadata_columns.remove("image_id")
-        lower_case = {i: i.lower() for i in metadata_columns}
-        df = df.rename(columns=lower_case)
-
-        if "age" in list(lower_case.values()):
-            df["age"] = df["age"].apply(categorize_age)
-
-        for grp, subset_data in df.groupby(list(lower_case.values())):
-            grp_str = ",".join([str(i) for i in grp])
-
-            if subset_data.shape[0] < COHORT_SIZE_LIMIT:
-                print(
-                    f"Warning - grp excluded - {grp_str} cohort size < {COHORT_SIZE_LIMIT}"
-                )
-            else:
-                image_ids = set(subset_data["image_id"].to_list())
-                filtered_data = {
-                    "prediction": {
-                        i: data["prediction"][i]
-                        for i in data["prediction"]
-                        if i in image_ids
-                    },
-                    "ground_truth": {
-                        i: data["ground_truth"][i]
-                        for i in data["ground_truth"]
-                        if i in image_ids
-                    },
-                    "metadata": subset_data,
-                    "class_mapping": data["class_mapping"],
-                }
-                cohorts_data[grp_str] = filtered_data
-
-        return data
-
     def __calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
         """
         A function to calculate the metrics
@@ -151,17 +87,7 @@ class Classification:
         else:
             prediction, ground_truth = self.__preprocess(data)
 
-        # TODO: Check the prev code for the below
-
-        true = np.array(data["ground_truth"])
-        pred_probs = np.array(data["prediction"])
-
-        if pred_probs.ndim > 1 and pred_probs.shape[1] > 1:
-            # Assuming binary classification, take probability of positive class
-            pred_probs = pred_probs[:, 1]
-        else:
-            pred_probs = pred_probs.ravel()
-        fpr, tpr, thresholds = roc_curve(true, pred_probs)
+        fpr, tpr, thresholds = roc_curve(ground_truth, prediction)
 
         # Calculate optimal threshold using Youden's J statistic
         youden_j = tpr - fpr
@@ -194,19 +120,9 @@ class Classification:
 
         # Validate the data
         self._validate_data(data)
-        metadata = data.get("metadata")
 
-        if DEBUG:
-            metadata = None
-
-        if metadata:
-            cohort_data = self.apply_metadata(data)
-            for _cohort_key in cohort_data:
-                result[_cohort_key] = self.__calculate_metrics(
-                    cohort_data[_cohort_key], data.get("class_mapping")
-                )
-        else:
-            result = self.__calculate_metrics(data, data.get("class_mapping"))
+        # calculate the metrics
+        result = self.__calculate_metrics(data, data.get("class_mapping"))
 
         return result
 

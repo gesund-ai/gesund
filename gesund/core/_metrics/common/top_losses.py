@@ -5,22 +5,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
+import seaborn as sns
 
 from gesund.core import metric_manager, plot_manager
-
-COHORT_SIZE_LIMIT = 2
-DEBUG = True
-
-
-def categorize_age(age):
-    if age < 18:
-        return "Child"
-    elif 18 <= age < 30:
-        return "Young Adult"
-    elif 30 <= age < 60:
-        return "Adult"
-    else:
-        return "Senior"
 
 
 class Classification:
@@ -57,7 +44,9 @@ class Classification:
 
         return True
 
-    def __preprocess(self, data: dict, get_logits=False):
+    def __preprocess(
+        self, data: dict, get_logits: bool = False, keep_imageid: bool = False
+    ):
         """
         Preprocesses the data
 
@@ -65,73 +54,60 @@ class Classification:
         :type data: dict
         :param get_logits: in case of multi class classification set to True
         :type get_logits: boolean
+        :param keep_imageid: to keep the image id in the response set to True
+        :type keep_imageid: bool
 
         :return: data tuple
         :rtype: tuple
         """
-        prediction, ground_truth = [], []
+        prediction, ground_truth, image_id_list = [], [], []
         for image_id in data["ground_truth"]:
             sample_gt = data["ground_truth"][image_id]
             sample_pred = data["prediction"][image_id]
             ground_truth.append(sample_gt["annotation"][0]["label"])
+            image_id_list.append(image_id)
 
             if get_logits:
                 prediction.append(sample_pred["logits"])
             else:
                 prediction.append(sample_pred["prediction_class"])
-        return (np.asarray(prediction), np.asarray(ground_truth))
 
-    def apply_metadata(self, data: dict) -> dict:
+        return (np.asarray(prediction), np.asarray(ground_truth), image_id_list)
+
+    def _softmax(self, logits) -> np.ndarray:
         """
-        Applies metadata to the data for metric calculation and plotting.
+        A function to calculate the softmax
 
-        :param data: The input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
-        :type data: dict
+        :param logits: logits
+        :type logits: np.ndarray
 
-        :return: Filtered dataset
-        :rtype: dict
+        :return: computed probabilities from logits
+        :rtype: np.ndarray
         """
-        # TODO:: This function could be global to be applied across metrics
+        exp_logits = np.exp(logits - np.max(logits, axis=1, keepdims=True))
+        probabilities = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
+        return probabilities
 
-        df: pd.DataFrame = pd.DataFrame.from_records(data["metadata"])
-        cohorts_data = {}
+    def _calculate_loss(
+        self, y_true: np.ndarray, y_pred: np.ndarray, overall: bool = False
+    ) -> float:
+        # Convert logits to probabilities
+        probabilities = self._softmax(y_pred)
+        # Clip probabilities to prevent log(0)
+        probabilities = np.clip(probabilities, 1e-15, 1 - 1e-15)
+        # Create one-hot encoded labels
+        y_true_one_hot = np.eye(np.max(y_true) + 1)[y_true]
+        # Calculate cross-entropy loss
 
-        metadata_columns = df.columns.tolist()
-        metadata_columns.remove("image_id")
-        lower_case = {i: i.lower() for i in metadata_columns}
-        df = df.rename(columns=lower_case)
+        if overall:
+            # to calculate if the loss is calculated over all the examples
+            loss = -np.sum(y_true_one_hot * np.log(probabilities)) / y_true.shape[0]
+        else:
+            loss = -np.log(probabilities[np.arange(len(y_true)), y_true])
 
-        if "age" in list(lower_case.values()):
-            df["age"] = df["age"].apply(categorize_age)
+        return np.round(loss, 4)
 
-        for grp, subset_data in df.groupby(list(lower_case.values())):
-            grp_str = ",".join([str(i) for i in grp])
-
-            if subset_data.shape[0] < COHORT_SIZE_LIMIT:
-                print(
-                    f"Warning - grp excluded - {grp_str} cohort size < {COHORT_SIZE_LIMIT}"
-                )
-            else:
-                image_ids = set(subset_data["image_id"].to_list())
-                filtered_data = {
-                    "prediction": {
-                        i: data["prediction"][i]
-                        for i in data["prediction"]
-                        if i in image_ids
-                    },
-                    "ground_truth": {
-                        i: data["ground_truth"][i]
-                        for i in data["ground_truth"]
-                        if i in image_ids
-                    },
-                    "metadata": subset_data,
-                    "class_mapping": data["class_mapping"],
-                }
-                cohorts_data[grp_str] = filtered_data
-
-        return data
-
-    def __calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
+    def __calculate_metrics(self, data: dict) -> dict:
         """
         A function to calculate the metrics
 
@@ -143,34 +119,31 @@ class Classification:
         :return: results calculated
         :rtype: dict
         """
-        class_order = [int(i) for i in class_mapping.keys()]
+        prediction, ground_truth, image_id = self.__preprocess(
+            data, get_logits=True, keep_imageid=True
+        )
+        pred_gt_df = pd.DataFrame(prediction)
+        pred_gt_df["ground_truth"] = ground_truth.tolist()
+        pred_gt_df["image_id"] = image_id
 
-        if len(class_order) > 2:
-            prediction, ground_truth = self.__preprocess(data, get_logits=True)
-        else:
-            prediction, ground_truth = self.__preprocess(data)
-
-        # TODO: Check the prev code for the below
-        predictions = pd.DataFrame(data["prediction"])
-        ground_truth = pd.Series(data["ground_truth"])
-        loss = pd.Series(data["loss"])
-
-        meta_pred_true = pd.DataFrame(
-            {"pred_categorical": predictions.idxmax(axis=1), "true": ground_truth}
+        # calculate the loss first
+        # the loss considered is cross entropy loss as its the most general one used
+        # for classification. Inorder to use a different loss function new class
+        # method is supposed to defined and following line is replaced
+        pred_gt_df["loss"] = self._calculate_loss(
+            pred_gt_df["ground_truth"].to_numpy(), pred_gt_df[[0, 1]].to_numpy()
+        )
+        overall_loss = self._calculate_loss(
+            pred_gt_df["ground_truth"].to_numpy(),
+            pred_gt_df[[0, 1]].to_numpy(),
+            overall=True,
         )
 
-        # Calculate top losses
-        top_losses_calculator = TopLosses(loss=loss, meta_pred_true=meta_pred_true)
-        top_losses_df = top_losses_calculator.calculate_top_losses()
+        # only the first 10 values with loss are picked up from the results
+        # where the loss are sorted from highest to lowest order
+        pred_gt_df = pred_gt_df.sort_values(by="loss", ascending=False)
 
-        result = {
-            "top_losses": top_losses_df,
-            "meta_pred_true": meta_pred_true,
-            "predictions": predictions,
-            "loss": loss,
-            "class_mapping": class_mapping,
-        }
-
+        result = {"loss_data": pred_gt_df, "overall_loss": overall_loss}
         return result
 
     def calculate(self, data: dict) -> dict:
@@ -188,67 +161,23 @@ class Classification:
 
         # Validate the data
         self._validate_data(data)
-        metadata = data.get("metadata")
 
-        if DEBUG:
-            metadata = None
-
-        if metadata:
-            cohort_data = self.apply_metadata(data)
-            for _cohort_key in cohort_data:
-                result[_cohort_key] = self.__calculate_metrics(
-                    cohort_data[_cohort_key], data.get("class_mapping")
-                )
-        else:
-            result = self.__calculate_metrics(data, data.get("class_mapping"))
-
+        # calculate the metrics
+        result = self.__calculate_metrics(data)
         return result
 
 
-class TopLosses:
-    def __init__(self, loss: pd.Series, meta_pred_true: pd.DataFrame) -> None:
-        self.loss = loss
-        self.meta_pred_true = meta_pred_true
-
-    def calculate_top_losses(
-        self, predicted_class: Optional[int] = None, top_k: int = 9
-    ) -> pd.Series:
-        """
-        Calculates the top losses.
-
-        :param predicted_class: Class of interest to calculate top losses.
-        :type predicted_class: Optional[int]
-        :param top_k: Number of top losses to return
-        :type top_k: int
-        :return: Series of top losses
-        :rtype: pd.Series
-        """
-        if predicted_class is not None:
-            indices = self.meta_pred_true[
-                self.meta_pred_true["pred_categorical"] == predicted_class
-            ].index
-            sorted_top_loss = self.loss.loc[indices].sort_values(ascending=False)
-        else:
-            sorted_top_loss = self.loss.sort_values(ascending=False)
-        return sorted_top_loss.head(top_k)
-
-
 class PlotTopLosses:
-    def __init__(self, data: dict):
+    def __init__(self, data: dict, cohort_id: Optional[int] = None):
         self.data = data
-        self.top_losses = data["top_losses"]
-        self.meta_pred_true = data["meta_pred_true"]
-        self.predictions = data["predictions"]
-        self.loss = data["loss"]
-        self.metadata = data.get("metadata", pd.DataFrame())
-        self.class_mappings = data.get("class_mappings", {})
+        self.cohort_id = cohort_id
 
     def _validate_data(self):
         """
         Validates the data required for plotting the top losses.
         """
-        if "top_losses" not in self.data:
-            raise ValueError("Data must contain 'top_losses'.")
+        if "loss_data" not in self.data:
+            raise ValueError("Data must contain 'loss_data'.")
 
     def save(self, fig: Figure, filename: str) -> str:
         """
@@ -263,7 +192,12 @@ class PlotTopLosses:
         dir_path = "plots"
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
-        filepath = f"{dir_path}/{filename}"
+
+        if self.cohort_id:
+            filepath = f"{dir_path}/{self.cohort_id}_{filename}"
+        else:
+            filepath = f"{dir_path}/{filename}"
+
         fig.savefig(filepath, format="png")
         return filepath
 
@@ -278,58 +212,29 @@ class PlotTopLosses:
         """
         # Validate the data
         self._validate_data()
-
-        top_losses_indices = self.top_losses.index
-        top_losses_values = self.top_losses.values
-
-        # Prepare data for plotting
-        predicted_logits = self.predictions.loc[top_losses_indices]
-        if self.class_mappings:
-            predicted_classes = predicted_logits.idxmax(axis=1).map(self.class_mappings)
-            true_classes = self.meta_pred_true.loc[top_losses_indices]["true"].map(
-                self.class_mappings
-            )
-        else:
-            predicted_classes = predicted_logits.idxmax(axis=1)
-            true_classes = self.meta_pred_true.loc[top_losses_indices]["true"]
-
-        confidences = predicted_logits.max(axis=1)
-        losses = self.top_losses.values
-
-        # Create a DataFrame for easy plotting
-        plot_data = pd.DataFrame(
-            {
-                "Loss": losses,
-                "Ground Truth": true_classes.values,
-                "Prediction": predicted_classes.values,
-                "Confidence": confidences.values,
-                "Index": top_losses_indices,
-            }
+        fig, ax = plt.subplots(figsize=(10, 7))
+        plot_data = self.data["loss_data"].head(20)
+        sns.barplot(
+            data=plot_data,
+            x="image_id",
+            y="loss",
+            ax=ax,
+            palette="pastel",
+            hue="ground_truth",
         )
 
-        # Plotting
-        fig, ax = plt.subplots(figsize=(12, 6))
-        bars = ax.bar(plot_data["Index"].astype(str), plot_data["Loss"], color="salmon")
-        ax.set_xlabel("Sample Index")
-        ax.set_ylabel("Loss")
-        ax.set_title("Top Losses")
+        ax.set_xlabel("Image id", fontdict={"fontsize": 14, "fontweight": "medium"})
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
+        ax.set_ylabel("Loss Value", fontdict={"fontsize": 14, "fontweight": "medium"})
 
-        # Annotate bars with Ground Truth and Prediction
-        for bar, gt, pred in zip(
-            bars, plot_data["Ground Truth"], plot_data["Prediction"]
-        ):
-            height = bar.get_height()
-            ax.text(
-                bar.get_x() + bar.get_width() / 2,
-                height + 0.01,
-                f"True: {gt}\nPred: {pred}",
-                ha="center",
-                va="bottom",
-                fontsize=8,
-            )
+        title_txt = f"Top losses : Overall loss: {self.data['overall_loss']} : Top 20"
+        if self.cohort_id:
+            title_str = f"{title_txt}: cohort - {self.cohort_id}"
+        else:
+            title_str = f"{title_txt}"
 
-        plt.xticks(rotation=90)
-        plt.tight_layout()
+        ax.set_title(title_str, fontdict={"fontsize": 16, "fontweight": "medium"})
+        ax.legend(loc="lower right")
         return fig
 
 
@@ -367,7 +272,10 @@ def calculate_top_losses(data: dict, problem_type: str):
 
 @plot_manager.register("classification.top_losses")
 def plot_top_losses(
-    results: dict, save_plot: bool, file_name: str = "top_losses.png"
+    results: dict,
+    save_plot: bool,
+    file_name: str = "top_losses.png",
+    cohort_id: Optional[int] = None,
 ) -> Union[str, None]:
     """
     A wrapper function to plot the top losses chart.
@@ -378,11 +286,13 @@ def plot_top_losses(
     :type save_plot: bool
     :param file_name: Name of the file to save the plot
     :type file_name: str
+    :param cohort_id: id of the cohort
+    :type cohort_id: int
 
     :return: None or path to the saved plot
     :rtype: Union[str, None]
     """
-    plotter = PlotTopLosses(data=results)
+    plotter = PlotTopLosses(data=results, cohort_id=cohort_id)
     fig = plotter.plot()
     if save_plot:
         return plotter.save(fig, filename=file_name)

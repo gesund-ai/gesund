@@ -130,6 +130,7 @@ def test_plot_manager(plot_config, setup_and_teardown):
         ({"problem_type": "classification"}, "confusion_matrix", None),
         ({"problem_type": "classification"}, "most_confused", None),
         ({"problem_type": "classification"}, "stats_tables", None),
+        ({"problem_type": "classification"}, "top_losses", None),
     ],
 )
 def test_plot_manager_single_metric(
