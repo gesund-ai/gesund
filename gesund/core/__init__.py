@@ -8,4 +8,6 @@ from ._metrics.common import (
     stats_tables,
     top_losses,
     threshold,
+    average_precision,
+    top_losses,
 )

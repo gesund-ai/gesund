@@ -6,18 +6,18 @@ from gesund import Validation
 
 
 @pytest.mark.parametrize(
-    "plot_config", [{"problem_type": "classification"}], indirect=True
+    "plot_config", [{"problem_type": "object_detection"}], indirect=True
 )
 def test_validation_initialization(plot_config, setup_and_teardown):
     from gesund.core.schema import UserInputParams
 
-    data_dir = "./tests/_data/classification"
+    data_dir = "./tests/_data/object_detection"
 
     validator = Validation(
         annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
         predictions_path=f"{data_dir}/gesund_custom_format/prediction.json",
         class_mapping=f"{data_dir}/test_class_mappings.json",
-        problem_type="classification",
+        problem_type="object_detection",
         data_format="json",
         json_structure_type="gesund",
         metadata_path=f"{data_dir}/test_metadata.json",
@@ -28,18 +28,18 @@ def test_validation_initialization(plot_config, setup_and_teardown):
 
 
 @pytest.mark.parametrize(
-    "plot_config", [{"problem_type": "classification"}], indirect=True
+    "plot_config", [{"problem_type": "object_detection"}], indirect=True
 )
 def test_validation_dataload(plot_config, setup_and_teardown):
     from gesund.core.schema import UserInputData
 
-    data_dir = "./tests/_data/classification"
+    data_dir = "./tests/_data/object_detection"
 
     validator = Validation(
         annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
         predictions_path=f"{data_dir}/gesund_custom_format/prediction.json",
         class_mapping=f"{data_dir}/test_class_mappings.json",
-        problem_type="classification",
+        problem_type="object_detection",
         data_format="json",
         json_structure_type="gesund",
         metadata_path=f"{data_dir}/test_metadata.json",
@@ -50,14 +50,15 @@ def test_validation_dataload(plot_config, setup_and_teardown):
 
 
 @pytest.mark.parametrize(
-    "plot_config", [{"problem_type": "classification"}], indirect=True
+    "plot_config", [{"problem_type": "object_detection"}], indirect=True
 )
 def test_metrics_manager(plot_config, setup_and_teardown):
     from gesund import Validation
     from gesund.validation._result import ValidationResult
     from gesund.core._managers.metric_manager import metric_manager
 
-    problem_type = "classification"
+    problem_type = "object_detection"
+    # problem_type = "classification"
     data_dir = f"./tests/_data/{problem_type}"
     validator = Validation(
         annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
@@ -85,14 +86,14 @@ def test_metrics_manager(plot_config, setup_and_teardown):
 
 
 @pytest.mark.parametrize(
-    "plot_config", [{"problem_type": "classification"}], indirect=True
+    "plot_config", [{"problem_type": "object_detection"}], indirect=True
 )
 def test_plot_manager(plot_config, setup_and_teardown):
     from gesund import Validation
     from gesund.validation._result import ValidationResult
     from gesund.core._managers.metric_manager import metric_manager
 
-    problem_type = "classification"
+    problem_type = "object_detection"
     data_dir = f"./tests/_data/{problem_type}"
     validator = Validation(
         annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
@@ -132,6 +133,8 @@ def test_plot_manager(plot_config, setup_and_teardown):
         ({"problem_type": "classification"}, "stats_tables", None),
         ({"problem_type": "classification"}, "top_losses", None),
         ({"problem_type": "classification"}, "threshold", None),
+        ({"problem_type": "object_detection"}, "average_precision", None),
+        ({"problem_type": "object_detection"}, "top_losses", None),
     ],
 )
 def test_plot_manager_single_metric(
@@ -142,7 +145,7 @@ def test_plot_manager_single_metric(
     from gesund.core._managers.metric_manager import metric_manager
     from gesund.core._managers.plot_manager import plot_manager
 
-    problem_type = "classification"
+    problem_type = "object_detection"
     data_dir = f"./tests/_data/{problem_type}"
     validator = Validation(
         annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
@@ -151,7 +154,7 @@ def test_plot_manager_single_metric(
         problem_type=problem_type,
         data_format="json",
         json_structure_type="gesund",
-        # metadata_path=f"{data_dir}/test_metadata_new.json",
+        metadata_path=f"{data_dir}/test_metadata_new.json",
         plot_config=plot_config,
         cohort_args={"selection_criteria": "random"},
         metric_args={"threshold": [0.25, 0.5, 0.75]},
@@ -166,7 +169,6 @@ def test_plot_manager_single_metric(
     validation_results.plot(
         metric_name=metric_name, save_plot=True, cohort_id=cohort_id
     )
-
     if metric_name == "stats_tables":
         assert os.path.exists("plots/plot_0.png")
     else:
