@@ -124,7 +124,7 @@ def test_plot_manager(plot_config, setup_and_teardown):
 
 
 @pytest.mark.parametrize(
-    "plot_config, metric_name",
+    "plot_config, metric_name, cohort_id",
     [
         ({"problem_type": "classification"}, "lift_chart", None),
         ({"problem_type": "classification"}, "auc", None),
@@ -133,9 +133,13 @@ def test_plot_manager(plot_config, setup_and_teardown):
         ({"problem_type": "classification"}, "stats_tables", None),
         ({"problem_type": "classification"}, "top_losses", None),
         ({"problem_type": "classification"}, "threshold", None),
+        ({"problem_type": "object_detection"}, "average_precision", None),
+        ({"problem_type": "object_detection"}, "top_losses", None),
     ],
 )
-def test_plot_manager_single_metric(plot_config, metric_name, setup_and_teardown):
+def test_plot_manager_single_metric(
+    plot_config, metric_name, cohort_id, setup_and_teardown
+):
     from gesund import Validation
     from gesund.validation._result import ValidationResult
     from gesund.core._managers.metric_manager import metric_manager
@@ -162,8 +166,18 @@ def test_plot_manager_single_metric(plot_config, metric_name, setup_and_teardown
     assert metric_name in metric_manager.get_names(problem_type=problem_type)
     assert metric_name in plot_manager.get_names(problem_type=problem_type)
 
-    validation_results.plot(metric_name=metric_name, save_plot=True, cohort_id=1)
-    assert os.path.exists(f"plots/1_{metric_name}.png") is True
+    validation_results.plot(
+        metric_name=metric_name, save_plot=True, cohort_id=cohort_id
+    )
+    if metric_name == "stats_tables":
+        assert os.path.exists("plots/plot_0.png")
+    else:
+        if cohort_id:
+            path_to_check = f"plots/{cohort_id}_{metric_name}.png"
+        else:
+            path_to_check = f"plots/{metric_name}.png"
+
+        assert os.path.exists(path_to_check) is True
 
 
 """
