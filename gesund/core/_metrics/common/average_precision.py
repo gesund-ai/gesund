@@ -139,6 +139,63 @@ class AveragePrecision:
 
         return metrics_final
 
+    def calculate_highlighted_overall_metrics(self, threshold):
+
+        pred_coco = self.coco_[0]
+        gt_coco = self.coco_[1]
+
+        return self.calculate_coco_metrics(pred_coco, gt_coco)
+
+    def calculate_ap_metrics(
+        self, threshold=None, idxs=None, return_map=False, return_class_metrics=True
+    ):
+        pred_coco = self.coco_[0]
+        gt_coco = self.coco_[1]
+
+        class_based_coco_metrics = self.calculate_coco_metrics(
+            pred_coco,
+            gt_coco,
+            return_class_metrics=return_class_metrics,
+            threshold=threshold,
+            idxs=idxs,
+        )
+
+        return class_based_coco_metrics
+
+    def calculate_iou_threshold_graph(self, threshold, return_points=True):
+
+        pred_coco = self.coco_[0]
+        gt_coco = self.coco_[1]
+
+        return self.calculate_coco_metrics(
+            pred_coco, gt_coco, return_points=return_points, threshold=threshold
+        )
+
+    def calculate_confidence_distribution(
+        self, threshold, predicted_class=None, return_conf_dist=True
+    ):
+        pred_coco = self.coco_[0]
+        gt_coco = self.coco_[1]
+        eval_imgs = self.calculate_coco_metrics(
+            pred_coco, gt_coco, return_conf_dist=return_conf_dist
+        )
+        existing_image_ids = [i["image_id"] for i in eval_imgs]
+        image_id_scores = dict()
+        for image_id in existing_image_ids:
+            for cls_id in self.class_mappings:
+                cls_id = int(cls_id)
+                if predicted_class is not None and cls_id != predicted_class:
+                    continue
+                confidences = [
+                    i["dtScores"]
+                    for i in eval_imgs
+                    if i["image_id"] == image_id and i["category_id"] == cls_id
+                ]
+                if len(confidences) != 0:
+                    image_id_scores[image_id] = np.mean(np.array(confidences).flatten())
+                    break
+        return image_id_scores
+
     def plot_top_losses(self, top_losses=True):
 
         pred_coco = self.coco_[0]
