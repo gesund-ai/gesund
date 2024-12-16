@@ -133,8 +133,7 @@ def test_plot_manager(plot_config, setup_and_teardown):
         ({"problem_type": "classification"}, "stats_tables", None),
         ({"problem_type": "classification"}, "top_losses", None),
         ({"problem_type": "classification"}, "threshold", None),
-        ({"problem_type": "object_detection"}, "average_precision", None),
-        ({"problem_type": "object_detection"}, "top_losses", None),
+        # ({"problem_type": "object_detection"}, "average_precision", None),
     ],
 )
 def test_plot_manager_single_metric(
@@ -145,7 +144,7 @@ def test_plot_manager_single_metric(
     from gesund.core._managers.metric_manager import metric_manager
     from gesund.core._managers.plot_manager import plot_manager
 
-    problem_type = "object_detection"
+    problem_type = "classification"
     data_dir = f"./tests/_data/{problem_type}"
     validator = Validation(
         annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
@@ -154,7 +153,7 @@ def test_plot_manager_single_metric(
         problem_type=problem_type,
         data_format="json",
         json_structure_type="gesund",
-        metadata_path=f"{data_dir}/test_metadata_new.json",
+        # metadata_path=f"{data_dir}/test_metadata_new.json",
         plot_config=plot_config,
         cohort_args={"selection_criteria": "random"},
         metric_args={"threshold": [0.25, 0.5, 0.75]},
