@@ -24,7 +24,8 @@ This library provides tools for calculating validation metrics for predictions a
 To use this library, ensure you have the necessary dependencies installed in your environment. You can install them via `pip`:
 
 ```sh
-pip install gesund
+pip install gesund==latest_version
+pip install pycocotools@git+https://github.com/HammadK44/cocoapi.git@Dev#subdirectory=PythonAPI/
 ```
 
 ## Basic Usage
