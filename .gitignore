@@ -174,4 +174,6 @@ outputs/*
 */*/__pycache__
 */__pycache__
 
-gesund-src
+plots/*
+gesund-src/*
+

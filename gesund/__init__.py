@@ -1,1 +1,1 @@
-from .validation._validation import Validation
+from gesund.validation._validation import Validation
