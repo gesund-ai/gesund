@@ -16,35 +16,41 @@ import seaborn as sns
 from gesund.core import metric_manager, plot_manager
 from gesund.core._metrics.common.average_precision import AveragePrecision
 
+
 class Classification:
     pass
+
 
 class SemanticSegmentation:
     pass
 
+
 class ObjectDetection:
     def _validate_data(self):
         pass
+
     def __preprocess(self):
         pass
+
     def __calculate_metrics(self):
         pass
+
     def calculate(self, data: dict) -> dict:
         self._validate_data(data)
         result = self.__calculate_metrics(data, data.get("class_mappings"))
         return result
-    
+
 
 class PlotHighlightedOverallMetrics:
     def __init__(self, data: dict, cohort_id: Optional[int] = None):
         self.data = data
-        #TODO: Continue from here
+        # TODO: Continue from here
         self.cohort_id = cohort_id
 
     def _validate_data(self):
-        #TODO: Continue init parameters in here.
+        # TODO: Continue init parameters in here.
         pass
-    
+
     def save(self, fig: Figure, filename: str) -> str:
         dir_path = "plots"
         if not os.path.exists(dir_path):
@@ -57,7 +63,7 @@ class PlotHighlightedOverallMetrics:
 
         fig.savefig(filepath, format="png")
         return filepath
-    
+
     def plot(self) -> Figure:
         """
         Plot the highlighted overall metrics.
@@ -70,7 +76,7 @@ class PlotHighlightedOverallMetrics:
             x="Value",
             y="Metric",
             hue="Metric",
-            data=self.df, #Check, check, check df
+            data=self.df,  # Check, check, check df
             palette="pastel",
             edgecolor="black",
             legend=False,
@@ -78,8 +84,8 @@ class PlotHighlightedOverallMetrics:
         ax.set_title("Overall Metrics", fontsize=20, fontweight="bold", pad=20)
         ax.set_xlabel("Metric Value", fontsize=14, labelpad=15)
         ax.set_ylabel("Metric", fontsize=14, labelpad=15)
-        ax.tick_params(axis='x', labelsize=12)
-        ax.tick_params(axis='y', labelsize=12)
+        ax.tick_params(axis="x", labelsize=12)
+        ax.tick_params(axis="y", labelsize=12)
 
         fig.tight_layout()
         return fig
@@ -91,11 +97,9 @@ problem_type_map = {
     "object_detection": ObjectDetection,
 }
 
+
 @metric_manager.register("object_detection.highlighted_overall_metrics")
-def calculate_highlighted_overall_metrics(
-    data: dict,
-    problem_type: str
-):
+def calculate_highlighted_overall_metrics(data: dict, problem_type: str):
     """
     A wrapper function to calculate the highlighted overall metrics.
     """
@@ -103,11 +107,10 @@ def calculate_highlighted_overall_metrics(
     result = _metric_calculator.calculate(data)
     return result
 
+
 @plot_manager.register("object_detection.highlighted_overall_metrics")
 def plot_highlighted_overall_metrics_od(
-    results: dict,
-    save_plot: bool,
-    file_name: str = "highlighted_overall_metrics.png"
+    results: dict, save_plot: bool, file_name: str = "highlighted_overall_metrics.png"
 ) -> Union[str, None]:
     """
     A wrapper function to plot the highlighted overall metrics.
@@ -119,9 +122,7 @@ def plot_highlighted_overall_metrics_od(
     else:
         plt.show()
 
-
-
-#TODO->1 : Calculate
+    # TODO->1 : Calculate
     """
     def calculate_highlighted_overall_metrics(self, threshold):
 
@@ -131,19 +132,18 @@ def plot_highlighted_overall_metrics_od(
         return self.calculate_coco_metrics(pred_coco, gt_coco)
     """
 
-
-#TODO-> 2 : Plot
+    # TODO-> 2 : Plot
     """
     def _plot_highlighted_overall_metrics(self, threshold: float) -> Dict[str, Any]:
-    
-    
+
+
         Plot highlighted overall metrics at specified threshold.
 
         :param threshold: IoU threshold value
         :type threshold: float
         :return: Dictionary containing overall metrics data
         :rtype: Dict[str, Any]
-        
+
         rename_dict = {
             f"map{int(threshold*100)}": f"mAP@{int(threshold*100)}",
             f"map{int(threshold*100)}_11": f"mAP11@{int(threshold*100)}",
@@ -173,10 +173,10 @@ def plot_highlighted_overall_metrics_od(
     """
 
 
-#TODO->3 : PLot steps 
+# TODO->3 : PLot steps
 """
     def _plot_overall_metrics(self, overall_args, save_path=None):
-        
+
         Create a bar plot visualization for overall validation metrics.
 
         :param overall_args: (dict, optional) Dictionary containing:
@@ -187,7 +187,7 @@ def plot_highlighted_overall_metrics_od(
 
         :return: None
         :raises AttributeError: If no valid overall data is loaded.
-        
+
 
         if (
             not self.overall_json_data
@@ -251,8 +251,8 @@ def plot_highlighted_overall_metrics_od(
         plt.close()
 """
 
-#TODO->4 : If need overall metric arguments.
+# TODO->4 : If need overall metric arguments.
 """
-        'overall_metrics': {'overall_metrics_metrics': ['map', 'mar'], 'threshold': 0.5}, 
+        'overall_metrics': {'overall_metrics_metrics': ['map', 'mar'], 'threshold': 0.5},
 
 """

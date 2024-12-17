@@ -16,32 +16,39 @@ import seaborn as sns
 from gesund.core import metric_manager, plot_manager
 from gesund.core._metrics.common.average_precision import AveragePrecision
 
+
 class Classification:
     pass
+
 
 class SemanticSegmentation:
     pass
 
+
 class ObjectDetection:
     def _validate_data(self):
         pass
+
     def __preprocess(self):
         pass
+
     def __calculate_metrics(self):
         pass
+
     def calculate(self, data: dict) -> dict:
         self._validate_data(data)
         result = self.__calculate_metrics(data, data.get("class_mappings"))
         return result
 
+
 class PlotConfidenceDistribution:
     def __init__(self, data: dict, cohort_id: Optional[int] = None):
         self.data = data
-        #TODO: Continue from here
+        # TODO: Continue from here
         self.cohort_id = cohort_id
-    
+
     def _validate_data(self):
-        #TODO: Continue init parameters in here.
+        # TODO: Continue init parameters in here.
         pass
 
     def save(self, fig: Figure, filename: str) -> str:
@@ -56,9 +63,10 @@ class PlotConfidenceDistribution:
 
         fig.savefig(filepath, format="png")
         return filepath
-        
+
     def plot(self) -> Figure:
         pass
+
 
 problem_type_map = {
     "classification": Classification,
@@ -66,11 +74,9 @@ problem_type_map = {
     "object_detection": ObjectDetection,
 }
 
+
 @metric_manager.register("object_detection.confidence_distribution")
-def calculate_confidence_distribution(
-    data: dict,
-    problem_type: str
-):
+def calculate_confidence_distribution(data: dict, problem_type: str):
     """
     A wrapper function to calculate the confidence_distribution metrics.
     """
@@ -78,11 +84,10 @@ def calculate_confidence_distribution(
     result = _metric_calculator.calculate(data)
     return result
 
+
 @plot_manager.register("object_detection.confidence_distribution")
 def plot_confidence_distribution_od(
-    results: dict,
-    save_plot: bool,
-    file_name: str = "confidence_distribution.png"
+    results: dict, save_plot: bool, file_name: str = "confidence_distribution.png"
 ) -> Union[str, None]:
     """
     A wrapper function to plot the confidence distribution metrics.
