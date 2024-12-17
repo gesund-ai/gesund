@@ -14,7 +14,7 @@ from matplotlib.figure import Figure
 import seaborn as sns
 
 from gesund.core import metric_manager, plot_manager
-from gesund.core._metrics.common.average_precision import AveragePrecision
+from .average_precision import AveragePrecision
 
 
 class Classification:
@@ -404,48 +404,6 @@ def calculate_top_losses_classification(data: dict, problem_type: str):
     metric_calculator = problem_type_map[problem_type]()
     result = metric_calculator.calculate(data)
     return result
-
-
-@metric_manager.register("object_detection.top_losses")
-def calculate_top_losses_obj(data: dict, problem_type: str):
-    """
-    A wrapper function to calculate the Top Losses metric.
-
-    :param data: Dictionary of data: {"prediction": , "ground_truth": }
-    :type data: dict
-    :param problem_type: Type of the problem
-    :type problem_type: str
-
-    :return: Dict of calculated results
-    :rtype: dict
-    """
-    _metric_calculator = problem_type_map[problem_type]()
-    result = _metric_calculator.calculate(data)
-    return result
-
-
-@plot_manager.register("object_detection.top_losses")
-def plot_top_losses_obj(
-    results: dict,
-    save_plot: bool,
-    file_name: str = "top_losses.png",
-    cohort_id: Optional[int] = None,
-) -> Union[str, None]:
-    """
-    A wrapper function to plot the Top Losses curves.
-    """
-    plotter = PlotTopLosses(
-        coco_=results.get("coco_"),
-        class_mappings=results.get("class_mappings"),
-        loss=results.get("loss"),
-        meta_dict=results.get("meta_dict"),
-        cohort_id=cohort_id,
-    )
-    fig = plotter.plot()
-    if save_plot:
-        return plotter.save(fig, filename=file_name)
-    else:
-        plt.show()
 
 
 @plot_manager.register("classification.top_losses")

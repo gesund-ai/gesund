@@ -133,10 +133,9 @@ def test_plot_manager(plot_config, setup_and_teardown):
         ({"problem_type": "classification"}, "stats_tables", None),
         ({"problem_type": "classification"}, "top_losses", None),
         ({"problem_type": "classification"}, "threshold", None),
-        # ({"problem_type": "object_detection"}, "average_precision", None),
     ],
 )
-def test_plot_manager_single_metric(
+def test_plot_manager_single_metric_classification(
     plot_config, metric_name, cohort_id, setup_and_teardown
 ):
     from gesund import Validation
@@ -177,6 +176,50 @@ def test_plot_manager_single_metric(
             path_to_check = f"plots/{metric_name}.png"
 
         assert os.path.exists(path_to_check) is True
+
+
+@pytest.mark.parametrize(
+    "plot_config, metric_name, cohort_id",
+    [({"problem_type": "object_detection"}, "average_precision", None)],
+)
+def test_plot_manager_single_metric_obj_det(
+    plot_config, metric_name, cohort_id, setup_and_teardown
+):
+    from gesund import Validation
+    from gesund.validation._result import ValidationResult
+    from gesund.core._managers.metric_manager import metric_manager
+    from gesund.core._managers.plot_manager import plot_manager
+
+    problem_type = "object_detection"
+    data_dir = f"./tests/_data/{problem_type}"
+    validator = Validation(
+        annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
+        predictions_path=f"{data_dir}/gesund_custom_format/prediction.json",
+        class_mapping=f"{data_dir}/test_class_mappings.json",
+        problem_type=problem_type,
+        data_format="json",
+        json_structure_type="gesund",
+        # metadata_path=f"{data_dir}/test_metadata_new.json",
+        plot_config=plot_config,
+        cohort_args={"selection_criteria": "random"},
+        metric_args={"threshold": [0.25, 0.5, 0.75]},
+    )
+
+    validation_results = validator.run()
+    assert isinstance(validation_results, ValidationResult) is True
+    assert metric_name in metric_manager.get_names(problem_type=problem_type)
+    assert metric_name in plot_manager.get_names(problem_type=problem_type)
+
+    validation_results.plot(
+        metric_name=metric_name, save_plot=True, cohort_id=cohort_id
+    )
+
+    if cohort_id:
+        path_to_check = f"plots/{cohort_id}_{metric_name}.png"
+    else:
+        path_to_check = f"plots/{metric_name}.png"
+
+    assert os.path.exists(path_to_check) is True
 
 
 """

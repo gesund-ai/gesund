@@ -8,5 +8,5 @@ from ._metrics.common import (
     stats_tables,
     top_losses,
     threshold,
-    # average_precision
+    average_precision,
 )
