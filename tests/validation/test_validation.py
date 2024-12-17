@@ -179,11 +179,19 @@ def test_plot_manager_single_metric_classification(
 
 
 @pytest.mark.parametrize(
-    "plot_config, metric_name, cohort_id",
-    [({"problem_type": "object_detection"}, "average_precision", None)],
+    "plot_config, metric_name, cohort_id, threshold",
+    [
+        #  ({"problem_type": "object_detection"}, "average_precision", None, 0.5),
+        (
+            {"problem_type": "object_detection"},
+            "average_precision",
+            None,
+            [0, 0.25, 0.5, 0.75, 1],
+        )
+    ],
 )
 def test_plot_manager_single_metric_obj_det(
-    plot_config, metric_name, cohort_id, setup_and_teardown
+    plot_config, metric_name, cohort_id, threshold, setup_and_teardown
 ):
     from gesund import Validation
     from gesund.validation._result import ValidationResult
@@ -202,7 +210,7 @@ def test_plot_manager_single_metric_obj_det(
         # metadata_path=f"{data_dir}/test_metadata_new.json",
         plot_config=plot_config,
         cohort_args={"selection_criteria": "random"},
-        metric_args={"threshold": [0.25, 0.5, 0.75]},
+        metric_args={"threshold": threshold},
     )
 
     validation_results = validator.run()
