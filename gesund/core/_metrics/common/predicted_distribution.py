@@ -15,6 +15,7 @@ import seaborn as sns
 
 from gesund.core import metric_manager, plot_manager
 from .average_precision import AveragePrecision
+from .iou import IoUCalc
 
 
 class Classification:
@@ -26,11 +27,67 @@ class SemanticSegmentation:
 
 
 class ObjectDetection:
-    def _validate_data(self):
-        pass
+    def __init__(self):
+        self.iou = IoUCalc()
 
-    def __preprocess(self):
-        pass
+    def _validate_data(self, data: dict) -> bool:
+        """
+        A function to validate the given data used for calculating metrics for object detection validation
+
+        :param data: a dictionary containing the ground truth and prediction data
+        :type data: dict
+        """
+        # check for the important keys in the data
+        check_keys = ("ground_truth", "prediction", "class_mapping", "metric_args")
+        for _key in check_keys:
+            if _key not in data:
+                raise ValueError(f"Missing {_key} in the data dictionary")
+
+        # check the common set of images
+        common_ids = set(list(data["prediction"].keys())).difference(
+            set(list(data["ground_truth"].keys()))
+        )
+
+        if common_ids:
+            raise ValueError(
+                "prediction and ground truth does not have corresponding samples"
+            )
+
+    def __preprocess(self, data: dict) -> tuple:
+        """
+        A function to preprocess
+
+        :param data: dictionary data
+        :type data: dict
+
+        :return: gt, pred
+        :rtype: tuple(dict, dict)
+        """
+        gt_boxes, pred_boxes = {}, {}
+
+        for image_id in data["ground_truth"]:
+            for _ant in data["ground_truth"][image_id]["annotation"]:
+                points = _ant["points"]
+                box_points = [
+                    points[0]["x"],
+                    points[0]["y"],
+                    points[1]["x"],
+                    points[1]["y"],
+                ]
+                if image_id in gt_boxes:
+                    gt_boxes[image_id].append(box_points)
+                else:
+                    gt_boxes[image_id] = [box_points]
+
+            for pred in data["prediction"][image_id]["objects"]:
+                points = pred["box"]
+                box_points = [points["x1"], points["y1"], points["x2"], points["y2"]]
+                if image_id in pred_boxes:
+                    pred_boxes[image_id].append(box_points)
+                else:
+                    pred_boxes[image_id] = [box_points]
+
+        return (gt_boxes, pred_boxes)
 
     def __calculate_metrics(self):
         pass
