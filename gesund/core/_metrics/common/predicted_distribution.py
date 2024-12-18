@@ -144,12 +144,13 @@ def calculate_predicted_distribution(data: dict, problem_type: str):
 
 @plot_manager.register("object_detection.predicted_distribution")
 def plot_predicted_distribution_od(
-    results: dict, save_plot: bool, file_name: str = "predicted_distribution.png"
+    results: dict, save_plot: bool, 
+    file_name: str = "predicted_distribution.png", cohort_id: Optional[int] = None
 ) -> Union[str, None]:
     """
     A wrapper function to plot the predicted distribution metrics.
     """
-    plotter = PlotPredictedDistribution(data=results)
+    plotter = PlotPredictedDistribution(data=results, cohort_id=cohort_id)
     fig = plotter.plot()
     if save_plot:
         return plotter.save(fig, filename=file_name)

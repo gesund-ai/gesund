@@ -144,12 +144,13 @@ def calculate_confidence_distribution(data: dict, problem_type: str):
 
 @plot_manager.register("object_detection.confidence_distribution")
 def plot_confidence_distribution_od(
-    results: dict, save_plot: bool, file_name: str = "confidence_distribution.png"
+    results: dict, save_plot: bool,
+    file_name: str = "confidence_distribution.png", cohort_id: Optional[int] = None
 ) -> Union[str, None]:
     """
     A wrapper function to plot the confidence distribution metrics.
     """
-    plotter = PlotConfidenceDistribution(data=results)
+    plotter = PlotConfidenceDistribution(data=results, cohort_id=cohort_id)
     fig = plotter.plot()
     if save_plot:
         return plotter.save(fig, filename=file_name)
