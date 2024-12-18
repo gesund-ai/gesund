@@ -14,7 +14,7 @@ from matplotlib.figure import Figure
 import seaborn as sns
 
 from gesund.core import metric_manager, plot_manager
-from gesund.core._metrics.common.average_precision import AveragePrecision
+from .average_precision import AveragePrecision
 
 class Classification:
     pass
