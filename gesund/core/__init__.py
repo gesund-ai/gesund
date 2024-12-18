@@ -10,5 +10,5 @@ from ._metrics.common import (
     threshold,
     average_precision,
     confidence_distribution,
-    predicted_distribution
+    predicted_distribution,
 )
