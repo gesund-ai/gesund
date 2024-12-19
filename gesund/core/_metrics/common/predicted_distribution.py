@@ -29,6 +29,7 @@ class SemanticSegmentation:
 class ObjectDetection:
     def __init__(self):
         self.iou = IoUCalc()
+        self.class_mapping = {}
 
     def _validate_data(self, data: dict) -> bool:
         """
@@ -89,8 +90,41 @@ class ObjectDetection:
 
         return (gt_boxes, pred_boxes)
 
-    def __calculate_metrics(self):
-        pass
+    def __calculate_metrics(self, data: dict, class_mappings: dict) -> dict:
+        idxs = (
+            data["validation_utils"]
+            .filter_attribute_by_dict(data.get("target_attribute_dict"))
+            .index.tolist()
+        )
+
+        pred_df = pd.DataFrame(data["coco"][0])
+        pred_df = pred_df[pred_df["image_id"].isin(idxs)]
+
+        pred_class_occurrence_df = (
+            pred_df.groupby("image_id")["category_id"]
+            .value_counts()
+            .unstack()
+            .fillna(0)
+        )
+
+        non_occurring_classes = list(
+            set([int(i) for i in class_mappings.keys()])
+            - set(pred_class_occurrence_df.columns.tolist())
+        )
+        for class_ in non_occurring_classes:
+            pred_class_occurrence_df[class_] = 0
+
+        pred_class_occurrence_df.columns = pred_class_occurrence_df.columns.astype(str)
+        pred_class_occurrence_df.rename(columns=class_mappings, inplace=True)
+
+        pred_class_occurrence_dict = pred_class_occurrence_df.sum().to_dict()
+
+        payload_dict = {
+            "type": "pie",
+            "data": pred_class_occurrence_dict,
+        }
+
+        return payload_dict
 
     def calculate(self, data: dict) -> dict:
         self._validate_data(data)
@@ -101,12 +135,13 @@ class ObjectDetection:
 class PlotPredictedDistribution:
     def __init__(self, data: dict, cohort_id: Optional[int] = None):
         self.data = data
-        # TODO: Continue from here
         self.cohort_id = cohort_id
 
     def _validate_data(self):
-        # TODO: Continue init parameters in here.
-        pass
+        required_keys = ["type", "data"]
+        for key in required_keys:
+            if key not in self.data:
+                raise ValueError(f"Data must contain '{key}'.")
 
     def save(self, fig: Figure, filename: str) -> str:
         dir_path = "plots"
@@ -122,7 +157,20 @@ class PlotPredictedDistribution:
         return filepath
 
     def plot(self) -> Figure:
-        pass
+        sns.set_theme(style="whitegrid")
+        self._validate_data()
+
+        pred_class_occurrence_dict = self.data["data"]
+
+        fig, ax = plt.subplots(figsize=(10, 7))
+        labels = list(pred_class_occurrence_dict.keys())
+        values = list(pred_class_occurrence_dict.values())
+        ax.pie(values, labels=labels, autopct="%1.1f%%", startangle=90)
+        ax.axis("equal")
+        ax.set_title("Predicted Distribution")
+        plt.tight_layout()
+
+        return fig
 
 
 problem_type_map = {
@@ -144,8 +192,10 @@ def calculate_predicted_distribution(data: dict, problem_type: str):
 
 @plot_manager.register("object_detection.predicted_distribution")
 def plot_predicted_distribution_od(
-    results: dict, save_plot: bool, 
-    file_name: str = "predicted_distribution.png", cohort_id: Optional[int] = None
+    results: dict,
+    save_plot: bool,
+    file_name: str = "predicted_distribution.png",
+    cohort_id: Optional[int] = None,
 ) -> Union[str, None]:
     """
     A wrapper function to plot the predicted distribution metrics.

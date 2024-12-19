@@ -89,8 +89,7 @@ class ObjectDetection:
                     pred_boxes[image_id] = [box_points]
 
         return (gt_boxes, pred_boxes)
-    
-    
+
     def _calc_precision_recall(self, gt_boxes, pred_boxes, threshold: float) -> tuple:
         """
         A function to calculate the precision and recall
@@ -127,21 +126,25 @@ class ObjectDetection:
         recall = true_positives / num_gt_boxes
 
         return (precision, recall)
-    
+
     def _calc_conf_distR(self, gt_boxes_dict, pred_boxes_dict, threshold):
-        #TODO: Could be wrong that function check again.
+        # TODO: Could be wrong that function check again.
         image_id_scores = {}
         for image_id in pred_boxes_dict:
-            #TODO:
+            # TODO:
             # get gt&pred boxes
- 
-            gt_boxes = gt_boxes_dict.get(image_id, []),
+
+            gt_boxes = (gt_boxes_dict.get(image_id, []),)
             pred_boxes = pred_boxes_dict[image_id]
-        
+
             for cls_id in self.class_mapping:
                 cls_id = int(cls_id)
-                gt_boxes_cls = [box for box in gt_boxes if box.get("category_id") == cls_id]
-                pred_boxes_cls = [box for box in pred_boxes if box.get("category_id") == cls_id]
+                gt_boxes_cls = [
+                    box for box in gt_boxes if box.get("category_id") == cls_id
+                ]
+                pred_boxes_cls = [
+                    box for box in pred_boxes if box.get("category_id") == cls_id
+                ]
 
                 if not gt_boxes_cls or not pred_boxes_cls:
                     continue
@@ -173,7 +176,7 @@ class ObjectDetection:
 
         results = self._calc_conf_distR(gt_boxes, pred_boxes, thresholds)
         return results
-    
+
     def calculate(self, data: dict) -> dict:
         result = {}
         self._validate_data(data)
@@ -187,7 +190,7 @@ class PlotConfidenceDistribution:
         self.cohort_id = cohort_id
 
     def _validate_data(self):
-        #TODO: After check fun -> need to update
+        # TODO: After check fun -> need to update
         required_keys = ["class_mapping", "ground_truth", "prediction"]
         for key in required_keys:
             if key not in self.data:
@@ -214,9 +217,8 @@ class PlotConfidenceDistribution:
         self._validate_data()
         fig, ax = plt.subplots(figsize=(10, 7))
         sns.scatterplot(
-            #TODO: Check the data after update the function
+            # TODO: Check the data after update the function
             data=self.data["result"],
-            
             x="x",
             y="y",
             hue="labels",
@@ -229,7 +231,6 @@ class PlotConfidenceDistribution:
         ax.set_ylabel("Y-axis", fontdict={"fontsize": 14, "fontweight": "medium"})
         ax.legend(loc="lower right", fontsize=12)
         return fig
-
 
 
 problem_type_map = {
