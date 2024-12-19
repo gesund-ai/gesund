@@ -47,7 +47,7 @@ class Classification:
 
         return True
 
-    def __preprocess(self, data: dict, get_logits=False) -> tuple:
+    def _preprocess(self, data: dict, get_logits=False) -> tuple:
         """
         Preprocesses the data
 
@@ -91,11 +91,11 @@ class Classification:
         if len(class_order) > 2:
             # implementation of multi class classification
             # logits are required for multi class classification
-            prediction, ground_truth = self.__preprocess(data, get_logits=True)
+            prediction, ground_truth = self._preprocess(data, get_logits=True)
             # TODO: multi class auc - roc calculation
 
         else:
-            prediction, ground_truth = self.__preprocess(data)
+            prediction, ground_truth = self._preprocess(data)
             fpr, tpr, thresholds = roc_curve(prediction, ground_truth)
             auc_score = auc(fpr, tpr)
             fpr = [float(round(value, 4)) for value in fpr]

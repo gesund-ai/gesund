@@ -8,6 +8,33 @@ class IoUCalc:
     def __init__(self):
         pass
 
+    def calculate_iou_loss(self, gt_boxes: list, pred_boxes: list):
+        """
+        Calculates the intersection over union loss between ground truth and predicted box
+
+        :param gt_boxes: list of ground truth boxes
+        :type gt_boxes: list
+        :param pred_boxes: list of predicted boxes
+        :type pred_boxes: list
+
+        :return: iou loss
+        :rtype: float
+        """
+        num_gt_boxes = len(gt_boxes)
+        num_pred_boxes = len(pred_boxes)
+
+        iou_loss = 0.0
+
+        for i in range(num_gt_boxes):
+            max_iou = 0.0
+            for j in range(num_pred_boxes):
+                iou = self._calculate_box(gt_boxes[i], pred_boxes[j])
+                max_iou = max(max_iou, iou)
+            iou_loss += (1 - max_iou) ** 2
+
+        iou_loss /= num_gt_boxes
+        return iou_loss
+
     def _calculate_box(self, box1, box2):
         """
         A function to calculate the bounding box
