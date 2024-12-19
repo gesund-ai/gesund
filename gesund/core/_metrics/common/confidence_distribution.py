@@ -29,6 +29,7 @@ class SemanticSegmentation:
 class ObjectDetection:
     def __init__(self):
         self.iou = IoUCalc()
+        self.class_mapping = {}
 
     def _validate_data(self, data: dict) -> bool:
         """
@@ -88,25 +89,109 @@ class ObjectDetection:
                     pred_boxes[image_id] = [box_points]
 
         return (gt_boxes, pred_boxes)
+    
+    
+    def _calc_precision_recall(self, gt_boxes, pred_boxes, threshold: float) -> tuple:
+        """
+        A function to calculate the precision and recall
 
-    def __calculate_metrics(self):
-        pass
+        :param gt_boxes:
+        :type gt_boxes:
+        :param pred_boxes:
+        :type pred_boxes:
+        :param threshold:
+        :type threshold:
 
+        :return: calculated precision and recall
+        :rtype: tuple
+        """
+        num_gt_boxes, num_pred_boxes = len(gt_boxes), len(pred_boxes)
+        true_positives, false_positives = 0, 0
+
+        for pred_box in pred_boxes:
+            max_iou = 0
+            for gt_box in gt_boxes:
+                iou = self.iou.calculate(pred_box, gt_box)
+                max_iou = max(max_iou, iou)
+
+            if max_iou >= threshold:
+                true_positives += 1
+            else:
+                false_positives += 1
+
+        precision = (
+            true_positives / (true_positives + false_positives)
+            if (true_positives + false_positives) > 0
+            else 0
+        )
+        recall = true_positives / num_gt_boxes
+
+        return (precision, recall)
+    
+    def _calc_conf_distR(self, gt_boxes_dict, pred_boxes_dict, threshold):
+        #TODO: Could be wrong that function check again.
+        image_id_scores = {}
+        for image_id in pred_boxes_dict:
+            #TODO:
+            # get gt&pred boxes
+ 
+            gt_boxes = gt_boxes_dict.get(image_id, []),
+            pred_boxes = pred_boxes_dict[image_id]
+        
+            for cls_id in self.class_mapping:
+                cls_id = int(cls_id)
+                gt_boxes_cls = [box for box in gt_boxes if box.get("category_id") == cls_id]
+                pred_boxes_cls = [box for box in pred_boxes if box.get("category_id") == cls_id]
+
+                if not gt_boxes_cls or not pred_boxes_cls:
+                    continue
+
+                confidences = []
+                for pred_box in pred_boxes_cls:
+                    pred_bbox = pred_box["bbox"]
+                    max_iou = 0
+                    for gt_box in gt_boxes_cls:
+                        gt_bbox = gt_box["bbox"]
+                        iou = self.iou.calculate(np.array(pred_bbox), np.array(gt_bbox))
+                        if iou > max_iou:
+                            max_iou = iou
+                    if max_iou >= threshold:
+                        confidences.append(pred_box["score"])
+                if confidences:
+                    image_id_scores[image_id] = np.mean(confidences)
+                    break
+        return image_id_scores
+
+    def __calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
+        results = {}
+        gt_boxes, pred_boxes = self.__preprocess(data)
+
+        thresholds = data["metric_args"]["threshold"]
+
+        if not isinstance(thresholds, list) and thresholds is not None:
+            thresholds = [thresholds]
+
+        results = self._calc_conf_distR(gt_boxes, pred_boxes, thresholds)
+        return results
+    
     def calculate(self, data: dict) -> dict:
+        result = {}
         self._validate_data(data)
-        result = self.__calculate_metrics(data, data.get("class_mappings"))
+        result = self.__calculate_metrics(data, data.get("class_mapping"))
         return result
 
 
 class PlotConfidenceDistribution:
     def __init__(self, data: dict, cohort_id: Optional[int] = None):
         self.data = data
-        # TODO: Continue from here
         self.cohort_id = cohort_id
 
     def _validate_data(self):
-        # TODO: Continue init parameters in here.
-        pass
+        #TODO: After check fun -> need to update
+        required_keys = ["class_mapping", "ground_truth", "prediction"]
+        for key in required_keys:
+            if key not in self.data:
+                raise ValueError(f"Data must contain '{key}'.")
 
     def save(self, fig: Figure, filename: str) -> str:
         dir_path = "plots"
@@ -122,7 +207,29 @@ class PlotConfidenceDistribution:
         return filepath
 
     def plot(self) -> Figure:
-        pass
+        """
+        A function to plot the confidence distribution
+        """
+        sns.set_theme(style="whitegrid")
+        self._validate_data()
+        fig, ax = plt.subplots(figsize=(10, 7))
+        sns.scatterplot(
+            #TODO: Check the data after update the function
+            data=self.data["result"],
+            
+            x="x",
+            y="y",
+            hue="labels",
+            palette="rocket",
+            s=100,
+            alpha=0.7,
+        )
+        ax.set_title("Scatter Plot of Points", fontsize=18, fontweight="bold", pad=20)
+        ax.set_xlabel("X-axis", fontdict={"fontsize": 14, "fontweight": "medium"})
+        ax.set_ylabel("Y-axis", fontdict={"fontsize": 14, "fontweight": "medium"})
+        ax.legend(loc="lower right", fontsize=12)
+        return fig
+
 
 
 problem_type_map = {
@@ -144,8 +251,10 @@ def calculate_confidence_distribution(data: dict, problem_type: str):
 
 @plot_manager.register("object_detection.confidence_distribution")
 def plot_confidence_distribution_od(
-    results: dict, save_plot: bool,
-    file_name: str = "confidence_distribution.png", cohort_id: Optional[int] = None
+    results: dict,
+    save_plot: bool,
+    file_name: str = "confidence_distribution.png",
+    cohort_id: Optional[int] = None,
 ) -> Union[str, None]:
     """
     A wrapper function to plot the confidence distribution metrics.
