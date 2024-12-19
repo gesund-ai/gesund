@@ -14,6 +14,7 @@ from matplotlib.figure import Figure
 import seaborn as sns
 
 from gesund.core import metric_manager, plot_manager
+from gesund.core._utils import ValidationUtils
 from .average_precision import AveragePrecision
 from .iou import IoUCalc
 
@@ -84,40 +85,32 @@ class ObjectDetection:
                 points = pred["box"]
                 box_points = [points["x1"], points["y1"], points["x2"], points["y2"]]
                 if image_id in pred_boxes:
-                    pred_boxes[image_id].append(box_points)
+                    pred_boxes[image_id].append(
+                        {"box_points": box_points, "category_id": pred["category_id"]}
+                    )
                 else:
-                    pred_boxes[image_id] = [box_points]
+                    pred_boxes[image_id] = [
+                        {"box_points": box_points, "category_id": pred["category_id"]}
+                    ]
 
         return (gt_boxes, pred_boxes)
 
-    def __calculate_metrics(self, data: dict, class_mappings: dict) -> dict:
-        idxs = (
-            data["validation_utils"]
-            .filter_attribute_by_dict(data.get("target_attribute_dict"))
-            .index.tolist()
-        )
+    def __calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
+        gt_boxes, pred_boxes = self.__preprocess(data)
 
-        pred_df = pd.DataFrame(data["coco"][0])
-        pred_df = pred_df[pred_df["image_id"].isin(idxs)]
+        pred_class_occurrence_dict = {}
+        for image_id in pred_boxes:
+            for pred in pred_boxes[image_id]:
+                class_id = pred["category_id"]
+                if class_id in pred_class_occurrence_dict:
+                    pred_class_occurrence_dict[class_id] += 1
+                else:
+                    pred_class_occurrence_dict[class_id] = 1
 
-        pred_class_occurrence_df = (
-            pred_df.groupby("image_id")["category_id"]
-            .value_counts()
-            .unstack()
-            .fillna(0)
-        )
-
-        non_occurring_classes = list(
-            set([int(i) for i in class_mappings.keys()])
-            - set(pred_class_occurrence_df.columns.tolist())
-        )
-        for class_ in non_occurring_classes:
-            pred_class_occurrence_df[class_] = 0
-
-        pred_class_occurrence_df.columns = pred_class_occurrence_df.columns.astype(str)
-        pred_class_occurrence_df.rename(columns=class_mappings, inplace=True)
-
-        pred_class_occurrence_dict = pred_class_occurrence_df.sum().to_dict()
+        if class_mapping is not None:
+            pred_class_occurrence_dict = {
+                class_mapping[str(k)]: v for k, v in pred_class_occurrence_dict.items()
+            }
 
         payload_dict = {
             "type": "pie",
@@ -128,7 +121,7 @@ class ObjectDetection:
 
     def calculate(self, data: dict) -> dict:
         self._validate_data(data)
-        result = self.__calculate_metrics(data, data.get("class_mappings"))
+        result = self.__calculate_metrics(data, data.get("class_mapping"))
         return result
 
 
