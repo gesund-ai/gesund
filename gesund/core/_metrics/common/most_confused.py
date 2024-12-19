@@ -45,7 +45,7 @@ class Classification:
 
         return True
 
-    def __preprocess(self, data: dict, get_logits=False):
+    def _preprocess(self, data: dict, get_logits=False):
         """
         Preprocesses the data
 
@@ -84,9 +84,9 @@ class Classification:
         class_order = [int(i) for i in class_mapping.keys()]
 
         if len(class_order) > 2:
-            prediction, ground_truth = self.__preprocess(data, get_logits=True)
+            prediction, ground_truth = self._preprocess(data, get_logits=True)
         else:
-            prediction, ground_truth = self.__preprocess(data)
+            prediction, ground_truth = self._preprocess(data)
 
         cm = confusion_matrix(ground_truth, prediction, labels=class_order)
         confused_pairs = []

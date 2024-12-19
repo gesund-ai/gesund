@@ -55,6 +55,7 @@ class ValidationResult:
         metric_name: str,
         save_plot: bool,
         cohort_id: Optional[int] = None,
+        file_name: Optional[str] = None,
     ) -> None:
         """
         A function to run the plot executor
@@ -67,6 +68,8 @@ class ValidationResult:
         :type save_plot: bool
         :param cohort_id: the id of the cohort if applicable
         :type cohort_id: int
+        :param file_name: the name of the file to use for saving
+        :type file_name: str
 
         """
         # cohort wise plotting is only possible when the cohort map is populated
@@ -74,16 +77,24 @@ class ValidationResult:
         if self.cohort_args["cohort_map"]:
             if cohort_id:
                 result = self.result[cohort_id][metric_name]
-                plot_executor(results=result, save_plot=save_plot, cohort_id=cohort_id)
+                plot_executor(
+                    results=result,
+                    save_plot=save_plot,
+                    cohort_id=cohort_id,
+                    file_name=file_name,
+                )
             else:
                 for _cohort_id in self.cohort_args["cohort_map"]:
                     result = self.result[_cohort_id][metric_name]
                     plot_executor(
-                        results=result, save_plot=save_plot, cohort_id=_cohort_id
+                        results=result,
+                        save_plot=save_plot,
+                        cohort_id=_cohort_id,
+                        file_name=file_name,
                     )
         else:
             result = self.result[metric_name]
-            plot_executor(results=result, save_plot=save_plot)
+            plot_executor(results=result, save_plot=save_plot, file_name=file_name)
 
     def plot(
         self,
@@ -114,9 +125,13 @@ class ValidationResult:
                 _plot_executor = plot_manager[
                     f"{self.user_params.problem_type}.{_metric}"
                 ]
-                self._run_plot_executor(_plot_executor, _metric, save_plot, cohort_id)
+                self._run_plot_executor(
+                    _plot_executor, _metric, save_plot, cohort_id, file_name
+                )
         else:
             _plot_executor = plot_manager[
                 f"{self.user_params.problem_type}.{metric_name}"
             ]
-            self._run_plot_executor(_plot_executor, metric_name, save_plot, cohort_id)
+            self._run_plot_executor(
+                _plot_executor, metric_name, save_plot, cohort_id, file_name
+            )

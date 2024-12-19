@@ -44,7 +44,7 @@ class Classification:
 
         return True
 
-    def __preprocess(self, data: dict, get_logits=False):
+    def _preprocess(self, data: dict, get_logits=False):
         """
         Preprocesses the data
 
@@ -82,7 +82,7 @@ class Classification:
         """
         class_order = [int(i) for i in class_mapping.keys()]
 
-        prediction, ground_truth = self.__preprocess(data, get_logits=True)
+        prediction, ground_truth = self._preprocess(data, get_logits=True)
 
         lift_chart_calculator = LiftChart(class_mapping)
         lift_points = lift_chart_calculator.calculate_lift_curve_points(

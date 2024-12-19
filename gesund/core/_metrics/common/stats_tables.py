@@ -53,7 +53,7 @@ class Classification:
 
         return True
 
-    def __preprocess(self, data: dict, get_logits=False):
+    def _preprocess(self, data: dict, get_logits=False):
         """
         Preprocesses the data
 
@@ -97,11 +97,11 @@ class Classification:
         pred_logits = data.get("pred_logits", None)
 
         if len(class_order) > 2:
-            prediction, ground_truth = self.__preprocess(data, get_logits=True)
+            prediction, ground_truth = self._preprocess(data, get_logits=True)
             pred_logits = prediction
             pred_categorical = np.argmax(prediction, axis=1)
         else:
-            prediction, ground_truth = self.__preprocess(data)
+            prediction, ground_truth = self._preprocess(data)
             pred_categorical = prediction
             pred_logits = None
 

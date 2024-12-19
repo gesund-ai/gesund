@@ -1,276 +1,182 @@
-from typing import Union, Optional, Callable, Dict, Any, List
+from typing import Union, Optional
 import os
 
 import numpy as np
 import pandas as pd
-import itertools
-from datetime import datetime
-import pickle
-import sklearn
-from pycocotools.coco import COCO
-from pycocotools.cocoeval import COCOeval
-import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import seaborn as sns
+import matplotlib.pyplot as plt
 
-from gesund.core._utils import ValidationUtils
 from gesund.core import metric_manager, plot_manager
+from .iou import IoUCalc
 
-COHORT_SIZE_LIMIT = 2
-DEBUG = True
+
+class AveragePrecision:
+    pass
 
 
 class Classification:
     pass
 
 
-class SemanticSegmentation(Classification):
+class SemanticSegmentation:
     pass
 
 
-class AveragePrecision:
-    def __init__(self, class_mappings, coco_):
-        self.class_mappings = class_mappings
-        self.class_idxs = [int(i) for i in list(class_mappings.keys())]
-        self.coco_ = coco_
-
-    def calculate_coco_metrics(
-        self,
-        pred_coco,
-        gt_coco,
-        return_class_metrics=False,
-        return_points=False,
-        return_conf_dist=False,
-        threshold=None,
-        top_losses=False,
-        idxs=None,
-    ):
-        annType = ["segm", "bbox", "keypoints"]
-        annType = annType[1]  # specify type here
-
-        annFile = gt_coco
-        cocoGt = COCO(annFile)
-
-        resFile = pred_coco
-        cocoDt = cocoGt.loadRes(resFile)
-
-        imgIds = sorted(cocoGt.getImgIds())
-        cocoEval = COCOeval(cocoGt, cocoDt, annType)
-
-        if top_losses:
-            class_mean_list = []
-            losses_list = []
-            ids = cocoEval.params.catIds
-            cocoEval.params.imgIds = imgIds
-            cocoEval.evaluate()
-            cocoEval.accumulate()
-            for img in imgIds:
-                for ids_ in ids:
-                    a = cocoEval.ious[(img, ids_)]
-                    if len(a) != 0:
-                        class_mean = a.max(1).mean()
-                        class_mean_list.append(class_mean)
-                    else:
-                        pass
-
-                mean = sum(class_mean_list) / len(class_mean_list)
-                losses_list.append({"image_id": img, "mIoU": mean})
-
-            sorted_list = sorted(losses_list, key=lambda x: x["mIoU"], reverse=True)
-            for i, item in enumerate(sorted_list):
-                item["rank"] = i + 1
-            return losses_list
-
-        if return_conf_dist:
-            cocoEval.params.imgIds = imgIds
-            cocoEval.evaluate()
-            cocoEval.accumulate()
-            eval_imgs = [i for i in cocoEval.evalImgs if i is not None]
-
-            return eval_imgs
-
-        if return_points:
-            xy_list = {}
-            ids = cocoEval.params.catIds
-            cocoEval.params.imgIds = imgIds
-            cocoEval.evaluate()
-            cocoEval.accumulate()
-
-            for ids_ in ids:
-                coordinates = cocoEval.plotPrecisionRecallGraph(threshold, ids_)
-                xy_list[ids_] = coordinates
-
-            return xy_list
-
-        if return_class_metrics:
-
-            metrics = []
-            ids = cocoEval.params.catIds
-
-            if idxs:
-                cocoEval.params.imgIds = idxs
-
-            for ids_ in ids:
-
-                cocoEval.params.catIds = [ids_]  # Class-wise metrics outputted
-                cocoEval.evaluate()  # [ 0_dict(), 1_dict(), 2_dict(), ...]
-                cocoEval.accumulate()
-                if threshold:
-                    metric = cocoEval.summarize(threshold)
-                else:
-                    metric = cocoEval.summarize()
-
-                metrics.append(metric)
-
-            metrics_by_class = {
-                metric: {i: metrics[i][metric] for i in range(len(ids))}
-                for metric in metrics[0]
-            }
-            metrics_final = {k.replace("m", ""): v for k, v in metrics_by_class.items()}
-            if threshold:
-                metrics_final["APs"] = metrics_final.pop(f"ap{threshold}")
-                metrics_final["mAP"] = np.mean(list(metrics_final["APs"].values()))
-
-        else:
-            cocoEval.params.imgIds = imgIds
-            cocoEval.evaluate()
-            cocoEval.accumulate()
-            metrics_final = cocoEval.summarize()
-
-        return metrics_final
-
-    def calculate_highlighted_overall_metrics(self, threshold):
-
-        pred_coco = self.coco_[0]
-        gt_coco = self.coco_[1]
-
-        return self.calculate_coco_metrics(pred_coco, gt_coco)
-
-    def calculate_ap_metrics(
-        self, threshold=None, idxs=None, return_map=False, return_class_metrics=True
-    ):
-        pred_coco = self.coco_[0]
-        gt_coco = self.coco_[1]
-
-        class_based_coco_metrics = self.calculate_coco_metrics(
-            pred_coco,
-            gt_coco,
-            return_class_metrics=return_class_metrics,
-            threshold=threshold,
-            idxs=idxs,
-        )
-
-        return class_based_coco_metrics
-
-    def calculate_iou_threshold_graph(self, threshold, return_points=True):
-
-        pred_coco = self.coco_[0]
-        gt_coco = self.coco_[1]
-
-        return self.calculate_coco_metrics(
-            pred_coco, gt_coco, return_points=return_points, threshold=threshold
-        )
-
-    def calculate_confidence_distribution(
-        self, threshold, predicted_class=None, return_conf_dist=True
-    ):
-        pred_coco = self.coco_[0]
-        gt_coco = self.coco_[1]
-        eval_imgs = self.calculate_coco_metrics(
-            pred_coco, gt_coco, return_conf_dist=return_conf_dist
-        )
-        existing_image_ids = [i["image_id"] for i in eval_imgs]
-        image_id_scores = dict()
-        for image_id in existing_image_ids:
-            for cls_id in self.class_mappings:
-                cls_id = int(cls_id)
-                if predicted_class is not None and cls_id != predicted_class:
-                    continue
-                confidences = [
-                    i["dtScores"]
-                    for i in eval_imgs
-                    if i["image_id"] == image_id and i["category_id"] == cls_id
-                ]
-                if len(confidences) != 0:
-                    image_id_scores[image_id] = np.mean(np.array(confidences).flatten())
-                    break
-        return image_id_scores
-
-    def plot_top_losses(self, top_losses=True):
-
-        pred_coco = self.coco_[0]
-        gt_coco = self.coco_[1]
-
-        response = self.calculate_coco_metrics(
-            pred_coco, gt_coco, top_losses=top_losses
-        )
-
-        return response
-
-
 class ObjectDetection:
+    def __init__(self):
+        self.iou = IoUCalc()
+
     def _validate_data(self, data: dict) -> bool:
         """
-        A function to validate the data that is required for metric calculation and plotting.
+        A function to validate the given data used for calculating metrics for object detection validation
 
-        :param data: The input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
+        :param data: a dictionary containing the ground truth and prediction data
         :type data: dict
-
-        :return: Status if the data is valid
-        :rtype: bool
         """
-        # Basic validation checks
-        if not isinstance(data, dict):
-            raise ValueError("Data must be a dictionary.")
-        required_keys = ["prediction", "ground_truth"]
-        for key in required_keys:
-            if key not in data:
-                raise ValueError(f"Data must contain '{key}'.")
+        # check for the important keys in the data
+        check_keys = ("ground_truth", "prediction", "class_mapping", "metric_args")
+        for _key in check_keys:
+            if _key not in data:
+                raise ValueError(f"Missing {_key} in the data dictionary")
 
-        if len(data["prediction"]) != len(data["ground_truth"]):
-            raise ValueError("Prediction and ground_truth must have the same length.")
+        # check the common set of images
+        common_ids = set(list(data["prediction"].keys())).difference(
+            set(list(data["ground_truth"].keys()))
+        )
 
-        if (
-            len(
-                set(list(data["prediction"].keys())).difference(
-                    set(list(data["ground_truth"].keys()))
-                )
+        if common_ids:
+            raise ValueError(
+                "prediction and ground truth does not have corresponding samples"
             )
-            > 0
-        ):
-            raise ValueError("Prediction and ground_truth must have the same keys.")
 
-        return True
-
-    def __preprocess(self, data: dict, get_logits=False) -> tuple:
+    @staticmethod
+    def _preprocess(data: dict, get_label=False) -> tuple:
         """
-        Preprocesses the data
+        A function to preprocess
 
-        :param data: dictionary containing the data prediction, ground truth, metadata
+        :param data: dictionary data
         :type data: dict
-        :param get_logits: in case of multi class classification set to True
-        :type get_logits: boolean
 
-        :return: data tuple
+        :return: gt, pred
+        :rtype: tuple(dict, dict)
+        """
+        gt_boxes, pred_boxes = {}, {}
+
+        for image_id in data["ground_truth"]:
+            for _ant in data["ground_truth"][image_id]["annotation"]:
+                points = _ant["points"]
+                box_points = [
+                    points[0]["x"],
+                    points[0]["y"],
+                    points[1]["x"],
+                    points[1]["y"],
+                ]
+
+                if get_label:
+                    box_points.append(_ant["label"])
+
+                if image_id in gt_boxes:
+                    gt_boxes[image_id].append(box_points)
+                else:
+                    gt_boxes[image_id] = [box_points]
+
+            for pred in data["prediction"][image_id]["objects"]:
+                points = pred["box"]
+                box_points = [points["x1"], points["y1"], points["x2"], points["y2"]]
+
+                if get_label:
+                    box_points.append(pred["prediction_class"])
+
+                if image_id in pred_boxes:
+                    pred_boxes[image_id].append(box_points)
+                else:
+                    pred_boxes[image_id] = [box_points]
+
+        return (gt_boxes, pred_boxes)
+
+    def _calc_precision_recall(self, gt_boxes, pred_boxes, threshold: float) -> tuple:
+        """
+        A function to calculate the precision and recall
+
+        :param gt_boxes:
+        :type gt_boxes:
+        :param pred_boxes:
+        :type pred_boxes:
+        :param threshold:
+        :type threshold:
+
+        :return: calculated precision and recall
         :rtype: tuple
         """
-        prediction, ground_truth = [], []
-        for image_id in data["ground_truth"]:
-            sample_gt = data["ground_truth"][image_id]
-            sample_pred = data["prediction"][image_id]
-            ground_truth.append(sample_gt["annotation"][0]["label"])
+        num_gt_boxes, num_pred_boxes = len(gt_boxes), len(pred_boxes)
+        true_positives, false_positives = 0, 0
 
-            if get_logits:
-                prediction.append(sample_pred["logits"])
+        for pred_box in pred_boxes:
+            max_iou = 0
+            for gt_box in gt_boxes:
+                iou = self.iou.calculate(pred_box, gt_box)
+                max_iou = max(max_iou, iou)
+
+            if max_iou >= threshold:
+                true_positives += 1
             else:
-                prediction.append(sample_pred["prediction_class"])
-        return (np.asarray(prediction), np.asarray(ground_truth))
+                false_positives += 1
+
+        precision = (
+            true_positives / (true_positives + false_positives)
+            if (true_positives + false_positives) > 0
+            else 0
+        )
+        recall = true_positives / num_gt_boxes
+
+        return (precision, recall)
+
+    def _calc_mAP_mAR(
+        self, gt_boxes_dict: dict, pred_boxes_dict: dict, thresholds: list
+    ) -> dict:
+        """
+        A function to calculate average precision and average recall
+
+        :param gt_boxes_dict: image id and box points for ground truth
+        :type gt_boxes_dict: dict
+        :param pred_boxes_dict: image id and box points for prediction
+        :type pred_boxes_dict: dict
+        :param thresholds: list of threshold
+        :type thresholds: list
+
+        :return: dicitonary of results
+        :rtype: dict
+        """
+        results = {"metric": [], "threshold": [], "value": []}
+        for threshold in thresholds:
+            image_precisions, image_recalls = [], []
+
+            for image_id in gt_boxes_dict.keys():
+                gt_boxes = gt_boxes_dict[image_id]
+                pred_boxes = pred_boxes_dict[image_id]
+                precision, recall = self._calc_precision_recall(
+                    gt_boxes, pred_boxes, threshold
+                )
+                image_precisions.append(precision)
+                image_recalls.append(recall)
+
+            average_precision = np.mean(image_precisions)
+            average_recall = np.mean(image_recalls)
+            results["metric"].append("mAP")
+            results["value"].append(average_precision)
+            results["metric"].append("mAR")
+            results["value"].append(average_recall)
+            results["threshold"].append(threshold)
+            results["threshold"].append(threshold)
+
+        return pd.DataFrame(results)
 
     def __calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
         """
-        A function to calculate the metrics
+        A function to  calculate the metrics
 
-        :param data: data dictionary containing data
+        :param data: data dicationry containing the data
         :type data: dict
         :param class_mapping: a dictionary with class mapping labels
         :type class_mapping: dict
@@ -278,69 +184,63 @@ class ObjectDetection:
         :return: results calculated
         :rtype: dict
         """
-        class_order = [int(i) for i in list(class_mapping.keys())]
+        results = {}
 
-        if len(class_order) > 2:
+        # preprocess the data to convert the dictionasry into gt box
+        # pred box
+        gt_boxes, pred_boxes = self._preprocess(data)
 
-            prediction, ground_truth = self.__preprocess(data, get_logits=True)
+        # get the threshold
+        thresholds = data["metric_args"]["threshold"]
 
-        else:
-            prediction, ground_truth = self.__preprocess(data)
+        if not isinstance(thresholds, list) and thresholds is not None:
+            thresholds = [thresholds]
 
-            # TODO:
+        # calculate the mAR
+        results = self._calc_mAP_mAR(gt_boxes, pred_boxes, thresholds)
 
-        return data
+        return results
 
     def calculate(self, data: dict) -> dict:
         """
-        Calculates the Average Precision metric for the given dataset.
+        Calculates the average precision score for the given dataset
 
         :param data: The input data required for calculation and plotting
-                     {"prediction":, "ground_truth": , "class_mappings":}
+                    {"prediction":, "ground_truth": , "class_mapping":}
         :type data: dict
 
-        :return: Calculated metric results
+        :return: calculated metric results
         :rtype: dict
         """
         result = {}
 
-        # Validate the data
+        # validate the data
         self._validate_data(data)
 
         # calculate results
         result = self.__calculate_metrics(data, data.get("class_mapping"))
 
-        return result
+        return {"result": result}
 
 
-class PlotAveragePrecision:
-    def __init__(
-        self,
-        class_mappings,
-        coco_,
-        meta_data_dict=None,
-    ):
-        self.class_mappings = class_mappings
-        self.coco_ = coco_
-
-        if bool(meta_data_dict):
-            self.is_meta_exists = True
-            meta_df = pd.DataFrame(meta_data_dict).T
-            self.validation_utils = ValidationUtils(meta_df)
+class PlotAvgPrecision:
+    def __init__(self, data: dict, cohort_id: Optional[int] = None):
+        self.data = data
+        self.cohort_id = cohort_id
 
     def _validate_data(self):
         """
-        Validates the data required for plotting.
+        validates the data required for plotting the bar plot
         """
-        if not self.coco_ or not self.class_mappings:
-            raise ValueError("COCO data and class mappings must be provided.")
+        if not isinstance(self.data["result"], pd.DataFrame):
+            raise ValueError(f"Data must be a data frame.")
 
     def save(self, fig: Figure, filename: str) -> str:
         """
-        Saves the plot to a file.
+        Saves the plot to a file
 
-        :param filename: Path where the plot image will be saved
-        :type filename: str
+        :param fig: the matplotlib figure object where the plot image is stored
+        :type fig: str
 
         :return: Path where the plot image is saved
         :rtype: str
@@ -353,242 +253,42 @@ class PlotAveragePrecision:
             filepath = f"{dir_path}/{self.cohort_id}_{filename}"
         else:
             filepath = f"{dir_path}/{filename}"
+
         fig.savefig(filepath, format="png")
         return filepath
 
-    def _plot_performance_by_iou_threshold(
-        self, threshold: float, return_points: bool = False
-    ) -> Dict[str, Any]:
-        """
-        Plot performance metrics at specific IoU threshold.
-
-        :param threshold: IoU threshold value
-        :type threshold: float
-        :param return_points: Whether to return coordinate points
-        :type return_points: bool
-        :return: Dictionary containing performance metrics data
-        :rtype: Dict[str, Any]
-        """
-        payload_dict = dict()
-        payload_dict["type"] = "mixed"
-
-        average_precision = AveragePrecision(
-            class_mappings=self.class_mappings,
-            coco_=self.coco_,
-        )
-
-        metrics = average_precision.calculate_ap_metrics(threshold=threshold)
-        coordinates = average_precision.calculate_iou_threshold_graph(
-            threshold=threshold
-        )
-
-        response = average_precision.calculate_highlighted_overall_metrics(threshold)
-
-        if return_points:
-            payload_dict["data"] = {
-                "metrics": metrics,
-                "coordinates": coordinates,
-            }
-        else:
-            payload_dict["data"] = {"ap_results": response}
-        return payload_dict
-
-    def _plot_highlighted_overall_metrics(self, threshold: float) -> Dict[str, Any]:
-        """
-        Plot highlighted overall metrics at specified threshold.
-
-        :param threshold: IoU threshold value
-        :type threshold: float
-        :return: Dictionary containing overall metrics data
-        :rtype: Dict[str, Any]
-        """
-        rename_dict = {
-            f"map{int(threshold*100)}": f"mAP@{int(threshold*100)}",
-            f"map{int(threshold*100)}_11": f"mAP11@{int(threshold*100)}",
-            "map50": "mAP@50",
-            "map75": "mAP@75",
-            "map5095": "mAP@[.50,.95]",
-            "mar1": "mAR@max=1",
-            "mar10": "mAR@max=10",
-            "mar100": "mAR@max=100",
-        }
-        average_precision = AveragePrecision(
-            class_mappings=self.class_mappings,
-            coco_=self.coco_,
-        )
-        overall_metrics = average_precision.calculate_highlighted_overall_metrics(
-            threshold
-        )
-        for metric in list(overall_metrics.keys()):
-            overall_metrics[rename_dict[metric]] = overall_metrics.pop(metric)
-
-        val_train_dict = {}
-        for value in rename_dict.values():
-            val_train_dict[value] = {"Validation": overall_metrics[value]}
-
-        payload_dict = {"type": "overall", "data": val_train_dict}
-        return payload_dict
-
-    def _filter_ap_metrics(
-        self, target_attribute_dict: Optional[Dict[str, Any]]
-    ) -> List[int]:
-        """
-        Filter average precision metrics based on target attributes.
-
-        :param target_attribute_dict: Dictionary of target attributes for filtering
-        :type target_attribute_dict: Optional[Dict[str, Any]]
-        :return: List of filtered indices
-        :rtype: List[int]
-        """
-        if target_attribute_dict:
-            idxs = self.validation_utils.filter_attribute_by_dict(
-                target_attribute_dict
-            ).index.tolist()
-
-        return idxs
-
-    def _plot_statistics_classbased_table(
-        self,
-        threshold: Optional[float] = None,
-        target_attribute_dict: Optional[Dict[str, Any]] = None,
-    ) -> Dict[str, Any]:
-        """
-        Plot class-based statistics table.
-
-        :param threshold: IoU threshold value
-        :type threshold: Optional[float]
-        :param target_attribute_dict: Dictionary for filtering by attributes
-        :type target_attribute_dict: Optional[Dict[str, Any]]
-        :return: Dictionary containing class-based statistics
-        :rtype: Dict[str, Any]
-        """
-
-        average_precision = AveragePrecision(
-            class_mappings=self.class_mappings,
-            coco_=self.coco_,
-        )
-
-        rename_dict = {
-            f"ap10": f"AP@10",
-            f"ap10_11": f"AP11@10",
-            "ap50": "AP@50",
-            "ap75": "AP@75",
-            "ap5095": "AP@[.50,.95]",
-            "ar1": "AR@max=1",
-            "ar10": "AR@max=10",
-            "ar100": "AR@max=100",
-        }
-        if target_attribute_dict:
-            idxs = self._filter_ap_metrics(target_attribute_dict)
-        else:
-            idxs = None
-
-        ap_metrics = average_precision.calculate_ap_metrics(idxs=idxs)
-
-        class_ap_metrics = dict()
-
-        for class_ in ap_metrics["ap50"].keys():
-            class_dict = dict()
-            for metric in ap_metrics:
-                class_dict[rename_dict[metric]] = ap_metrics[metric][class_]
-            class_ap_metrics[self.class_mappings[str(class_)]] = class_dict
-
-        payload_dict = {"type": "table", "data": {"Validation": class_ap_metrics}}
-        return payload_dict
-
-    def _plot_training_validation_comparison_classbased_table(self):
-
-        threshold = 0.1
-        payload_dict = self._plot_highlighted_overall_metrics(threshold)
-
-        keys_to_be_included = ["mAP@50", "mAP@75", "mAP@[.50,.95]"]
-        all_keys = payload_dict["data"].keys()
-
-        for key in list(set(all_keys) - set(keys_to_be_included)):
-            payload_dict["data"].pop(key)
-
-        payload_dict["type"] = "bar"
-        return payload_dict
-
-    def _main_metric(self, threshold):
-        average_precision = AveragePrecision(
-            class_mappings=self.class_mappings,
-            coco_=self.coco_,
-        )
-        mean_map_given = average_precision.calculate_ap_metrics(threshold=threshold)[
-            "mAP"
-        ].round(4)
-        payload_dict = {f"mAP@{int(threshold*100)}": mean_map_given}
-        return payload_dict
-
-    def blind_spot_metrics(
-        self, target_attribute_dict: Optional[Dict[str, Any]], threshold: float
-    ) -> Dict[str, Any]:
-        """
-        Plots ROC Curve for target_class.
-        References:
-        https://scikit-learn.org/stable/auto_examples/model_selection/plot_roc.html
-        https://plotly.com/python/roc-and-pr-curves/
-        :param target_class: target class to produce ROC plot
-        :return: payload_dict
-        """
-        average_precision = AveragePrecision(
-            class_mappings=self.class_mappings,
-            coco_=self.coco_,
-        )
-        avg_rename_dict = {
-            f"map{int(threshold*100)}": f"mAP@{int(threshold*100)}",
-            f"map{int(threshold*100)}_11": f"mAP11@{int(threshold*100)}",
-            "map50": "mAP@50",
-            "map75": "mAP@75",
-            "map5095": "mAP@[.50,.95]",
-            "mar1": "mAR@max=1",
-            "mar10": "mAR@max=10",
-            "mar100": "mAR@max=100",
-        }
-
-        rename_dict = {
-            "ap10": "AP@10",
-            "ap10_11": "AP11@10",
-            "ap50": "AP@50",
-            "ap75": "AP@75",
-            "ap5095": "AP@[.50,.95]",
-            "ar1": "AR@max=1",
-            "ar10": "AR@max=10",
-            "ar100": "AR@max=100",
-        }
-        idxs = (
-            self._filter_ap_metrics(target_attribute_dict)
-            if bool(target_attribute_dict)
-            else None
-        )
-
-        class_metrics = average_precision.calculate_ap_metrics(idxs=idxs)
-        overall_metrics = average_precision.calculate_highlighted_overall_metrics(
-            threshold
-        )
-
-        for key in list(class_metrics.keys()):
-            class_metrics[rename_dict[key]] = class_metrics.pop(key)
-
-        for metric in list(overall_metrics.keys()):
-            overall_metrics[avg_rename_dict[metric]] = overall_metrics.pop(metric)
-
-        blind_spot_metrics_dict = pd.DataFrame(class_metrics).T.to_dict()
-        blind_spot_metrics_dict = {
-            str(k): v for k, v in blind_spot_metrics_dict.items()
-        }
-
-        blind_spot_metrics_dict["Average"] = overall_metrics
-
-        return blind_spot_metrics_dict
-
     def plot(self) -> Figure:
         """
-        Plots the Top Losses.
+        Plots the AUC curves.
         """
+        sns.set_style("whitegrid")
+
+        # validate the data
         self._validate_data()
-        # TODO: Add the plot logic here
+
+        fig, ax = plt.subplots(figsize=(10, 7))
+        sns.barplot(
+            x="metric",
+            y="value",
+            hue="threshold",
+            data=self.data["result"],
+            ax=ax,
+            palette="pastel",
+        )
+        ax.set_xlabel("Metric", fontdict={"fontsize": 14, "fontweight": "medium"})
+        ax.set_ylabel("Value", fontdict={"fontsize": 14, "fontweight": "medium"})
+
+        if self.cohort_id:
+            title_str = f"mAP and mAR at Thresholds: cohort - {self.cohort_id}"
+        else:
+            title_str = "mAP and mAR at Thresholds"
+
+        ax.set_title(
+            title_str,
+            fontdict={"fontsize": 16, "fontweight": "medium"},
+        )
+        ax.legend(loc="lower right")
+        return fig
 
 
 problem_type_map = {
@@ -599,17 +299,9 @@ problem_type_map = {
 
 
 @metric_manager.register("object_detection.average_precision")
-def calculate_average_precision(data: dict, problem_type: str):
+def calculate_avg_precision(data: dict, problem_type: str):
     """
-    A wrapper function to calculate the Average Precision metric.
-
-    :param data: Dictionary of data: {"prediction": , "ground_truth": }
-    :type data: dict
-    :param problem_type: Type of the problem
-    :type problem_type: str
-
-    :return: Dict of calculated results
-    :rtype: dict
+    A wrapper function to calculate the average precision
     """
     _metric_calculator = problem_type_map[problem_type]()
     result = _metric_calculator.calculate(data)
@@ -617,22 +309,24 @@ def calculate_average_precision(data: dict, problem_type: str):
 
 
 @plot_manager.register("object_detection.average_precision")
-def plot_average_precision(
+def plot_avg_precision(
     results: dict,
     save_plot: bool,
     file_name: str = "average_precision.png",
     cohort_id: Optional[int] = None,
 ) -> Union[str, None]:
     """
-    A wrapper function to plot the Average Precision.
+    A wrapper function to plot average precision
+
+    :param results: Dictionary of the results
+    :type results: dict
+    :param save_plot: boolean value to save plot
+    :type save_plot: bool
+
+    :return: None or path to the saved plot
+    :rtype: Union[str, None]
     """
-    plotter = PlotAveragePrecision(
-        coco_=results.get("coco_"),
-        class_mappings=results.get("class_mappings"),
-        loss=results.get("loss"),
-        meta_dict=results.get("meta_dict"),
-        cohort_id=cohort_id,
-    )
+    plotter = PlotAvgPrecision(data=results, cohort_id=cohort_id)
     fig = plotter.plot()
     if save_plot:
         return plotter.save(fig, filename=file_name)

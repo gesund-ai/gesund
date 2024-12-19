@@ -1,20 +1,14 @@
-from typing import Union, Optional, List, Dict
+from typing import Union, Optional
 import os
-import itertools
-from datetime import datetime
-import pickle
 
 import numpy as np
 import pandas as pd
-import sklearn
-from pycocotools.coco import COCO
-from pycocotools.cocoeval import COCOeval
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import seaborn as sns
 
 from gesund.core import metric_manager, plot_manager
-from gesund.core._metrics.common.average_precision import AveragePrecision
+from .iou import IoUCalc
 
 
 class Classification:
@@ -51,7 +45,7 @@ class Classification:
 
         return True
 
-    def __preprocess(
+    def _preprocess(
         self, data: dict, get_logits: bool = False, keep_imageid: bool = False
     ):
         """
@@ -127,7 +121,7 @@ class Classification:
         :return: results calculated
         :rtype: dict
         """
-        prediction, ground_truth, image_id = self.__preprocess(
+        prediction, ground_truth, image_id = self._preprocess(
             data, get_logits=True, keep_imageid=True
         )
         pred_gt_df = pd.DataFrame(prediction)
@@ -172,6 +166,142 @@ class Classification:
 
         # calculate the metrics
         result = self.__calculate_metrics(data)
+        return result
+
+
+class SemanticSegmentation(Classification):
+    pass
+
+
+class ObjectDetection:
+    def __init__(self):
+        self.iou = IoUCalc()
+
+    def _validate_data(self, data: dict) -> bool:
+        """
+        A function to validate the data that is required for metric calculation and plotting.
+
+        :param data: The input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
+        :type data: dict
+
+        :return: Status if the data is valid
+        :rtype: bool
+        """
+        # Basic validation checks
+        if not isinstance(data, dict):
+            raise ValueError("Data must be a dictionary.")
+
+        required_keys = ["prediction", "ground_truth"]
+        for key in required_keys:
+            if key not in data:
+                raise ValueError(f"Data must contain '{key}'.")
+
+        if len(data["prediction"]) != len(data["ground_truth"]):
+            raise ValueError("Prediction and ground_truth must have the same length.")
+
+        if (
+            len(
+                set(list(data["prediction"].keys())).difference(
+                    set(list(data["ground_truth"].keys()))
+                )
+            )
+            > 0
+        ):
+            raise ValueError("Prediction and ground_truth must have the same keys.")
+
+        return True
+
+    def _preprocess(self, data: dict) -> tuple:
+        """
+        Preprocesses the data
+
+        :param data: dictionary containing the data prediction, ground truth, metadata
+        :type data: dict
+        :param get_logits: in case of multi class classification set to True
+        :type get_logits: boolean
+        :param keep_imageid: to keep the image id in the response set to True
+        :type keep_imageid: bool
+
+        :return: data tuple
+        :rtype: tuple
+        """
+        from .average_precision import ObjectDetection
+
+        return ObjectDetection._preprocess(data)
+
+    def _calculate_loss(
+        self, gt_boxes_dict: dict, pred_boxes_dict: dict, class_mapping: dict
+    ) -> pd.DataFrame:
+        """
+        A function to calculate the loss function
+
+        :param gt_boxes_dict: a dictionary of gt boxes, with image id as the key
+        :type gt_boxes_dict: dict
+        :param pred_boxes_dict: a dictionary of pred boxes, with image id as the key
+        :type pred_boxes_dict: dict
+        :param class_mapping: dict
+        :type class_mapping: dict
+
+        :return: pandas data frame
+        """
+        loss_data = {"image_id": [], "loss": []}
+        for image_id in gt_boxes_dict:
+            gt_box = gt_boxes_dict[image_id]
+            pred_box = pred_boxes_dict[image_id]
+
+            iou_loss = self.iou.calculate_iou_loss(gt_box, pred_box)
+            loss_data["image_id"].append(image_id)
+            loss_data["loss"].append(iou_loss)
+
+        loss_data = pd.DataFrame(loss_data)
+        loss_data = loss_data.sort_values(by="loss", ascending=False)
+        return loss_data
+
+    def __calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
+        """
+        A function to calculate the metrics
+
+        :param data: data dictionary containing data
+        :type data: dict
+        :param class_mapping: a dictionary with class mapping labels
+        :type class_mapping: dict
+
+        :return: results calculated
+        :rtype: dict
+        """
+        results = {}
+
+        # preprocess the data to load the data
+        gt_boxes, pred_boxes = self._preprocess(data)
+
+        # calculate the loss
+        _loss = self._calculate_loss(gt_boxes, pred_boxes, class_mapping)
+
+        results["loss_data"] = _loss
+
+        return results
+
+    def calculate(self, data: dict) -> dict:
+        """
+        Calculates the Top Losses metric for the given dataset.
+
+        :param data: The input data required for calculation and plotting
+                     {"prediction":, "ground_truth": , "class_mappings":}
+        :type data: dict
+
+        :return: Calculated metric results
+        :rtype: dict
+        """
+        result = {}
+
+        # Validate the data
+        self._validate_data(data)
+
+        # calculate results
+        result = self.__calculate_metrics(data, data.get("class_mapping"))
+
+        result["overall_loss"] = round(result["loss_data"]["loss"].mean(), 4)
+
         return result
 
 
@@ -222,13 +352,14 @@ class PlotTopLosses:
         self._validate_data()
         fig, ax = plt.subplots(figsize=(10, 7))
         plot_data = self.data["loss_data"].head(20)
+        hue_value = "ground_truth" if "ground_truth" in plot_data.columns else None
         sns.barplot(
             data=plot_data,
             x="image_id",
             y="loss",
             ax=ax,
             palette="pastel",
-            hue="ground_truth",
+            hue=hue_value,
         )
 
         ax.set_xlabel("Image id", fontdict={"fontsize": 14, "fontweight": "medium"})
@@ -244,142 +375,6 @@ class PlotTopLosses:
         ax.set_title(title_str, fontdict={"fontsize": 16, "fontweight": "medium"})
         ax.legend(loc="lower right")
         return fig
-
-
-class SemanticSegmentation(Classification):
-    pass
-
-
-class ObjectDetection:
-    def _validate_data(self, data: dict) -> bool:
-        """
-        A function to validate the data that is required for metric calculation and plotting.
-
-        :param data: The input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
-        :type data: dict
-
-        :return: Status if the data is valid
-        :rtype: bool
-        """
-        # Basic validation checks
-        if not isinstance(data, dict):
-            raise ValueError("Data must be a dictionary.")
-        required_keys = ["prediction", "ground_truth"]
-        for key in required_keys:
-            if key not in data:
-                raise ValueError(f"Data must contain '{key}'.")
-
-        if len(data["prediction"]) != len(data["ground_truth"]):
-            raise ValueError("Prediction and ground_truth must have the same length.")
-
-        if (
-            len(
-                set(list(data["prediction"].keys())).difference(
-                    set(list(data["ground_truth"].keys()))
-                )
-            )
-            > 0
-        ):
-            raise ValueError("Prediction and ground_truth must have the same keys.")
-
-        return True
-
-    def __preprocess(self, data: dict, get_logits=False) -> tuple:
-        """
-        Preprocesses the data
-
-        :param data: dictionary containing the data prediction, ground truth, metadata
-        :type data: dict
-        :param get_logits: in case of multi class classification set to True
-        :type get_logits: boolean
-        :param keep_imageid: to keep the image id in the response set to True
-        :type keep_imageid: bool
-
-        :return: data tuple
-        :rtype: tuple
-        """
-        prediction, ground_truth, image_id_list = [], [], []
-        for image_id in data["ground_truth"]:
-            sample_gt = data["ground_truth"][image_id]
-            sample_pred = data["prediction"][image_id]
-            ground_truth.append(sample_gt["annotation"][0]["label"])
-            image_id_list.append(image_id)
-
-            if get_logits:
-                prediction.append(sample_pred["logits"])
-            else:
-                prediction.append(sample_pred["prediction_class"])
-
-    def __calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
-        """
-        A function to calculate the metrics
-
-        :param data: data dictionary containing data
-        :type data: dict
-        :param class_mapping: a dictionary with class mapping labels
-        :type class_mapping: dict
-
-        :return: results calculated
-        :rtype: dict
-        """
-        class_order = [int(i) for i in list(class_mapping.keys())]
-        # TODO: class wise auc and roc
-
-        if len(class_order) > 2:
-
-            prediction, ground_truth = self.__preprocess(data, get_logits=True)
-
-        else:
-            prediction, ground_truth = self.__preprocess(data)
-
-            # TODO: check if the methods for that script are available
-
-        return data
-
-    def calculate(self, data: dict) -> dict:
-        """
-        Calculates the Top Losses metric for the given dataset.
-
-        :param data: The input data required for calculation and plotting
-                     {"prediction":, "ground_truth": , "class_mappings":}
-        :type data: dict
-
-        :return: Calculated metric results
-        :rtype: dict
-        """
-        result = {}
-
-        # Validate the data
-        self._validate_data(data)
-
-        # calculate results
-        result = self.__calculate_metrics(data, data.get("class_mapping"))
-
-        return result
-
-
-class TopLosses:
-    def __init__(self, coco_, class_mappings, loss):
-        self.coco_ = coco_
-        self.class_mappings = class_mappings
-        self.loss = loss
-
-    def calculate_top_losses(self, top_k=100):
-        """
-        Calculates and returns the top_k samples with the highest losses.
-        """
-        average_precision = AveragePrecision(
-            class_mappings=self.class_mappings,
-            coco_=self.coco_,
-        )
-
-        losses_list = average_precision.plot_top_losses()
-
-        # Sort and get top_k losses
-        sorted_losses = sorted(losses_list, key=lambda x: x["mIoU"])
-        top_losses = sorted_losses[:top_k]
-
-        return top_losses
 
 
 problem_type_map = {
@@ -398,6 +393,7 @@ def calculate_top_losses_classification(data: dict, problem_type: str):
     :type data: dict
     :param problem_type: Type of the problem
     :type problem_type: str
+
     :return: Calculated results
     :rtype: dict
     """
@@ -406,48 +402,7 @@ def calculate_top_losses_classification(data: dict, problem_type: str):
     return result
 
 
-@metric_manager.register("object_detection.top_losses")
-def calculate_top_losses_obj(data: dict, problem_type: str):
-    """
-    A wrapper function to calculate the Top Losses metric.
-
-    :param data: Dictionary of data: {"prediction": , "ground_truth": }
-    :type data: dict
-    :param problem_type: Type of the problem
-    :type problem_type: str
-
-    :return: Dict of calculated results
-    :rtype: dict
-    """
-    _metric_calculator = problem_type_map[problem_type]()
-    result = _metric_calculator.calculate(data)
-    return result
-
-
 @plot_manager.register("object_detection.top_losses")
-def plot_top_losses_obj(
-    results: dict,
-    save_plot: bool,
-    file_name: str = "top_losses.png",
-    cohort_id: Optional[int] = None,
-) -> Union[str, None]:
-    """
-    A wrapper function to plot the Top Losses curves.
-    """
-    plotter = PlotTopLosses(
-        coco_=results.get("coco_"),
-        class_mappings=results.get("class_mappings"),
-        loss=results.get("loss"),
-        meta_dict=results.get("meta_dict"),
-        cohort_id=cohort_id,
-    )
-    fig = plotter.plot()
-    if save_plot:
-        return plotter.save(fig, filename=file_name)
-    else:
-        plt.show()
-
-
 @plot_manager.register("classification.top_losses")
 def plot_top_losses_classification(
     results: dict,
@@ -476,3 +431,39 @@ def plot_top_losses_classification(
         return plotter.save(fig, filename=file_name)
     else:
         plt.show()
+
+
+@metric_manager.register("object_detection.top_losses")
+def calculate_top_losses_obj_det(data: dict, problem_type: str):
+    """
+    A wrappper function to calculate the top losses metric
+
+    :param data: Dictionary of data: {"prediction": , "ground_truth":, "loss":}
+    :type data: dict
+    :param problem_type: Type of the problem
+    :type problem_type: str
+
+    :return: calculated results
+    :rtype: dict
+    """
+    metric_calculator = problem_type_map[problem_type]()
+    result = metric_calculator.calculate(data)
+    return result
+
+
+# @plot_manager.register("object_detection.top_losses")
+# def plot_top_losses_obj_det(
+#     results: dict,
+#     save_plot:bool,
+#     file_name: str = "top_losses_obj_detection.png",
+#     cohort_id: Optional[int] = None,
+# ) -> Union[str, None]:
+#     """
+#     A wrapper function to plot the top losses chart
+#     """
+#     plotter = PlotTopLosses(data=results, cohort_id=cohort_id)
+#     fig = plotter.plot()
+#     if save_plot:
+#         return plotter.save(fig, filename=file_name)
+#     else:
+#         plt.show()

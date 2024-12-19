@@ -52,7 +52,7 @@ class Classification:
 
         return True
 
-    def __preprocess(self, data: dict, get_logits=False):
+    def _preprocess(self, data: dict, get_logits=False):
         """
         Preprocesses the data
 
@@ -127,7 +127,7 @@ class Classification:
         """
         from gesund.core._metrics.common.top_losses import Classification
 
-        prediction, ground_truth = self.__preprocess(data, get_logits=True)
+        prediction, ground_truth = self._preprocess(data, get_logits=True)
         pred_gt_df = pd.DataFrame(prediction)
 
         # softmax is applied to make the logits aka the raw outputs of the model
