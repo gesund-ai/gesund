@@ -449,21 +449,3 @@ def calculate_top_losses_obj_det(data: dict, problem_type: str):
     metric_calculator = problem_type_map[problem_type]()
     result = metric_calculator.calculate(data)
     return result
-
-
-# @plot_manager.register("object_detection.top_losses")
-# def plot_top_losses_obj_det(
-#     results: dict,
-#     save_plot:bool,
-#     file_name: str = "top_losses_obj_detection.png",
-#     cohort_id: Optional[int] = None,
-# ) -> Union[str, None]:
-#     """
-#     A wrapper function to plot the top losses chart
-#     """
-#     plotter = PlotTopLosses(data=results, cohort_id=cohort_id)
-#     fig = plotter.plot()
-#     if save_plot:
-#         return plotter.save(fig, filename=file_name)
-#     else:
-#         plt.show()

@@ -49,74 +49,82 @@ class ObjectDetection:
 
     def _preprocess(self, data: dict) -> tuple:
         """
-        A function to preprocess
+        A function to preprocess the data
 
-        :param data: dictionary data
+        :param data: a dictionary containing the ground truth and prediction data
         :type data: dict
 
-        :return: gt, pred
-        :rtype: tuple(dict, dict)
+        :return: a tuple containing the ground truth and prediction boxes
+        :rtype: tuple
         """
-        gt_boxes, pred_boxes = {}, {}
+        from .average_precision import ObjectDetection
 
-        for image_id in data["ground_truth"]:
-            for _ant in data["ground_truth"][image_id]["annotation"]:
-                points = _ant["points"]
-                box_points = [
-                    points[0]["x"],
-                    points[0]["y"],
-                    points[1]["x"],
-                    points[1]["y"],
-                ]
-                if image_id in gt_boxes:
-                    gt_boxes[image_id].append(box_points)
-                else:
-                    gt_boxes[image_id] = [box_points]
+        return ObjectDetection._preprocess(data, get_label=True)
 
-            for pred in data["prediction"][image_id]["objects"]:
-                points = pred["box"]
-                box_points = [points["x1"], points["y1"], points["x2"], points["y2"]]
-                if image_id in pred_boxes:
-                    pred_boxes[image_id].append(
-                        {"box_points": box_points, "category_id": pred["category_id"]}
-                    )
-                else:
-                    pred_boxes[image_id] = [
-                        {"box_points": box_points, "category_id": pred["category_id"]}
-                    ]
+    def _organize_data(
+        self, gt_boxes: dict, pred_boxes: dict, class_mapping: dict
+    ) -> dict:
+        """
+        A function to organize the data
 
-        return (gt_boxes, pred_boxes)
+        :param gt_boxes: a dictionary containing the ground truth boxes
+        :type gt_boxes: dict
+        :param pred_boxes: a dictionary containing the prediction boxes
+        :type pred_boxes: dict
+        :param class_mapping: a dictionary containing the class mapping
+        :type class_mapping: dict
+
+        :return: a dictionary containing the organized data
+        :rtype: dict
+        """
+        data = {"pred_class_label": [], "gt_class_label": []}
+
+        for image_id in gt_boxes:
+            data["gt_class_label"].extend([box[-1] for box in gt_boxes[image_id]])
+            data["pred_class_label"].extend([box[-1] for box in pred_boxes[image_id]])
+
+        return data
 
     def _calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
+        """
+        A function to calculate the predicted_distribution metrics
+
+        :param data: a dictionary containing the ground truth and prediction data
+        :type data: dict
+        :param class_mapping: a dictionary containing the class mapping
+        :type class_mapping: dict
+
+        :return: a dictionary containing the calculated metrics
+        :rtype: dict
+        """
+        results = {}
+        # preprocess the data
         gt_boxes, pred_boxes = self._preprocess(data)
 
-        pred_class_occurrence_dict = {}
-        for image_id in pred_boxes:
-            for pred in pred_boxes[image_id]:
-                class_id = pred["category_id"]
-                if class_id in pred_class_occurrence_dict:
-                    pred_class_occurrence_dict[class_id] += 1
-                else:
-                    pred_class_occurrence_dict[class_id] = 1
+        label_dist = self._organize_data(gt_boxes, pred_boxes, class_mapping)
 
-        if class_mapping is not None:
-            pred_class_occurrence_dict = {
-                class_mapping[str(k)]: v for k, v in pred_class_occurrence_dict.items()
-            }
+        results["label_distribution"] = label_dist
 
-        payload_dict = {
-            "type": "pie",
-            "data": pred_class_occurrence_dict,
-        }
-
-        return payload_dict
+        return results
 
     def calculate(self, data: dict) -> dict:
-        result = {}
-        self._validate_data(data)
-        result = self._calculate_metrics(data, data.get("class_mapping"))
-        return result
+        """
+        A function to calculate the predicted_distribution metrics
 
+        :param data: a dictionary containing the ground truth and prediction data
+        :type data: dict
+
+        :return: a dictionary containing the calculated metrics
+        :rtype: dict
+        """
+        result = {}
+        # validate the data
+        self._validate_data(data)
+
+        # calculate the metrics
+        result = self._calculate_metrics(data, data.get("class_mapping"))
+
+        return result
 
 
 class PlotPredictedDistribution:
@@ -125,12 +133,24 @@ class PlotPredictedDistribution:
         self.cohort_id = cohort_id
 
     def _validate_data(self):
-        required_keys = ["type", "data"]
-        for key in required_keys:
-            if key not in self.data:
-                raise ValueError(f"Data must contain '{key}'.")
+        """
+        Validate the data
+        """
+        if "label_distribution" not in self.data:
+            raise ValueError("Missing label_distribution in the data dictionary")
 
     def save(self, fig: Figure, filename: str) -> str:
+        """
+        A function to save the plot
+
+        :param fig: the figure object
+        :type fig: Figure
+        :param filename: the name of the file
+        :type filename: str
+
+        :return: the path to the saved file
+        :rtype: str
+        """
         dir_path = "plots"
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
@@ -144,20 +164,45 @@ class PlotPredictedDistribution:
         return filepath
 
     def plot(self) -> Figure:
-        sns.set_theme(style="whitegrid")
+        """
+        A function to plot the predicted distribution
+
+        :return: the figure object
+        :rtype: Figure
+        """
+        # validate the data
         self._validate_data()
 
-        pred_class_occurrence_dict = self.data["data"]
+        sns.set_theme(style="whitegrid")
+        figx, ax = plt.subplots(1, 2, figsize=(10, 6))
 
-        fig, ax = plt.subplots(figsize=(10, 7))
-        labels = list(pred_class_occurrence_dict.keys())
-        values = list(pred_class_occurrence_dict.values())
-        ax.pie(values, labels=labels, autopct="%1.1f%%", startangle=90)
-        ax.axis("equal")
-        ax.set_title("Predicted Distribution")
+        plot_data = self.data["label_distribution"]
+        plot_data = pd.DataFrame(plot_data)
+
+        for i, column in enumerate(plot_data.columns):
+            value_counts = plot_data[column].value_counts(normalize=True)
+            wedges, texts, autotexts = ax[i].pie(
+                value_counts,
+                labels=value_counts.index,
+                autopct="%1.1f%%",
+                startangle=90,
+                colors=sns.color_palette("pastel"),
+                wedgesprops=dict(width=0.3),
+            )
+            for wedge in wedges:
+                wedge.set_edgecolor("white")
+            ax[i].set_title(f"{column} Distribution")
+
+        title_txt = f"Class Distribution: {self.data['overall_loss']} : Top 20"
+        if self.cohort_id:
+            title_str = f"{title_txt}: cohort - {self.cohort_id}"
+        else:
+            title_str = f"{title_txt}"
+
+        ax.set_title(title_str)
         plt.tight_layout()
 
-        return fig
+        return figx
 
 
 problem_type_map = {
@@ -171,6 +216,14 @@ problem_type_map = {
 def calculate_predicted_distribution(data: dict, problem_type: str):
     """
     A wrapper function to calculate the predicted_distribution metrics.
+
+    :param data: a dictionary containing the ground truth and prediction data
+    :type data: dict
+    :param problem_type: the type of problem
+    :type problem_type: str
+
+    :return: calculated metric results
+    :rtype: dict
     """
     _metric_calculator = problem_type_map[problem_type]()
     result = _metric_calculator.calculate(data)
@@ -186,6 +239,18 @@ def plot_predicted_distribution_od(
 ) -> Union[str, None]:
     """
     A wrapper function to plot the predicted distribution metrics.
+
+    :param results: a dictionary containing the results of the predicted distribution
+    :type results: dict
+    :param save_plot: a flag to save the plot
+    :type save_plot: bool
+    :param file_name: the name of the file
+    :type file_name: str
+    :param cohort_id: the cohort id
+    :type cohort_id: Optional[int]
+
+    :return: the path to the saved file
+    :rtype: Union[str, None]
     """
     plotter = PlotPredictedDistribution(data=results, cohort_id=cohort_id)
     fig = plotter.plot()
