@@ -29,7 +29,6 @@ class SemanticSegmentation:
 class ObjectDetection:
     def __init__(self):
         self.iou = IoUCalc()
-        self.class_mapping = {}
 
     def _validate_data(self, data: dict) -> bool:
         """
@@ -39,7 +38,7 @@ class ObjectDetection:
         :type data: dict
         """
         # check for the important keys in the data
-        check_keys = ("ground_truth", "prediction", "class_mapping", "metric_args")
+        check_keys = ("ground_truth", "prediction")
         for _key in check_keys:
             if _key not in data:
                 raise ValueError(f"Missing {_key} in the data dictionary")
@@ -54,7 +53,7 @@ class ObjectDetection:
                 "prediction and ground truth does not have corresponding samples"
             )
 
-    def __preprocess(self, data: dict) -> tuple:
+    def _preprocess(self, data: dict) -> tuple:
         """
         A function to preprocess
 
@@ -64,123 +63,79 @@ class ObjectDetection:
         :return: gt, pred
         :rtype: tuple(dict, dict)
         """
-        gt_boxes, pred_boxes = {}, {}
+        from .average_precision import ObjectDetection
+        
+        return ObjectDetection._preprocess(data)
 
-        for image_id in data["ground_truth"]:
-            for _ant in data["ground_truth"][image_id]["annotation"]:
-                points = _ant["points"]
-                box_points = [
-                    points[0]["x"],
-                    points[0]["y"],
-                    points[1]["x"],
-                    points[1]["y"],
-                ]
-                if image_id in gt_boxes:
-                    gt_boxes[image_id].append(box_points)
-                else:
-                    gt_boxes[image_id] = [box_points]
 
-            for pred in data["prediction"][image_id]["objects"]:
-                points = pred["box"]
-                box_points = [points["x1"], points["y1"], points["x2"], points["y2"]]
-                if image_id in pred_boxes:
-                    pred_boxes[image_id].append(box_points)
-                else:
-                    pred_boxes[image_id] = [box_points]
-
-        return (gt_boxes, pred_boxes)
-
-    def _calc_precision_recall(self, gt_boxes, pred_boxes, threshold: float) -> tuple:
+    def _calc_conf_distR(
+        self,
+        gt_boxes_dict: dict,
+        pred_boxes_dict: dict,
+        class_mapping: dict,
+        threshold: float = None,
+        predicted_class: Optional[str] = None
+    ) -> pd.DataFrame:
         """
-        A function to calculate the precision and recall
+        A function to calculate the loss function
 
-        :param gt_boxes:
-        :type gt_boxes:
-        :param pred_boxes:
-        :type pred_boxes:
-        :param threshold:
-        :type threshold:
+        :param gt_boxes_dict: a dictionary of gt boxes, with image id as the key
+        :type gt_boxes_dict: dict
+        :param pred_boxes_dict: a dictionary of pred boxes, with image id as the key
+        :type pred_boxes_dict: dict
+        :param class_mapping: dict
+        :type class_mapping: dict
 
-        :return: calculated precision and recall
-        :rtype: tuple
+        :return: pandas data frame
         """
-        num_gt_boxes, num_pred_boxes = len(gt_boxes), len(pred_boxes)
-        true_positives, false_positives = 0, 0
+        avg_conf = {"image_id": [], "avg_confidence": []}
+        for image_id, p_boxes in pred_boxes_dict.items():
+            if image_id not in gt_boxes_dict:
+                continue
+            confidences = []
+            for box in p_boxes:
+                # [x1, y1, x2, y2, label, confidence]
+                if len(box) < 6:
+                    continue
+                label = box[4]
+                conf = box[5]
 
-        for pred_box in pred_boxes:
-            max_iou = 0
-            for gt_box in gt_boxes:
-                iou = self.iou.calculate(pred_box, gt_box)
-                max_iou = max(max_iou, iou)
-
-            if max_iou >= threshold:
-                true_positives += 1
-            else:
-                false_positives += 1
-
-        precision = (
-            true_positives / (true_positives + false_positives)
-            if (true_positives + false_positives) > 0
-            else 0
-        )
-        recall = true_positives / num_gt_boxes
-
-        return (precision, recall)
-
-    def _calc_conf_distR(self, gt_boxes_dict, pred_boxes_dict, threshold):
-        # TODO: Could be wrong that function check again.
-        image_id_scores = {}
-        for image_id in pred_boxes_dict:
-            # TODO:
-            # get gt&pred boxes
-
-            gt_boxes = (gt_boxes_dict.get(image_id, []),)
-            pred_boxes = pred_boxes_dict[image_id]
-
-            for cls_id in self.class_mapping:
-                cls_id = int(cls_id)
-                gt_boxes_cls = [
-                    box for box in gt_boxes if box.get("category_id") == cls_id
-                ]
-                pred_boxes_cls = [
-                    box for box in pred_boxes if box.get("category_id") == cls_id
-                ]
-
-                if not gt_boxes_cls or not pred_boxes_cls:
+                if threshold is not None and conf < threshold:
+                    continue
+                if predicted_class is not None and label != predicted_class:
                     continue
 
-                confidences = []
-                for pred_box in pred_boxes_cls:
-                    pred_bbox = pred_box["bbox"]
-                    max_iou = 0
-                    for gt_box in gt_boxes_cls:
-                        gt_bbox = gt_box["bbox"]
-                        iou = self.iou.calculate(np.array(pred_bbox), np.array(gt_bbox))
-                        if iou > max_iou:
-                            max_iou = iou
-                    if max_iou >= threshold:
-                        confidences.append(pred_box["score"])
-                if confidences:
-                    image_id_scores[image_id] = np.mean(confidences)
-                    break
-        return image_id_scores
+                confidences.append(conf)
+            if confidences:
+                avg_conf["image_id"].append(image_id)
+                avg_conf["avg_confidence"].append(np.mean(confidences))
 
-    def __calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
-        results = {}
-        gt_boxes, pred_boxes = self.__preprocess(data)
+        return pd.DataFrame(avg_conf)
+
+
+    def _calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
+        gt_boxes, pred_boxes = self._preprocess(data)
 
         thresholds = data["metric_args"]["threshold"]
-
-        if not isinstance(thresholds, list) and thresholds is not None:
+        if thresholds is not None and not isinstance(thresholds, list):
             thresholds = [thresholds]
 
-        results = self._calc_conf_distR(gt_boxes, pred_boxes, thresholds)
-        return results
+        all_dfs = []
+        if not thresholds:  # 'thresholds' as [None] if not given
+            thresholds = [None]
+
+        for t in thresholds:
+            df = self._calc_conf_distR(gt_boxes, pred_boxes, class_mapping, t)
+            df["threshold"] = t
+            all_dfs.append(df)
+
+        final_df = pd.concat(all_dfs, ignore_index=True)
+        return {"result": final_df}
 
     def calculate(self, data: dict) -> dict:
         result = {}
         self._validate_data(data)
-        result = self.__calculate_metrics(data, data.get("class_mapping"))
+        result = self._calculate_metrics(data, data.get("class_mapping"))
         return result
 
 
@@ -190,11 +145,11 @@ class PlotConfidenceDistribution:
         self.cohort_id = cohort_id
 
     def _validate_data(self):
-        # TODO: After check fun -> need to update
-        required_keys = ["class_mapping", "ground_truth", "prediction"]
-        for key in required_keys:
-            if key not in self.data:
-                raise ValueError(f"Data must contain '{key}'.")
+        """
+        validates the data required for plotting the bar plot
+        """
+        if not isinstance(self.data["result"], pd.DataFrame):
+            raise ValueError(f"Data must be a data frame.")
 
     def save(self, fig: Figure, filename: str) -> str:
         dir_path = "plots"
@@ -217,7 +172,6 @@ class PlotConfidenceDistribution:
         self._validate_data()
         fig, ax = plt.subplots(figsize=(10, 7))
         sns.scatterplot(
-            # TODO: Check the data after update the function
             data=self.data["result"],
             x="x",
             y="y",

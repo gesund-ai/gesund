@@ -50,7 +50,8 @@ class ObjectDetection:
                 "prediction and ground truth does not have corresponding samples"
             )
 
-    def __preprocess(self, data: dict) -> tuple:
+    @staticmethod
+    def _preprocess(data: dict, get_label=False) -> tuple:
         """
         A function to preprocess
 
@@ -71,6 +72,10 @@ class ObjectDetection:
                     points[1]["x"],
                     points[1]["y"],
                 ]
+
+                if get_label:
+                    box_points.append(_ant["label"])
+
                 if image_id in gt_boxes:
                     gt_boxes[image_id].append(box_points)
                 else:
@@ -79,6 +84,10 @@ class ObjectDetection:
             for pred in data["prediction"][image_id]["objects"]:
                 points = pred["box"]
                 box_points = [points["x1"], points["y1"], points["x2"], points["y2"]]
+
+                if get_label:
+                    box_points.append(pred["prediction_class"])
+
                 if image_id in pred_boxes:
                     pred_boxes[image_id].append(box_points)
                 else:
@@ -179,7 +188,7 @@ class ObjectDetection:
 
         # preprocess the data to convert the dictionasry into gt box
         # pred box
-        gt_boxes, pred_boxes = self.__preprocess(data)
+        gt_boxes, pred_boxes = self._preprocess(data)
 
         # get the threshold
         thresholds = data["metric_args"]["threshold"]
