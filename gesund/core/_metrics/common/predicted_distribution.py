@@ -23,7 +23,6 @@ class SemanticSegmentation:
 class ObjectDetection:
     def __init__(self):
         self.iou = IoUCalc()
-        self.class_mapping = {}
 
     def _validate_data(self, data: dict) -> bool:
         """
@@ -33,7 +32,7 @@ class ObjectDetection:
         :type data: dict
         """
         # check for the important keys in the data
-        check_keys = ("ground_truth", "prediction", "class_mapping", "metric_args")
+        check_keys = ("ground_truth", "prediction")
         for _key in check_keys:
             if _key not in data:
                 raise ValueError(f"Missing {_key} in the data dictionary")
@@ -48,7 +47,7 @@ class ObjectDetection:
                 "prediction and ground truth does not have corresponding samples"
             )
 
-    def __preprocess(self, data: dict) -> tuple:
+    def _preprocess(self, data: dict) -> tuple:
         """
         A function to preprocess
 
@@ -88,8 +87,8 @@ class ObjectDetection:
 
         return (gt_boxes, pred_boxes)
 
-    def __calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
-        gt_boxes, pred_boxes = self.__preprocess(data)
+    def _calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
+        gt_boxes, pred_boxes = self._preprocess(data)
 
         pred_class_occurrence_dict = {}
         for image_id in pred_boxes:
@@ -113,9 +112,11 @@ class ObjectDetection:
         return payload_dict
 
     def calculate(self, data: dict) -> dict:
+        result = {}
         self._validate_data(data)
-        result = self.__calculate_metrics(data, data.get("class_mapping"))
+        result = self._calculate_metrics(data, data.get("class_mapping"))
         return result
+
 
 
 class PlotPredictedDistribution:
