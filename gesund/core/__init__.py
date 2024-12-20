@@ -9,4 +9,6 @@ from ._metrics.common import (
     top_losses,
     threshold,
     average_precision,
+    predicted_distribution,
+    confidence_distribution,
 )

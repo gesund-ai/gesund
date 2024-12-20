@@ -189,6 +189,8 @@ def test_plot_manager_single_metric_classification(
             [0, 0.25, 0.5, 0.75, 1],
         ),
         ({"problem_type": "object_detection"}, "top_losses", None, []),
+        ({"problem_type": "object_detection"}, "predicted_distribution", None, []),
+        ({"problem_type": "object_detection"}, "confidence_distribution", None, []),
     ],
 )
 def test_plot_manager_single_metric_obj_det(
