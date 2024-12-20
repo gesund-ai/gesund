@@ -1,21 +1,14 @@
 from typing import Union, Optional
 import os
-import itertools
-from datetime import datetime
-import pickle
 
 import numpy as np
 import pandas as pd
-import sklearn
-from pycocotools.coco import COCO
-from pycocotools.cocoeval import COCOeval
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 import seaborn as sns
 
 from gesund.core import metric_manager, plot_manager
 from gesund.core._utils import ValidationUtils
-from .average_precision import AveragePrecision
 from .iou import IoUCalc
 
 
