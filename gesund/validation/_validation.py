@@ -1,53 +1,27 @@
-from typing import Optional, Union
-import bson
 import os
 import json
+import bson
+from typing import Union, Optional
 
-from gesund.core._converters import ConverterFactory
-from gesund.core._data_loaders import DataLoader
-from gesund.core._schema import (
-    UserInputParams,
-    UserInputData,
-    ResultDataClassification,
-    ResultDataObjectDetection,
-    ResultDataSegmentation,
-)
-from gesund.core._plot import PlotData
+import pandas as pd
+
+from gesund.core.schema import UserInputParams, UserInputData
 from gesund.core._exceptions import MetricCalculationError
+from gesund.core._data_loaders import DataLoader
+from gesund.core._converters import ConverterFactory
+from ._result import ValidationResult
+from gesund.core._managers.metric_manager import metric_manager
 
 
-class ValidationProblemTypeFactory:
-    @classmethod
-    def get_problem_type_factory(cls, problem_type: str):
-        """
-        Return the validation creation class based on the problem_type.
-
-        :param problem_type: Type of problem (e.g., 'classification', 'object_detection').
-        :type problem_type: str
-
-        :return: Validation creation class corresponding to the problem type.
-        :rtype: class
-        """
-        if problem_type == "classification":
-            from gesund.core._metrics.classification.create_validation import (
-                ValidationCreation,
-            )
-
-            return ValidationCreation
-        elif problem_type == "semantic_segmentation":
-            from gesund.core._metrics.semantic_segmentation.create_validation import (
-                ValidationCreation,
-            )
-
-            return ValidationCreation
-        elif problem_type == "object_detection":
-            from gesund.core._metrics.object_detection.create_validation import (
-                ValidationCreation,
-            )
-
-            return ValidationCreation
-        else:
-            raise ValueError(f"Unknown problem type: {problem_type}")
+def categorize_age(age):
+    if age < 18:
+        return "Child"
+    elif 18 <= age < 30:
+        return "Young Adult"
+    elif 30 <= age < 60:
+        return "Adult"
+    else:
+        return "Senior"
 
 
 class Validation:
@@ -59,54 +33,36 @@ class Validation:
         problem_type: str,
         data_format: str,
         json_structure_type: str,
-        plot_config: dict,
+        plot_config: str,
         metadata_path: Optional[str] = None,
-        return_dict: Optional[bool] = False,
-        display_plots: Optional[bool] = False,
-        store_plots: Optional[bool] = False,
-        run_validation_only: Optional[bool] = False,
+        cohort_args: Optional[dict] = {},
+        plot_args: Optional[dict] = {},
+        metric_args: Optional[dict] = {},
     ):
         """
         Initialization function to handle the validation pipeline
 
         :param annotations_path: Path to the JSON file containing the annotations data.
         :type annotations_path: str
-
         :param predictions_path: Path to the JSON file containing the predictions data.
         :type predictions_path: str
-
         :param class_mappings: Path to the JSON file containing class mappings or a dictionary file.
         :type class_mappings: Union[str, dict]
-
         :param problem_type: Type of problem (e.g., 'classification', 'object_detection').
         :type problem_type: str
-
         :param json_structure_type: Data format for the validation (e.g., 'coco', 'yolo', 'gesund').
         :type json_structure_type: str
-
-        :param plot_config: The configuration in dictionary format required for plotting
+        :param plot_config: Config for the plotting
         :type plot_config: dict
-
         :param metadata_path: Path to the metadata file (if available).
         :type metadata_path: str
         :optional metadata_path: true
-
-        :param return_dict: If true then the return the result as dict
-        :type return_dict: bool
-        :optional return_dict: true
-
-        :param display_plots: if true then the plots are displayed
-        :type display_plots: bool
-        :optional display_plots: true
-
-        :param store_plots: if true then the plots are saved in local as png files
-        :type store_plots: bool
-        :optional store_plots: true
-
-        :param run_validation_only: by default true the plots are run
-        :type run_validation_only: bool
-        :optional run_validation_only: true
-
+        :param cohort_args: arguments supplied for cohort analysis
+        :type cohort_args: dict
+        :param plot_args: arguments supplied for cohort analysis
+        :type plot_args: dict
+        :param metric_args: arguments supplied for validation metrics
+        :type metric_args: dict
 
         :return: None
         """
@@ -117,13 +73,9 @@ class Validation:
             "metadata_path": metadata_path,
             "problem_type": problem_type,
             "json_structure_type": json_structure_type,
-            "return_dict": return_dict,
-            "display_plots": display_plots,
-            "store_plots": store_plots,
             "data_format": data_format,
             "class_mapping": class_mapping,
             "plot_config": plot_config,
-            "run_validation_only": run_validation_only,
         }
         self.user_params = UserInputParams(**params)
 
@@ -136,11 +88,20 @@ class Validation:
 
         os.makedirs(self.output_dir, exist_ok=True)
         os.makedirs(os.path.join(self.output_dir, "plots"), exist_ok=True)
-        self.problem_type_result_map = {
-            "classification": ResultDataClassification,
-            "object_detection": ResultDataObjectDetection,
-            "semantic_segmentation": ResultDataSegmentation,
+
+        # cohort parameters
+        self.cohort_params = {
+            "max_num_cohort": 10,
+            "min_cohort_size": 0,
+            "cohort_map": {},
         }
+        if cohort_args:
+            self.cohort_params.update(cohort_args)
+
+        self.plot_args = plot_args
+        self.metric_args = metric_args
+
+        self.debug_mode = False
 
     def _load_data(self) -> dict:
         """
@@ -169,6 +130,62 @@ class Validation:
 
         self.data = UserInputData(**data)
 
+    def apply_metadata(self, prediction: dict, annotation: dict) -> dict:
+        """
+        A function to create cohorts as per the metadata
+
+        :param prediction: structure containing the prediction data
+        :type prediction: dict
+        :param annotation: structure containing the annotation data
+        :type annotation: dict
+
+        :return: Filtered dataset
+        :rtype: dict
+        """
+        # convert the metadata into pandas dataframe for better access
+        df: pd.DataFrame = pd.DataFrame.from_records(self.data.metadata)
+        cohorts_data = {}
+        cohort_id_map = {}
+
+        # collect only the metadata columns
+        metadata_columns = df.columns.tolist()
+        metadata_columns.remove("image_id")
+        lower_case = {i: i.lower() for i in metadata_columns}
+        df = df.rename(columns=lower_case)
+
+        # categorize age in metadata
+        if "age" in list(lower_case.values()):
+            df["age"] = df["age"].apply(categorize_age)
+
+        # loop over group by to form cohorts with unique metadata
+        cohort_id = 0
+        for grp, subset_data in df.groupby(list(lower_case.values())):
+            grp_str = ",".join([str(i) for i in grp])
+            cohort_id = cohort_id + 1
+            cohort_id_map[cohort_id] = {"group": grp_str, "size": subset_data.shape[0]}
+
+            # it seems that
+            if subset_data.shape[0] < self.cohort_params["min_cohort_size"]:
+                print(
+                    f"Warning - grp excluded - {grp_str} cohort size < {self.cohort_params['min_cohort_size']}"
+                )
+            else:
+                image_ids = set(subset_data["image_id"].to_list())
+                filtered_data = {
+                    "prediction": {
+                        i: prediction[i] for i in prediction if i in image_ids
+                    },
+                    "ground_truth": {
+                        i: annotation[i] for i in annotation if i in image_ids
+                    },
+                    "metadata": subset_data,
+                    "class_mapping": self.data.class_mapping,
+                }
+                cohorts_data[cohort_id] = filtered_data
+
+        self.cohort_params["cohort_map"] = cohort_id_map
+        return cohorts_data
+
     def _convert_data(self, data):
         """
         A function to convert the data from the respective structure to the gesund format
@@ -196,7 +213,7 @@ class Validation:
         data["was_converted"] = True
         return data
 
-    def _run_validation(self) -> dict:
+    def _run_validation(self, data: dict) -> dict:
         """
         A function to run the validation
 
@@ -205,34 +222,23 @@ class Validation:
         :return: result dictionary
         :rtype: dict
         """
-        _validation_class = ValidationProblemTypeFactory().get_problem_type_factory(
-            self.user_params.problem_type
-        )
-
-        _metric_validation_executor = _validation_class(self.batch_job_id)
+        results = {}
         try:
-            if self.data.was_converted:
-                prediction = self.data.converted_prediction
-                annotation = self.data.converted_annotation
-            else:
-                prediction = self.data.prediction
-                annotation = self.data.annotation
-            metadata = None
-            if self.user_params.metadata_path:
-                metadata = self.data.metadata
-            validation_data = (
-                _metric_validation_executor.create_validation_collection_data(
-                    prediction, annotation, metadata
+            for metric_name in metric_manager.get_names(
+                problem_type=self.user_params.problem_type
+            ):
+                key_name = f"{self.user_params.problem_type}.{metric_name}"
+                print("Running ", key_name, "." * 5)
+                _metric_executor = metric_manager[key_name]
+                _result = _metric_executor(
+                    data=data, problem_type=self.user_params.problem_type
                 )
-            )
-
-            metrics = _metric_validation_executor.load(
-                validation_data, self.data.class_mapping
-            )
-            return metrics
+                results[metric_name] = _result
         except Exception as e:
             print(e)
             raise MetricCalculationError("Error in calculating metrics!")
+
+        return results
 
     def _save_json(self, results) -> None:
         """
@@ -280,25 +286,7 @@ class Validation:
             print("-" * 40)
         print("All Graphs and Plots Metrics saved in JSONs.\n" + "-" * 40)
 
-    def _plot_metrics(self, results: dict) -> None:
-        """
-        A function to plot the metrics
-
-        :param results: a dictionary containing the validation metrics
-        :type results: dict
-
-        :return: None
-        """
-        plot_data_executor = PlotData(
-            metrics_result=results,
-            user_params=self.user_params,
-            user_data=self.data,
-            batch_job_id=self.batch_job_id,
-            validation_problem_type_factory=ValidationProblemTypeFactory(),
-        )
-        plot_data_executor.plot()
-
-    def run(self) -> Union[None, ResultDataClassification]:
+    def run(self) -> ValidationResult:
         """
         A function to run the validation pipeline
 
@@ -309,23 +297,43 @@ class Validation:
         :rtype:
         """
         results = {}
+        cohorts = None
+
+        # the data is assigned to local veriables to later pass on to functions as parameters
+        # eventhough the data is stored in class attribute, for better code clarity
+        if self.data.was_converted:
+            prediction = self.data.converted_prediction
+            annotation = self.data.converted_annotation
+        else:
+            prediction = self.data.prediction
+            annotation = self.data.annotation
+
+        # if the metadata is made available then the data is divided into cohorts as per the metadata
+        if self.user_params.metadata_path:
+            cohorts = self.apply_metadata(prediction, annotation)
 
         # run the validation
-        results = self._run_validation()
-
-        # format the results
-        # results = self._format_results(results)
-
-        # store the results
-        self._save_json(results)
-
-        # plot the metrics only if user requires
-        if self.user_params.run_validation_only is False:
-            self._plot_metrics(results)
+        if cohorts:
+            for _cohort_id in cohorts:
+                data = cohorts[_cohort_id]
+                data["metric_args"] = self.metric_args
+                results[_cohort_id] = self._run_validation(data)
+        else:
+            results = self._run_validation(
+                data={
+                    "prediction": prediction,
+                    "ground_truth": annotation,
+                    "metadata": self.data.metadata,
+                    "class_mapping": self.data.class_mapping,
+                    "metric_args": self.metric_args,
+                }
+            )
 
         # return the results
-        if self.user_params.return_dict:
-            results = self.problem_type_result_map[self.user_params.problem_type](
-                **results
-            )
-            return results
+        return ValidationResult(
+            data=self.data,
+            input_params=self.user_params,
+            result=results,
+            plot_args=self.plot_args,
+            cohort_args=self.cohort_params,
+        )

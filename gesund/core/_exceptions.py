@@ -1,4 +1,4 @@
-class InputError(Exception):
+class CustomError(Exception):
     def __init__(self, msg: str):
         self.message = msg
         super().__init__(msg)
@@ -7,28 +7,25 @@ class InputError(Exception):
         return self.message
 
 
-class DataLoadError(Exception):
-    def __init__(self, msg: str):
-        self.message = msg
-        super().__init__(msg)
-
-    def __str__(self):
-        return self.message
+class InputError(CustomError):
+    pass
 
 
-class MetricCalculationError(Exception):
-    def __init__(self, msg: str):
-        self.message = msg
-        super().__init__(msg)
-
-    def __str__(self):
-        return self.message
+class DataLoadError(CustomError):
+    pass
 
 
-class PlotError(Exception):
-    def __init__(self, msg: str):
-        self.message = msg
-        super().__init__(msg)
+class MetricCalculationError(CustomError):
+    pass
 
-    def __str__(self):
-        return self.message
+
+class PlotError(CustomError):
+    pass
+
+
+class FunctionNotFoundError(CustomError):
+    pass
+
+
+class RegistrationNotAllowed(CustomError):
+    pass
