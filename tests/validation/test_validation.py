@@ -181,9 +181,14 @@ def test_plot_manager_single_metric_classification(
 @pytest.mark.parametrize(
     "plot_config, metric_name, cohort_id, threshold",
     [
-        ({"problem_type": "object_detection"}, "average_precision", None, [0, 0.25, 0.5, 0.75, 1]),
-        ({"problem_type": "object_detection"}, "confidence_distribution", None, [0, 0.25, 0.5, 0.75, 1]),
-        ({"problem_type": "object_detection"}, "predicted_distribution", None),
+        ({"problem_type": "object_detection"}, "average_precision", None, 0.5),
+        (
+            {"problem_type": "object_detection"},
+            "average_precision",
+            None,
+            [0, 0.25, 0.5, 0.75, 1],
+        ),
+        ({"problem_type": "object_detection"}, "top_losses", None, []),
     ],
 )
 def test_plot_manager_single_metric_obj_det(
@@ -208,20 +213,23 @@ def test_plot_manager_single_metric_obj_det(
         cohort_args={"selection_criteria": "random"},
         metric_args={"threshold": threshold},
     )
-
     validation_results = validator.run()
     assert isinstance(validation_results, ValidationResult) is True
     assert metric_name in metric_manager.get_names(problem_type=problem_type)
     assert metric_name in plot_manager.get_names(problem_type=problem_type)
 
+    file_name = f"{problem_type}_{metric_name}.png"
     validation_results.plot(
-        metric_name=metric_name, save_plot=True, cohort_id=cohort_id
+        metric_name=metric_name,
+        save_plot=True,
+        cohort_id=cohort_id,
+        file_name=file_name,
     )
 
     if cohort_id:
-        path_to_check = f"plots/{cohort_id}_{metric_name}.png"
+        path_to_check = f"plots/{cohort_id}_{file_name}"
     else:
-        path_to_check = f"plots/{metric_name}.png"
+        path_to_check = f"plots/{file_name}"
 
     assert os.path.exists(path_to_check) is True
 
