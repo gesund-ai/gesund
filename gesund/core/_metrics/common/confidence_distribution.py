@@ -57,77 +57,98 @@ class ObjectDetection:
         :rtype: tuple(dict, dict)
         """
         from .average_precision import ObjectDetection
-        
-        return ObjectDetection._preprocess(data)
 
+        return ObjectDetection._preprocess(data, get_label=False, get_pred_scores=True)
 
-    def _calc_conf_distR(
-        self,
-        gt_boxes_dict: dict,
-        pred_boxes_dict: dict,
-        class_mapping: dict,
-        threshold: float = None,
-        predicted_class: Optional[str] = None
+    def _calculate_conf_dist(
+        self, gt_boxes_dict, pred_boxes_dict: dict
     ) -> pd.DataFrame:
         """
-        A function to calculate the loss function
+        A function to organize the data for plotting the confidence distribution
 
-        :param gt_boxes_dict: a dictionary of gt boxes, with image id as the key
+        :param gt_boxes_dict: a dictionary containing the ground truth boxes
         :type gt_boxes_dict: dict
-        :param pred_boxes_dict: a dictionary of pred boxes, with image id as the key
+        :param pred_boxes_dict: a dictionary containing the prediction boxes
         :type pred_boxes_dict: dict
-        :param class_mapping: dict
-        :type class_mapping: dict
 
-        :return: pandas data frame
+        :return: a pandas dataframe containing the organized data
+        :rtype: pd.DataFrame
+
         """
-        avg_conf = {"image_id": [], "avg_confidence": []}
-        for image_id, p_boxes in pred_boxes_dict.items():
-            if image_id not in gt_boxes_dict:
-                continue
-            confidences = []
-            for box in p_boxes:
-                # [x1, y1, x2, y2, label, confidence]
-                if len(box) < 6:
-                    continue
-                label = box[4]
-                conf = box[5]
+        results = []
+        for image_id, pred_boxes in pred_boxes_dict.items():
+            gt_boxes = gt_boxes_dict[image_id]
+            matched_gt = [False] * len(gt_boxes)
 
-                if threshold is not None and conf < threshold:
-                    continue
-                if predicted_class is not None and label != predicted_class:
-                    continue
+            for pred_box in pred_boxes:
+                score = pred_box[-1]
+                pred_box = pred_box[:-1]
+                best_iou = 0
+                best_gt_idx = -1
 
-                confidences.append(conf)
-            if confidences:
-                avg_conf["image_id"].append(image_id)
-                avg_conf["avg_confidence"].append(np.mean(confidences))
+                for idx, gt_box in enumerate(gt_boxes):
+                    iou = self.iou.calculate(pred_box, gt_box)
+                    if iou > best_iou:
+                        best_iou = iou
+                        best_gt_idx = idx
 
-        return pd.DataFrame(avg_conf)
+                if best_iou > 0.5:
+                    if not matched_gt[best_gt_idx]:
+                        results.append(
+                            {"confidence": score, "label": "TP", "best_iou": best_iou}
+                        )
+                        matched_gt[best_gt_idx] = True
+                    else:
+                        results.append(
+                            {"confidence": score, "label": "FP", "best_iou": best_iou}
+                        )
+                else:
+                    results.append(
+                        {"confidence": score, "label": "FP", "best_iou": best_iou}
+                    )
 
+        data = pd.DataFrame(results)
+        return data
 
     def _calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
-        gt_boxes, pred_boxes = self._preprocess(data)
+        """
+        A function to calculate the metrics for object detection
 
-        thresholds = data["metric_args"]["threshold"]
-        if thresholds is not None and not isinstance(thresholds, list):
-            thresholds = [thresholds]
+        :param data: a dictionary containing the ground truth and prediction data
+        :type data: dict
+        :param class_mapping: a dictionary containing the class mapping
+        :type class_mapping: dict
 
-        all_dfs = []
-        if not thresholds:  # 'thresholds' as [None] if not given
-            thresholds = [None]
+        :return: a dictionary containing the calculated metrics
+        :rtype: dict
+        """
+        results = {}
 
-        for t in thresholds:
-            df = self._calc_conf_distR(gt_boxes, pred_boxes, class_mapping, t)
-            df["threshold"] = t
-            all_dfs.append(df)
+        # preprocess the data
+        gt_boxes_dict, pred_boxes_dict = self._preprocess(data)
 
-        final_df = pd.concat(all_dfs, ignore_index=True)
-        return {"result": final_df}
+        # re-organize the confidence distribution
+        result = self._calculate_conf_dist(gt_boxes_dict, pred_boxes_dict)
+        results["confidence_distribution"] = result
+
+        return results
 
     def calculate(self, data: dict) -> dict:
+        """
+        A function to calculate the metrics for object detection
+
+        :param data: a dictionary containing the ground truth and prediction data
+        :type data: dict
+
+        :return: a dictionary containing the calculated metrics
+        :rtype: dict
+        """
         result = {}
+
+        # validate the data
         self._validate_data(data)
+
+        # calculate the metrics
         result = self._calculate_metrics(data, data.get("class_mapping"))
         return result
 
@@ -141,7 +162,10 @@ class PlotConfidenceDistribution:
         """
         validates the data required for plotting the bar plot
         """
-        if not isinstance(self.data["result"], pd.DataFrame):
+        if "confidence_distribution" not in self.data:
+            raise ValueError("confidence_distribution data is missing.")
+
+        if not isinstance(self.data["confidence_distribution"], pd.DataFrame):
             raise ValueError(f"Data must be a data frame.")
 
     def save(self, fig: Figure, filename: str) -> str:
@@ -163,21 +187,29 @@ class PlotConfidenceDistribution:
         """
         sns.set_theme(style="whitegrid")
         self._validate_data()
-        fig, ax = plt.subplots(figsize=(10, 7))
-        sns.scatterplot(
-            data=self.data["result"],
-            x="x",
-            y="y",
-            hue="labels",
-            palette="rocket",
-            s=100,
-            alpha=0.7,
+
+        plot_data = self.data["confidence_distribution"]
+
+        g = sns.JointGrid(
+            data=plot_data,
+            x="confidence",
+            y="best_iou",
+            hue="label",
+            space=0,
+            height=8,
+            ratio=7,
         )
-        ax.set_title("Scatter Plot of Points", fontsize=18, fontweight="bold", pad=20)
-        ax.set_xlabel("X-axis", fontdict={"fontsize": 14, "fontweight": "medium"})
-        ax.set_ylabel("Y-axis", fontdict={"fontsize": 14, "fontweight": "medium"})
-        ax.legend(loc="lower right", fontsize=12)
-        return fig
+
+        g.plot_joint(sns.scatterplot, palette="pastel")
+        g.plot_marginals(sns.histplot, kde=True, color=".5")
+
+        g.set_axis_labels("Confidence Score", "Best IoU", fontsize=14)
+        g.fig.suptitle(
+            "Scatterplot with confidence distribution histograms", fontsize=16
+        )
+        plt.subplots_adjust(top=0.95)
+
+        return g.figure
 
 
 problem_type_map = {
@@ -191,6 +223,14 @@ problem_type_map = {
 def calculate_confidence_distribution(data: dict, problem_type: str):
     """
     A wrapper function to calculate the confidence_distribution metrics.
+
+    :param data: a dictionary containing the ground truth and prediction data
+    :type data: dict
+    :param problem_type: the type of problem
+    :type problem_type: str
+
+    :return: a dictionary containing the calculated metrics
+    :rtype: dict
     """
     _metric_calculator = problem_type_map[problem_type]()
     result = _metric_calculator.calculate(data)
@@ -206,6 +246,18 @@ def plot_confidence_distribution_od(
 ) -> Union[str, None]:
     """
     A wrapper function to plot the confidence distribution metrics.
+
+    :param results: a dictionary containing the calculated metrics
+    :type results: dict
+    :param save_plot: a flag to save the plot
+    :type save_plot: bool
+    :param file_name: the name of the file to save the plot
+    :type file_name: str
+    :param cohort_id: the cohort id
+    :type cohort_id: int
+
+    :return: the file path of the saved plot
+    :rtype: str
     """
     plotter = PlotConfidenceDistribution(data=results, cohort_id=cohort_id)
     fig = plotter.plot()

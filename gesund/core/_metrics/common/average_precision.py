@@ -51,12 +51,16 @@ class ObjectDetection:
             )
 
     @staticmethod
-    def _preprocess(data: dict, get_label=False) -> tuple:
+    def _preprocess(data: dict, get_label=False, get_pred_scores=False) -> tuple:
         """
         A function to preprocess
 
         :param data: dictionary data
         :type data: dict
+        :param get_label: boolean value to get the label
+        :type get_label: bool
+        :param get_pred_scores: boolean value to get the prediction scores
+        :type get_pred_scores: bool
 
         :return: gt, pred
         :rtype: tuple(dict, dict)
@@ -87,6 +91,9 @@ class ObjectDetection:
 
                 if get_label:
                     box_points.append(pred["prediction_class"])
+
+                if get_pred_scores:
+                    box_points.append(pred["confidence"])
 
                 if image_id in pred_boxes:
                     pred_boxes[image_id].append(box_points)

@@ -174,33 +174,66 @@ class PlotPredictedDistribution:
         self._validate_data()
 
         sns.set_theme(style="whitegrid")
-        figx, ax = plt.subplots(1, 2, figsize=(10, 6))
-
+        figx, ax = plt.subplots(1, 2, figsize=(10, 6), subplot_kw=dict(aspect="equal"))
+        colors1 = sns.color_palette("pastel")
+        colors2 = sns.color_palette("pastel")
         plot_data = self.data["label_distribution"]
         plot_data = pd.DataFrame(plot_data)
 
-        for i, column in enumerate(plot_data.columns):
-            value_counts = plot_data[column].value_counts(normalize=True)
-            wedges, texts, autotexts = ax[i].pie(
-                value_counts,
-                labels=value_counts.index,
-                autopct="%1.1f%%",
-                startangle=90,
-                colors=sns.color_palette("pastel"),
-                wedgesprops=dict(width=0.3),
-            )
-            for wedge in wedges:
-                wedge.set_edgecolor("white")
-            ax[i].set_title(f"{column} Distribution")
+        # plot first donut chart
+        value_counts1 = plot_data["gt_class_label"].value_counts()
+        wedges1, texts1, autotexts1 = ax[0].pie(
+            value_counts1,
+            labels=value_counts1.index,
+            autopct="%1.1f%%",
+            colors=colors1,
+            startangle=90,
+            wedgeprops=dict(width=0.3),
+        )
+        ax[0].add_artist(plt.Circle((0, 0), 0.7, fc="white"))
 
-        title_txt = f"Class Distribution: {self.data['overall_loss']} : Top 20"
         if self.cohort_id:
-            title_str = f"{title_txt}: cohort - {self.cohort_id}"
+            title_str = f"Ground Truth Distribution (Cohort ID: {self.cohort_id})"
         else:
-            title_str = f"{title_txt}"
+            title_str = "Ground Truth Distribution"
 
-        ax.set_title(title_str)
-        plt.tight_layout()
+        ax[0].set_title(title_str)
+        ax[0].legend(
+            wedges1,
+            value_counts1.index,
+            title="Classes",
+            loc="center left",
+            bbox_to_anchor=(1, 0, 0.5, 1),
+        )
+
+        # plot second donut chart
+        value_counts2 = plot_data["pred_class_label"].value_counts()
+        wedges2, texts2, autotexts2 = ax[1].pie(
+            value_counts2,
+            labels=value_counts2.index,
+            autopct="%1.1f%%",
+            colors=colors2,
+            startangle=90,
+            wedgeprops=dict(width=0.3),
+        )
+
+        ax[1].add_artist(plt.Circle((0, 0), 0.7, fc="white"))
+
+        if self.cohort_id:
+            title_str = f"Predicted Distribution (Cohort ID: {self.cohort_id})"
+        else:
+            title_str = "Predicted Distribution"
+
+        ax[1].set_title(title_str)
+        ax[1].legend(
+            wedges2,
+            value_counts2.index,
+            title="Classes",
+            loc="center left",
+            bbox_to_anchor=(1, 0, 0.5, 1),
+        )
+
+        plt.suptitle("Label Distribution")
 
         return figx
 
