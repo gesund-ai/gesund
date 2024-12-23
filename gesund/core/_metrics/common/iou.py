@@ -64,3 +64,25 @@ class IoUCalc:
 
     def calculate(self, y_true: np.ndarray, y_pred: np.ndarray):
         return self._calculate_box(y_true, y_pred)
+
+    @staticmethod
+    def calculate_iou_mask(mask1, mask2):
+        """
+        A function to calculate the intersection over union between two masks
+
+        :param mask1: the first mask
+        :type mask1: np.ndarray
+        :param mask2: the second mask
+        :type mask2: np.ndarray
+
+        :return: the calculated iou value
+        :rtype: float
+        """
+        if mask1.shape != mask2.shape:
+            raise ValueError("Masks must have the same shape.")
+
+        intersection = np.logical_and(mask1, mask2)
+        union = np.logical_or(mask1, mask2)
+
+        iou = np.sum(intersection) / np.sum(union)
+        return round(iou, 4)

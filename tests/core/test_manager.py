@@ -1,17 +1,7 @@
 import pytest
 
-from gesund.core import MetricManager
+from gesund.core import metric_manager
 from gesund.core._exceptions import FunctionNotFoundError, RegistrationNotAllowed
-
-
-@pytest.fixture
-def metrics_manager():
-    """
-    Fixture to initialize and return a metricsmanager instance
-
-    :return: Instance of MetricsManager
-    """
-    return MetricManager()
 
 
 @pytest.mark.parametrize(
@@ -23,7 +13,7 @@ def metrics_manager():
         ("invalid_problem_type", "mock_metric", True),
     ],
 )
-def test_register_metrics(metrics_manager, problem_type, metric_name, fail_case):
+def test_register_metrics(problem_type, metric_name, fail_case):
     """
     Test registering a metric function for the given problem type
 
@@ -42,17 +32,17 @@ def test_register_metrics(metrics_manager, problem_type, metric_name, fail_case)
     if fail_case:
         with pytest.raises(RegistrationNotAllowed):
 
-            @metrics_manager.register(register_key)
+            @metric_manager.register(register_key)
             def mock_metric():
                 pass
 
         with pytest.raises(FunctionNotFoundError):
-            _ = metrics_manager[register_key]
+            _ = metric_manager[register_key]
     else:
 
-        @metrics_manager.register(register_key)
+        @metric_manager.register(register_key)
         def mock_metric():
             pass
 
-        assert metrics_manager[register_key] == mock_metric
-        assert metric_name in metrics_manager.get_names(problem_type)
+        assert metric_manager[register_key] == mock_metric
+        assert metric_name in metric_manager.get_names(problem_type)
