@@ -239,7 +239,8 @@ def test_plot_manager_single_metric_obj_det(
 @pytest.mark.parametrize(
     "plot_config, metric_name, cohort_id, threshold",
     [
-        ({"problem_type": "semantic_segmentation"}, "iou_distribution", None, []),
+        # ({"problem_type": "semantic_segmentation"}, "iou_distribution", None, []),
+        ({"problem_type": "semantic_segmentation"}, "predicted_distribution", None, []),
     ],
 )
 def test_plot_manager_single_metric_sem_seg(
