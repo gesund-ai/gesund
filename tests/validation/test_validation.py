@@ -236,6 +236,57 @@ def test_plot_manager_single_metric_obj_det(
     assert os.path.exists(path_to_check) is True
 
 
+@pytest.mark.parametrize(
+    "plot_config, metric_name, cohort_id, threshold",
+    [
+        # ({"problem_type": "semantic_segmentation"}, "iou_distribution", None, []),
+        # ({"problem_type": "semantic_segmentation"}, "predicted_distribution", None, []),
+        ({"problem_type": "semantic_segmentation"}, "dice_distribution", None, []),
+    ],
+)
+def test_plot_manager_single_metric_sem_seg(
+    plot_config, metric_name, cohort_id, threshold, setup_and_teardown
+):
+    from gesund import Validation
+    from gesund.validation._result import ValidationResult
+    from gesund.core._managers.metric_manager import metric_manager
+    from gesund.core._managers.plot_manager import plot_manager
+
+    problem_type = "semantic_segmentation"
+    data_dir = f"./tests/_data/{problem_type}"
+    validator = Validation(
+        annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
+        predictions_path=f"{data_dir}/gesund_custom_format/prediction.json",
+        class_mapping=f"{data_dir}/test_class_mappings.json",
+        problem_type=problem_type,
+        data_format="json",
+        json_structure_type="gesund",
+        plot_config=plot_config,
+        cohort_args={"selection_criteria": "random"},
+        metric_args={"threshold": threshold},
+    )
+
+    validation_results = validator.run()
+    assert isinstance(validation_results, ValidationResult) is True
+    assert metric_name in metric_manager.get_names(problem_type=problem_type)
+    assert metric_name in plot_manager.get_names(problem_type=problem_type)
+    assert metric_name in validation_results.result
+
+    file_name = f"{problem_type}_{metric_name}.png"
+    validation_results.plot(
+        metric_name=metric_name,
+        save_plot=True,
+        cohort_id=cohort_id,
+        file_name=file_name,
+    )
+
+    if cohort_id:
+        path_to_check = f"plots/{cohort_id}_{file_name}"
+    else:
+        path_to_check = f"plots/{file_name}"
+    assert os.path.exists(path_to_check) is True
+
+
 """
 Usage
 

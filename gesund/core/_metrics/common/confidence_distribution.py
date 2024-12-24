@@ -204,7 +204,7 @@ class PlotConfidenceDistribution:
         g.plot_marginals(sns.histplot, kde=True, color=".5")
 
         g.set_axis_labels("Confidence Score", "Best IoU", fontsize=14)
-        g.fig.suptitle(
+        g.figure.suptitle(
             "Scatterplot with confidence distribution histograms", fontsize=16
         )
         plt.subplots_adjust(top=0.95)

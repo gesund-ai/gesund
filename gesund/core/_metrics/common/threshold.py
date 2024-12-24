@@ -299,6 +299,8 @@ def plot_threshold(
     :type results: dict
     :param save_plot: Boolean value to save plot
     :type save_plot: bool
+    :param file_name: Name of the file
+    :type file_name: str
 
     :return: None or path to the saved plot
     :rtype: Union[str, None]

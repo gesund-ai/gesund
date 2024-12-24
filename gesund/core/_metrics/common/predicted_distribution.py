@@ -17,7 +17,80 @@ class Classification:
 
 
 class SemanticSegmentation:
-    pass
+    def __init__(self):
+        pass
+
+    def _validate_data(self, data: dict) -> bool:
+        """
+        A function to validate the given data used for calculating metrics for object detection validation
+
+        :param data: a dictionary containing the ground truth and prediction data
+        :type data: dict
+
+        :return: a boolean value
+        :rtype: bool
+        """
+
+        return ObjectDetection._validate_data(ObjectDetection, data)
+
+    def _preprocess(self, data: dict, get_class_only=False) -> tuple:
+        """
+        A function to preprocess the data
+
+        :param data: a dictionary containing the ground truth and prediction data
+        :type data: dict
+        ;param get_class_only: a flag to get only the class labels
+        :type get_class_only: bool
+
+        :return: a tuple containing the ground truth and prediction boxes
+        :rtype: tuple
+        """
+        results = {"gt_class_label": [], "pred_class_label": []}
+        for image_id in data["ground_truth"]:
+            for annotation in data["ground_truth"][image_id]["annotation"]:
+                if annotation["type"] == "mask":
+                    results["gt_class_label"].append(annotation["label"])
+
+            for pred_mask in data["prediction"][image_id]["masks"]["rles"]:
+                results["pred_class_label"].append(pred_mask["class"])
+
+        results = pd.DataFrame(results)
+        return results
+
+    def _calculate_metrics(self, data: dict) -> dict:
+        """
+        A function to calculate the predicted_distribution metrics
+
+        :param data: a dictionary containing the ground truth and prediction data
+        :type data: dict
+
+        :return: a dictionary containing the calculated metrics
+        :rtype: dict
+        """
+        results = {}
+        # preprocess the data
+        label_dist = self._preprocess(data)
+        results["label_distribution"] = label_dist
+        return results
+
+    def calculate(self, data: dict) -> dict:
+        """
+        A function to calculate the predicted_distribution metrics
+
+        :param data: a dictionary containing the ground truth and prediction data
+        :type data: dict
+
+        :return: a dictionary containing the calculated metrics
+        :rtype: dict
+        """
+        result = {}
+        # validate the data
+        self._validate_data(data)
+
+        # calculate the metrics
+        result = self._calculate_metrics(data)
+
+        return result
 
 
 class ObjectDetection:
@@ -245,6 +318,7 @@ problem_type_map = {
 }
 
 
+@metric_manager.register("semantic_segmentation.predicted_distribution")
 @metric_manager.register("object_detection.predicted_distribution")
 def calculate_predicted_distribution(data: dict, problem_type: str):
     """
@@ -263,6 +337,7 @@ def calculate_predicted_distribution(data: dict, problem_type: str):
     return result
 
 
+@plot_manager.register("semantic_segmentation.predicted_distribution")
 @plot_manager.register("object_detection.predicted_distribution")
 def plot_predicted_distribution_od(
     results: dict,
