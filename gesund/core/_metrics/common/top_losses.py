@@ -9,6 +9,7 @@ import seaborn as sns
 
 from gesund.core import metric_manager, plot_manager
 from .iou import IoUCalc
+from .dice import DiceCalc
 
 
 class Classification:
@@ -169,8 +170,76 @@ class Classification:
         return result
 
 
-class SemanticSegmentation(Classification):
-    pass
+class SemanticSegmentation:
+    def __init__(self):
+        self.dice = DiceCalc()
+
+    def _validate_data(self, data: dict) -> bool:
+        return ObjectDetection._validate_data(ObjectDetection, data)
+
+    def _preprocess(self, data: dict) -> tuple:
+        """
+        function to preprocess the data
+
+        :param data: dictionary containing the data prediction, ground truth, metadata
+        :type data: dict
+
+        :return: data tuple
+        :rtype: tuple
+        """
+        from .iou_distribution import SemanticSegmentation
+
+        return SemanticSegmentation._preprocess(SemanticSegmentation, data)
+
+    def _calculate_metrics(self, data: dict) -> dict:
+        """
+        A function to calculate the metrics
+
+        :param data: a dictionary containing the ground truth and prediction data
+        :type data: dict
+
+        :return: a dictionary containing the calculated metrics
+        :rtype: dict
+        """
+        # preprocess the data
+        gt_data, pred_data = self._preprocess(data)
+
+        # calculate the loss
+        result = {"image_id": [], "loss": []}
+
+        for image_id in gt_data:
+            gt_masks = gt_data[image_id]
+            if not gt_masks:
+                continue
+
+            for gt_mask in gt_masks:
+                for pred_mask in pred_data[image_id]:
+                    dice_loss = self.dice.dice_loss(gt_mask, pred_mask)
+                    result["image_id"].append(image_id)
+                    result["loss"].append(dice_loss)
+
+            result = pd.DataFrame(result)
+            return result
+
+    def calculate(self, data: dict) -> dict:
+        """
+        A function to calculate the dice loss
+
+        :param data: a dictionary containing the ground truth and prediction data
+        :type data: dict
+
+        :return: a dictionary containing the dice distribution
+        :rtype: dict
+        """
+        result = {}
+
+        # validate the data
+        self._validate_data(data)
+
+        # calculate the metrics
+        result["loss_data"] = self._calculate_metrics(data)
+        result["overall_loss"] = result["loss_data"]["loss"].mean()
+        return result
 
 
 class ObjectDetection:
@@ -217,10 +286,6 @@ class ObjectDetection:
 
         :param data: dictionary containing the data prediction, ground truth, metadata
         :type data: dict
-        :param get_logits: in case of multi class classification set to True
-        :type get_logits: boolean
-        :param keep_imageid: to keep the image id in the response set to True
-        :type keep_imageid: bool
 
         :return: data tuple
         :rtype: tuple
@@ -385,6 +450,8 @@ problem_type_map = {
 }
 
 
+@metric_manager.register("semantic_segmentation.top_losses")
+@metric_manager.register("object_detection.top_losses")
 @metric_manager.register("classification.top_losses")
 def calculate_top_losses_classification(data: dict, problem_type: str):
     """
@@ -403,6 +470,7 @@ def calculate_top_losses_classification(data: dict, problem_type: str):
     return result
 
 
+@plot_manager.register("semantic_segmentation.top_losses")
 @plot_manager.register("object_detection.top_losses")
 @plot_manager.register("classification.top_losses")
 def plot_top_losses_classification(
@@ -432,21 +500,3 @@ def plot_top_losses_classification(
         return plotter.save(fig, filename=file_name)
     else:
         plt.show()
-
-
-@metric_manager.register("object_detection.top_losses")
-def calculate_top_losses_obj_det(data: dict, problem_type: str):
-    """
-    A wrappper function to calculate the top losses metric
-
-    :param data: Dictionary of data: {"prediction": , "ground_truth":, "loss":}
-    :type data: dict
-    :param problem_type: Type of the problem
-    :type problem_type: str
-
-    :return: calculated results
-    :rtype: dict
-    """
-    metric_calculator = problem_type_map[problem_type]()
-    result = metric_calculator.calculate(data)
-    return result
