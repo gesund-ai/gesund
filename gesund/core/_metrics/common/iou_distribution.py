@@ -178,7 +178,6 @@ class SemanticSegmentation:
                     data["iou"].append(iou)
 
         data = pd.DataFrame(data)
-        # data = data.groupby("image_id").agg({"iou": "mean"}).reset_index()
         data = data.dropna()
         return data
 
@@ -198,7 +197,9 @@ class SemanticSegmentation:
         self._validate_data(data)
 
         # calculate the metrics
-        result["iou_distribution"] = self._calculate_metrics(data, class_mapping={})
+        result["iou_distribution"] = self._calculate_metrics(
+            data, class_mapping=data.get("class_mapping", {})
+        )
 
         return result
 

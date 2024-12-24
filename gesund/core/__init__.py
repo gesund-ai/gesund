@@ -12,4 +12,5 @@ from ._metrics.common import (
     predicted_distribution,
     confidence_distribution,
     iou_distribution,
+    dice_distribution,
 )
