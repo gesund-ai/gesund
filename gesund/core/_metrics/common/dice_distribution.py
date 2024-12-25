@@ -67,7 +67,7 @@ class SemanticSegmentation:
         gt_data, pred_data = self._preprocess(data)
 
         # calculate the dice distribution
-        data = {"image_id": [], "dice": [], "iou": []}
+        result = {"image_id": [], "dice": [], "iou": []}
 
         for image_id in gt_data:
             gt_masks = gt_data[image_id]
@@ -78,13 +78,13 @@ class SemanticSegmentation:
                 for pred_mask in pred_data[image_id]:
                     dice = self.dice.calculate(gt_mask, pred_mask)
                     iou = self.iou.calculate_iou_mask(gt_mask, pred_mask)
-                    data["image_id"].append(image_id)
-                    data["dice"].append(dice)
-                    data["iou"].append(iou)
+                    result["image_id"].append(image_id)
+                    result["dice"].append(dice)
+                    result["iou"].append(iou)
 
-            data = pd.DataFrame(data)
-            data = data.dropna()
-            return data
+            result = pd.DataFrame(result)
+            result = result.dropna()
+            return result
 
     def calculate(self, data: dict) -> dict:
         """
