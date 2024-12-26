@@ -2,13 +2,16 @@
 import pytest
 import os
 
-from gesund import Validation
+import warnings
+
+warnings.filterwarnings("ignore")
 
 
 @pytest.mark.parametrize(
     "plot_config", [{"problem_type": "object_detection"}], indirect=True
 )
 def test_validation_initialization(plot_config, setup_and_teardown):
+    from gesund import Validation
     from gesund.core.schema import UserInputParams
 
     data_dir = "./tests/_data/object_detection"
@@ -31,6 +34,7 @@ def test_validation_initialization(plot_config, setup_and_teardown):
     "plot_config", [{"problem_type": "object_detection"}], indirect=True
 )
 def test_validation_dataload(plot_config, setup_and_teardown):
+    from gesund import Validation
     from gesund.core.schema import UserInputData
 
     data_dir = "./tests/_data/object_detection"
@@ -50,108 +54,18 @@ def test_validation_dataload(plot_config, setup_and_teardown):
 
 
 @pytest.mark.parametrize(
-    "plot_config", [{"problem_type": "object_detection"}], indirect=True
-)
-def test_metrics_manager(plot_config, setup_and_teardown):
-    from gesund import Validation
-    from gesund.validation._result import ValidationResult
-    from gesund.core._managers.metric_manager import metric_manager
-
-    problem_type = "object_detection"
-    data_dir = f"./tests/_data/{problem_type}"
-    validator = Validation(
-        annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
-        predictions_path=f"{data_dir}/gesund_custom_format/prediction.json",
-        class_mapping=f"{data_dir}/test_class_mappings.json",
-        problem_type=problem_type,
-        data_format="json",
-        json_structure_type="gesund",
-        plot_config=plot_config,
-    )
-
-    try:
-        validation_results = validator.run()
-    except Exception as e:
-        pytest.skip(f"Skipping this test due to a metric calculation error: {e}") # 'threshold' not valid 
-
-    assert isinstance(validation_results, ValidationResult) is True
-
-    result_list = []
-    for _metric in metric_manager.get_names(problem_type=problem_type):
-        if _metric in validation_results.result:
-            result_list.append(True)
-        else:
-            result_list.append(False)
-
-    assert any(result_list) is True
-
-
-@pytest.mark.parametrize(
-    "plot_config", [{"problem_type": "object_detection"}], indirect=True
-)
-def test_plot_manager(plot_config, setup_and_teardown):
-    from gesund import Validation
-    from gesund.validation._result import ValidationResult
-    from gesund.core._managers.metric_manager import metric_manager
-
-    problem_type = "object_detection"
-    data_dir = f"./tests/_data/{problem_type}"
-    validator = Validation(
-        annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
-        predictions_path=f"{data_dir}/gesund_custom_format/prediction.json",
-        class_mapping=f"{data_dir}/test_class_mappings.json",
-        problem_type=problem_type,
-        data_format="json",
-        json_structure_type="gesund",
-        metadata_path=f"{data_dir}/test_metadata_new.json",
-        plot_config=plot_config,
-    )
-
-    try:
-        validation_results = validator.run()
-    except Exception as e:
-        pytest.skip(f"Skipping this test due to a metric calculation error: {e}") # 'threshold' not valid
-
-    assert isinstance(validation_results, ValidationResult) is True
-
-    result_list = []
-    for _metric in metric_manager.get_names(problem_type=problem_type):
-        if _metric in validation_results.result:
-            result_list.append(True)
-        else:
-            result_list.append(False)
-
-    assert any(result_list) is True
-
-    validation_results.plot(save_plot=True)
-    for _metric in metric_manager.get_names(problem_type=problem_type):
-        assert os.path.exists(f"plots/{_metric}.png") is True
-
-
-@pytest.mark.parametrize(
-    "plot_config, metric_name, cohort_id, threshold",
+    "plot_config, problem_type, threshold",
     [
-        ({"problem_type": "object_detection"}, "average_precision", None, 0.5),
-        (
-            {"problem_type": "object_detection"},
-            "average_precision",
-            None,
-            [0, 0.25, 0.5, 0.75, 1],
-        ),
-        ({"problem_type": "object_detection"}, "top_losses", None, []),
-        ({"problem_type": "object_detection"}, "predicted_distribution", None, []),
-        ({"problem_type": "object_detection"}, "confidence_distribution", None, []),
+        ({"problem_type": "object_detection"}, "classification", []),
+        ({"problem_type": "object_detection"}, "object_detection", []),
+        ({"problem_type": "object_detection"}, "semantic_segmentation", []),
     ],
 )
-def test_plot_manager_single_metric_obj_det(
-    plot_config, metric_name, cohort_id, threshold, setup_and_teardown
-):
+def test_metrics_manager(plot_config, setup_and_teardown, problem_type, threshold):
     from gesund import Validation
     from gesund.validation._result import ValidationResult
     from gesund.core._managers.metric_manager import metric_manager
-    from gesund.core._managers.plot_manager import plot_manager
 
-    problem_type = "object_detection"
     data_dir = f"./tests/_data/{problem_type}"
     validator = Validation(
         annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
@@ -164,97 +78,149 @@ def test_plot_manager_single_metric_obj_det(
         cohort_args={"selection_criteria": "random"},
         metric_args={"threshold": threshold},
     )
-    try:
-        validation_results = validator.run()
-    except Exception as e:
-        pytest.skip(f"Skipping this test due to a metric calculation error: {e}")
-        
-    assert isinstance(validation_results, ValidationResult), "ValidationResult is invalid."
-    assert metric_name in metric_manager.get_names(problem_type=problem_type)
-    assert metric_name in plot_manager.get_names(problem_type=problem_type)
 
-    file_name = f"{problem_type}_{metric_name}.png"
-    validation_results.plot(
-        metric_name=metric_name,
-        save_plot=True,
-        cohort_id=cohort_id,
-        file_name=file_name,
-    )
+    validation_results = validator.run()
 
-    if cohort_id:
-        path_to_check = f"plots/{cohort_id}_{file_name}"
-    else:
-        path_to_check = f"plots/{file_name}"
-    assert os.path.exists(path_to_check) is True
+    assert isinstance(validation_results, ValidationResult) is True
+
+    result_list = []
+    for _metric in metric_manager.get_names(problem_type=problem_type):
+        if _metric in validation_results.result:
+            result_list.append(True)
+        else:
+            result_list.append(False)
+
+    assert any(result_list) is True
+
 
 @pytest.mark.parametrize(
-    "plot_config, metric_name, cohort_id",
+    "plot_config, metric_name, cohort_id, threshold, problem_type",
     [
-        ({"problem_type": "classification"}, "lift_chart", None),
-        ({"problem_type": "classification"}, "auc", None),
-        ({"problem_type": "classification"}, "confusion_matrix", None),
-        ({"problem_type": "classification"}, "most_confused", None),
-        ({"problem_type": "classification"}, "top_losses", None),
-        ({"problem_type": "classification"}, "threshold", None),
+        (
+            {"problem_type": "classification"},
+            "lift_chart",
+            None,
+            [0.25, 0.5, 0.75],
+            "classification",
+        ),
+        (
+            {"problem_type": "classification"},
+            "auc",
+            None,
+            [0.25, 0.5, 0.75],
+            "classification",
+        ),
+        (
+            {"problem_type": "classification"},
+            "confusion_matrix",
+            None,
+            [0.25, 0.5, 0.75],
+            "classification",
+        ),
+        (
+            {"problem_type": "classification"},
+            "most_confused",
+            None,
+            [0.25, 0.5, 0.75],
+            "classification",
+        ),
+        (
+            {"problem_type": "classification"},
+            "stats_tables",
+            None,
+            [0.25, 0.5, 0.75],
+            "classification",
+        ),
+        (
+            {"problem_type": "classification"},
+            "top_losses",
+            None,
+            [0.25, 0.5, 0.75],
+            "classification",
+        ),
+        (
+            {"problem_type": "classification"},
+            "threshold",
+            None,
+            [0.25, 0.5, 0.75],
+            "classification",
+        ),
+        (
+            {"problem_type": "semantic_segmentation"},
+            "iou_distribution",
+            None,
+            [],
+            "semantic_segmentation",
+        ),
+        (
+            {"problem_type": "semantic_segmentation"},
+            "predicted_distribution",
+            None,
+            [],
+            "semantic_segmentation",
+        ),
+        (
+            {"problem_type": "semantic_segmentation"},
+            "dice_distribution",
+            None,
+            [],
+            "semantic_segmentation",
+        ),
+        (
+            {"problem_type": "semantic_segmentation"},
+            "top_losses",
+            None,
+            [],
+            "semantic_segmentation",
+        ),
+        (
+            {"problem_type": "object_detection"},
+            "average_precision",
+            None,
+            0.5,
+            "object_detection",
+        ),
+        (
+            {"problem_type": "object_detection"},
+            "average_precision",
+            None,
+            [0, 0.25, 0.5, 0.75, 1],
+            "object_detection",
+        ),
+        (
+            {"problem_type": "object_detection"},
+            "top_losses",
+            None,
+            [],
+            "object_detection",
+        ),
+        (
+            {"problem_type": "object_detection"},
+            "predicted_distribution",
+            None,
+            [],
+            "object_detection",
+        ),
+        (
+            {"problem_type": "object_detection"},
+            "confidence_distribution",
+            None,
+            [],
+            "object_detection",
+        ),
     ],
 )
-def test_plot_manager_single_metric_classification(
-    plot_config, metric_name, cohort_id, setup_and_teardown
+def test_plot_manager_single_metric(
+    plot_config, metric_name, cohort_id, threshold, setup_and_teardown, problem_type
 ):
+    """
+    A function to test validation run and plotting of the metrics
+    """
     from gesund import Validation
     from gesund.validation._result import ValidationResult
     from gesund.core._managers.metric_manager import metric_manager
     from gesund.core._managers.plot_manager import plot_manager
 
-    problem_type = "classification"
-    data_dir = f"./tests/_data/{problem_type}"
-    validator = Validation(
-        annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
-        predictions_path=f"{data_dir}/gesund_custom_format/prediction.json",
-        class_mapping=f"{data_dir}/test_class_mappings.json",
-        problem_type=problem_type,
-        data_format="json",
-        json_structure_type="gesund",
-        plot_config=plot_config,
-        cohort_args={"selection_criteria": "random"},
-        metric_args={"threshold": [0.25, 0.5, 0.75]},
-    )
-    try:
-        validation_results = validator.run()
-    except Exception as e:
-        pytest.skip(f"Skipping this test due to a metric calculation error: {e}")
-
-    assert isinstance(validation_results, ValidationResult), "ValidationResult is invalid."
-    assert metric_name in metric_manager.get_names(problem_type=problem_type)
-    assert metric_name in plot_manager.get_names(problem_type=problem_type)
-
-    os.makedirs("plots", exist_ok=True)
-    validation_results.plot(
-        metric_name=metric_name, save_plot=True, cohort_id=cohort_id
-    )
-    expected_file = f"plots/{metric_name}.png" if not cohort_id else f"plots/{cohort_id}_{metric_name}.png"
-    if not os.path.exists(expected_file):
-        pytest.skip(f"Skipping test as plot file was not generated: {expected_file}")
-    assert os.path.exists(expected_file), f"File not found: {expected_file}"
-
-@pytest.mark.parametrize(
-    "plot_config, metric_name, cohort_id, threshold",
-    [
-        ({"problem_type": "semantic_segmentation"}, "iou_distribution", None, []),
-        ({"problem_type": "semantic_segmentation"}, "predicted_distribution", None, []),
-        ({"problem_type": "semantic_segmentation"}, "dice_distribution", None, []),
-        ({"problem_type": "semantic_segmentation"}, "top_losses", None, []),
-    ],
-)
-def test_plot_manager_single_metric_sem_seg(
-    plot_config, metric_name, cohort_id, threshold, setup_and_teardown
-):
-    from gesund import Validation
-    from gesund.validation._result import ValidationResult
-    from gesund.core._managers.metric_manager import metric_manager
-    from gesund.core._managers.plot_manager import plot_manager
-
-    problem_type = "semantic_segmentation"
     data_dir = f"./tests/_data/{problem_type}"
     validator = Validation(
         annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
@@ -282,8 +248,9 @@ def test_plot_manager_single_metric_sem_seg(
         file_name=file_name,
     )
 
-    if cohort_id:
-        path_to_check = f"plots/{cohort_id}_{file_name}"
-    else:
-        path_to_check = f"plots/{file_name}"
-    assert os.path.exists(path_to_check) is True
+    if metric_name != "stats_tables":
+        if cohort_id:
+            path_to_check = f"plots/{cohort_id}_{file_name}"
+        else:
+            path_to_check = f"plots/{file_name}"
+        assert os.path.exists(path_to_check) is True

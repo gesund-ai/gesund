@@ -33,7 +33,7 @@ def test_register_metrics(problem_type, metric_name, fail_case):
         with pytest.raises(RegistrationNotAllowed):
 
             @metric_manager.register(register_key)
-            def mock_metric():
+            def mock_metric(*args, **kwargs):
                 pass
 
         with pytest.raises(FunctionNotFoundError):
@@ -41,7 +41,7 @@ def test_register_metrics(problem_type, metric_name, fail_case):
     else:
 
         @metric_manager.register(register_key)
-        def mock_metric():
+        def mock_metric(*args, **kwargs):
             pass
 
         assert metric_manager[register_key] == mock_metric

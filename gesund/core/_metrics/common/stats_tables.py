@@ -361,7 +361,9 @@ def calculate_stats_tables(data: dict, problem_type: str):
 
 
 @plot_manager.register("classification.stats_tables")
-def plot_stats_tables(results: dict, save_plot: bool) -> Union[List[str], List[Figure]]:
+def plot_stats_tables(
+    results: dict, save_plot: bool, file_name: str
+) -> Union[List[str], List[Figure]]:
     """
     Plots the stats tables.
 
@@ -369,6 +371,8 @@ def plot_stats_tables(results: dict, save_plot: bool) -> Union[List[str], List[F
     :type results: dict
     :param save_plot: Boolean value to save plots
     :type save_plot: bool
+    :param file_name: name of the files
+    :type file_name: str
 
     :return: List of figure objects or paths to the saved plots
     :rtype: Union[List[str], List[Figure]]
@@ -376,7 +380,7 @@ def plot_stats_tables(results: dict, save_plot: bool) -> Union[List[str], List[F
     plotter = PlotStatsTables(data=results)
     figs = plotter.plot()
     if save_plot:
-        filenames = [f"plot_{i}.png" for i in range(len(figs))]
+        filenames = [f"{file_name}_{i}.png" for i in range(len(figs))]
         return plotter.save(figs, filenames=filenames)
     else:
         plt.show()
