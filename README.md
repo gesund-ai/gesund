@@ -4,11 +4,10 @@
 
 # Validation Metrics Library
 
+[![Test  Workflow](https://github.com/gesund-ai/gesund/actions/workflows/test.yml/badge.svg)](https://github.com/gesund-ai/gesund/actions/workflows/test.yml)
 [![PyPi](https://img.shields.io/pypi/v/gesund)](https://pypi.org/project/gesund)
 [![PyPI Downloads](https://img.shields.io/pypi/dm/gesund.svg?label=PyPI%20downloads)](
 https://pypi.org/project/gesund/)
-
-
 
 
 This library provides tools for calculating validation metrics for predictions and annotations in machine learning workflows. It includes a command-line tool for computing and displaying validation metrics.
@@ -31,64 +30,44 @@ pip install pycocotools@git+https://github.com/HammadK44/cocoapi.git@Dev#subdire
 ## Basic Usage
 
 ```python
-
 # import the library
-from gesund.validation import Validation
 
-# set up the configs
-data_dir = "./tests/_data/classification"
-plot_config = {
-    "classification": {
-        "class_distributions": {
-            "metrics": ["normal", "pneumonia"],
-            "threshold": 10,
-        },
-        "blind_spot": {"class_type": ["Average", "1", "0"]},
-        "performance_by_threshold": {
-            "graph_type": "graph_1",
-            "metrics": [
-                "F1",
-                "Sensitivity",
-                "Specificity",
-                "Precision",
-                "FPR",
-                "FNR",
-            ],
-            "threshold": 0.2,
-        },
-        "roc": {"roc_class": ["normal", "pneumonia"]},
-        "precision_recall": {"pr_class": ["normal", "pneumonia"]},
-        "confidence_histogram": {"metrics": ["TP", "FP"], "threshold": 0.5},
-        "overall_metrics": {"metrics": ["AUC", "Precision"], "threshold": 0.2},
-        "confusion_matrix": {},
-        "prediction_dataset_distribution": {},
-        "most_confused_bar": {},
-        "confidence_histogram_scatter_distribution": {},
-        "lift_chart": {},
-    }
-}
+from gesund import Validation
+from gesund.validation._result import ValidationResult
+from gesund.core._managers.metric_manager import metric_manager
+from gesund.core._managers.plot_manager import plot_manager
+
+# Call the default configuration from utils
+from utils import callable_plot_config
+
+# Select your problem type {"classification", "object_detection", "semantic_segmentation"}
+
+# example usage for problem type
+problem_type = "classification"
+plot_configuration = callable_plot_config(problem_type)
+metric_name = "lift_chart"
+cohort_id = None
+data_dir = f"./tests/_data/{problem_type}"
 
 # create a class instance
-classification_validation = Validation(
+validator = Validation(
     annotations_path=f"{data_dir}/gesund_custom_format/annotation.json",
     predictions_path=f"{data_dir}/gesund_custom_format/prediction.json",
-    problem_type="classification",
     class_mapping=f"{data_dir}/test_class_mappings.json",
+    problem_type=problem_type,
     data_format="json",
     json_structure_type="gesund",
-    metadata_path=f"{data_dir}/test_metadata.json",
-    return_dict=True,
-    display_plots=False,
-    store_plots=False,
-    plot_config=plot_config,
-    run_validation_only=True
+    plot_config=plot_configuration,
+    cohort_args={"selection_criteria": "random"},
+    metric_args={"threshold": [0.25, 0.5, 0.75]},
 )
 
 # run the validation workflow
-results = classification_validation.run()
-
-# explore the results
-print(results)
+validation_results = validator.run()
+# save the results 
+validation_results.save(metric_name)
+# plot the results
+validation_results.plot(metric_name="auc", save_plot=False, cohort_id=cohort_id)
 
 ```
 
