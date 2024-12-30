@@ -14,10 +14,6 @@ setup(
         "numpy==1.21.6",
         "numba==0.55.2",
         "tqdm",
-        "pycocotools",
-    ],
-    dependency_links=[
-        "git+https://github.com/HammadK44/cocoapi.git@Dev#egg=pycocotools&subdirectory=PythonAPI"
     ],
     classifiers=[
         "Programming Language :: Python :: 3",
