@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gesund"
-version = "0.1.5"
+version = "0.2.0"
 authors = [
   { name = "Veysel Koccaman", email = "veysel@gesund.ai" },
   { name = "Hammad Khalid", email = "hammad@gesund.ai" },
@@ -56,4 +56,4 @@ test = [ "pytest", "pytest-cov"]
 where = ["gesund-src"]
 
 [tool.setuptools.package-data]
-mypkg = ["*.py", "*.json", "*.png"]
+mypkg = ["*.py", "*.json", "*.png", "*"]
