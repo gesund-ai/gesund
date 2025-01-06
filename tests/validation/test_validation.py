@@ -133,6 +133,13 @@ def test_metrics_manager(plot_config, setup_and_teardown, problem_type, threshol
         ),
         (
             {"problem_type": "classification"},
+            "blind_spot",
+            None,
+            [0.25, 0.5, 0.75],
+            "classification",
+        ),
+        (
+            {"problem_type": "classification"},
             "top_losses",
             None,
             [0.25, 0.5, 0.75],
@@ -254,3 +261,53 @@ def test_plot_manager_single_metric(
         else:
             path_to_check = f"plots/{file_name}"
         assert os.path.exists(path_to_check) is True
+
+
+@pytest.fixture(scope="session", autouse=True)
+def ensure_history_directory_exists():
+    """
+    Ensure that the history directory and the validation history file are created before any tests run.
+    """
+    import json
+
+    history_dir = "validation_mechanism_history"
+    os.makedirs(history_dir, exist_ok=True)
+    history_path = os.path.join(history_dir, "val_history.json")
+    if not os.path.exists(history_path):
+        with open(history_path, "w") as f:
+            json.dump({"test_runs": []}, f)
+
+
+@pytest.fixture(autouse=True)
+def clear_and_save_history_fixture(request):
+    """
+    Automatically clear and save the history data before and after each test.
+    """
+    from gesund.core import metric_manager, plot_manager, history_record_manager
+
+    yield from history_record_manager.clear_and_save_history(
+        request, metric_manager, plot_manager
+    )
+
+
+def test_ensure_history_directory_exists():
+    """
+    Verify that the history directory and the validation history file are successfully created.
+    """
+    history_dir = "validation_mechanism_history"
+    history_path = os.path.join(history_dir, "val_history.json")
+    assert os.path.exists(history_dir) is True
+    assert os.path.exists(history_path) is True
+
+
+def test_clear_and_save_history_fixture(clear_and_save_history_fixture):
+    """
+    Ensure that the history fixture correctly clears and saves the history data.
+    """
+    import json
+
+    history_path = os.path.join("validation_mechanism_history", "val_history.json")
+    with open(history_path, "r") as f:
+        history = json.load(f)
+    assert "test_runs" in history
+    assert isinstance(history["test_runs"], list)
