@@ -131,6 +131,7 @@ class Classification:
         # calculaee the metrics
         result = self.__calculate_metrics(data, data.get("class_mapping"))
 
+        metric_manager.record_usage("classification.confusion_matrix")
         return result
 
 
@@ -180,6 +181,8 @@ class PlotConfusionMatrix:
             filepath = f"{dir_path}/{filename}"
 
         fig.savefig(filepath, format="png")
+
+        plot_manager.record_usage("classification.confusion_matrix")
         return filepath
 
     def plot(self) -> Figure:
@@ -215,6 +218,8 @@ class PlotConfusionMatrix:
             title_str = "Confusion matrix"
 
         ax.set_title(title_str, fontdict={"fontsize": 16, "fontweight": "medium"})
+
+        plot_manager.record_usage("classification.confusion_matrix")
         return fig
 
 

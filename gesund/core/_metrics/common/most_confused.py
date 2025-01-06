@@ -127,6 +127,8 @@ class Classification:
 
         # calculate the metrics
         result = self.__calculate_metrics(data, data.get("class_mapping"))
+
+        metric_manager.record_usage("classification.most_confused")
         return result
 
 
@@ -171,6 +173,8 @@ class PlotMostConfused:
             filepath = f"{dir_path}/{filename}"
 
         fig.savefig(filepath, format="png")
+
+        plot_manager.record_usage("classification.most_confused")
         return filepath
 
     def plot(self, top_k: int = 5) -> Figure:
@@ -211,6 +215,8 @@ class PlotMostConfused:
 
         ax.set_title(title_str, fontdict={"fontsize": 16, "fontweight": "medium"})
         fig.tight_layout()
+
+        plot_manager.record_usage("classification.most_confused")
         return fig
 
 

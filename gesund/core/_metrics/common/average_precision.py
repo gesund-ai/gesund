@@ -227,6 +227,7 @@ class ObjectDetection:
         # calculate results
         result = self.__calculate_metrics(data, data.get("class_mapping"))
 
+        metric_manager.record_usage("object_detection.average_precision")
         return {"result": result}
 
 
@@ -262,6 +263,8 @@ class PlotAvgPrecision:
             filepath = f"{dir_path}/{filename}"
 
         fig.savefig(filepath, format="png")
+
+        plot_manager.record_usage("object_detection.average_precision")
         return filepath
 
     def plot(self) -> Figure:
@@ -295,6 +298,8 @@ class PlotAvgPrecision:
             fontdict={"fontsize": 16, "fontweight": "medium"},
         )
         ax.legend(loc="lower right")
+
+        plot_manager.record_usage("object_detection.average_precision")
         return fig
 
 

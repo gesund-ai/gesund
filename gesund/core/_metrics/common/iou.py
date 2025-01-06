@@ -84,5 +84,8 @@ class IoUCalc:
         intersection = np.logical_and(mask1, mask2)
         union = np.logical_or(mask1, mask2)
 
-        iou = np.sum(intersection) / np.sum(union)
+        if np.sum(union) == 0:
+            iou = 1.0
+        else:
+            iou = np.sum(intersection) / np.sum(union)
         return round(iou, 4)

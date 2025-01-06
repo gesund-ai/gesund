@@ -195,6 +195,8 @@ class Classification:
 
         # calculate the result
         result = self.__calculate_metrics(data, data.get("class_mapping"))
+
+        metric_manager.record_usage("classification.stats_tables")
         return result
 
 
@@ -247,6 +249,7 @@ class PlotStatsTables:
             fig.savefig(filepath, format="png")
             filepaths.append(filepath)
 
+        plot_manager.record_usage("classification.stats_tables")
         return filepaths
 
     def plot(self) -> List[Figure]:
@@ -324,14 +327,7 @@ class PlotStatsTables:
         ax_metrics.legend(title="Metric")
         figures.append(fig_metrics)
 
-        # Display overall metrics
-        # print("Overall Metrics:")
-        # for metric, value in self.overall_metrics.items():
-        #     print(
-        #         f"{metric}: {value:.4f}"
-        #         if isinstance(value, float)
-        #         else f"{metric}: {value}"
-        #     )
+        plot_manager.record_usage("classification.stats_tables")
         return figures
 
 
