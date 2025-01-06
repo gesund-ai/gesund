@@ -284,11 +284,20 @@ def clear_and_save_history_fixture(request):
     Automatically clear and save the history data before and after each test.
     """
     from gesund.core import metric_manager, plot_manager, history_record_manager
-
-    yield from history_record_manager.clear_and_save_history(
-        request, metric_manager, plot_manager
+    
+    plot_config = getattr(request, "param", {}) if hasattr(request, "param") else {}
+    if hasattr(request, "node"):
+        metric_name = request.node.callspec.params.get("metric_name") if hasattr(request.node, "callspec") else None
+        if metric_name:
+            plot_config["metric_name"] = metric_name
+    
+    run_info = history_record_manager.clear_and_save_history(
+        request, 
+        metric_manager, 
+        plot_manager,
+        plot_config=plot_config
     )
-
+    yield run_info
 
 def test_ensure_history_directory_exists():
     """

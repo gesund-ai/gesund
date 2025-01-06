@@ -1,6 +1,7 @@
 import os
 import json
 import datetime
+import time
 from typing import Dict, Any, List, Optional
 
 from gesund.core._managers.base import GenericPMManager
@@ -66,7 +67,6 @@ class HistoryRecordManager(GenericPMManager):
         return {
             "run_id": len(existing_history["test_runs"]) + 1,
             "start_date": datetime.datetime.now().date().isoformat(),
-            "metrics": [],
             "plots": [],
             "status": "completed",
             "error": None
@@ -75,76 +75,138 @@ class HistoryRecordManager(GenericPMManager):
     def update_run_info(
         self,
         run_info: Dict[str, Any],
-        metrics: List[Any],
         plots: List[Any],
+        metric_type: str = None,
         error: Optional[str] = None,
     ) -> None:
         """
-        Update the run information with metrics, plots, and error details.
-
-        :param run_info: The run information to update.
-        :type run_info: Dict[str, Any]
-        :param metrics: A list of metrics associated with the run.
-        :type metrics: List[Any]
-        :param plots: A list of plots associated with the run.
-        :type plots: List[Any]
-        :param error: An error message if the run failed. Defaults to None.
-        :type error: Optional[str]
-
-        :return: None
-        :rtype: None
+        Update the run information without including metrics.
+        
+        Args:
+            run_info: Run information to update
+            plots: List of plots
+            metric_type: Type of metric to filter (e.g. 'classification', 'object_detection')
+            error: Optional error message
         """
-        run_info["metrics"] = metrics
-        run_info["plots"] = plots
+        if metric_type:
+            plots = [p for p in plots if p['metric_name'].startswith(metric_type)]
+        
+        plot_names = {plot['metric_name'] for plot in plots}
+                    
+        run_info["plots"] = []
+        for name in sorted(plot_names):
+            #TODO: Cannot solved time issue added 0.001 to sleep time.
+            time.sleep(0.001)
+            run_info["plots"].append({
+                "metric_name": name,
+                "time": datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3]
+            })
         if error:
             run_info["status"] = "failed"
             run_info["error"] = error
 
-    def clear_and_save_history(
-            self, request, metric_manager, plot_manager
-    ):
+
+    def clear_history(self) -> None:
         """
-        Clear and save history before and after tests.
+        Clear all history data.
 
-        :param request: The pytest request object used to determine the test context.
-        :type request: Any
-        :param metric_manager: The manager responsible for handling metrics.
-        :type metric_manager: Any
-        :param plot_manager: The manager responsible for handling plots.
-        :type plot_manager: Any
-
-        :yield: None
+        :return: None
         :rtype: None
         """
+        self.save_history({"test_runs": []})
+
+    def get_next_run_id(self) -> int:
+        """
+        Get next available run ID.
+
+        :return: The next run ID.
+        :rtype: int
+        """       
         existing_history = self.load_history()
-        run_info = self.create_run_info(existing_history)
+        #TODO: Second problem is here, after restart we need to add increment 1 to run_id.
+        if not existing_history["test_runs"]:
+            return 1
+        return max(run["run_id"] for run in existing_history["test_runs"]) + 1
 
-        metric_manager.clear_history()
-        plot_manager.clear_history()
 
-        yield
-
-        if request.node.name.startswith('test_plot_manager_single_metric'):
-            try:
-                metrics = self.get_history(metric_manager)
-                plots = self.get_history(plot_manager)
-                self.update_run_info(run_info, metrics, plots)
-            except Exception as e:
-                self.update_run_info(run_info, [], [], str(e))
-
-            existing_history["test_runs"].append(run_info)
-            self.save_history(existing_history)
-
-    def get_history(self, manager) -> List[Dict]:
+    def clear_and_save_history(
+        self, 
+        request, 
+        metric_manager, 
+        plot_manager,
+        metric_type: str = None,
+        plot_config: Dict[str, Any] = None
+    ) -> Dict[str, Any]:
         """
-        Get history from a manager.
+        Clear and save history with filtered plots.
 
-        :param manager: The manager from which to retrieve history.
-        :type manager: Any
-
-        :return: The retrieved history data.
-        :rtype: List[Dict]
+        :param request: The request object.
+        :type request: Any
+        :param metric_manager: The metric manager.
+        :type metric_manager: Any
+        :param plot_manager: The plot manager.
+        :type plot_manager: Any
+        :param metric_type: The type of metric to filter.
+        :type metric_type: str
+        :param plot_config: The plot configuration dictionary.
+        :type plot_config: Dict[str, Any]
+        :return: The updated run information dictionary.
+        :rtype: Dict[str, Any]
         """
-        return manager.get_history()
+        try:
+            self.clear_history()
+            
+            existing_history = self.load_history()
+            run_info = self.create_run_info(existing_history)
+    
+            all_plots = plot_manager.get_history() or []
+
+            if plot_config:
+                problem_type = plot_config.get("problem_type")
+                metric_name = plot_config.get("metric_name")
+                
+                if metric_name:
+                    plots = [p for p in all_plots if p['metric_name'] == f"{problem_type}.{metric_name}"]
+                elif problem_type:
+                    plots = [p for p in all_plots if p['metric_name'].startswith(f"{problem_type}.")]
+            else:
+                plots = all_plots
+            
+            self.update_run_info(run_info, plots)
+            
+            new_history = {"test_runs": [run_info]}
+            self.save_history(new_history)
+            
+            return run_info
+                
+        except Exception as e:
+            error_run_info = {
+                "run_id": self.get_next_run_id(),
+                "start_date": datetime.datetime.now().date().isoformat(),
+                "plots": [],
+                "status": "failed",
+                "error": str(e)
+            }
+            self.save_history({"test_runs": [error_run_info]})
+            return error_run_info
+
+
+
+    def get_history(self, manager, metric_type: str = None) -> List[Dict]:
+        """
+        Get filtered history from a manager.
+        
+        Args:
+            manager: The manager from which to retrieve history
+            metric_type: Type of metric to filter (e.g. 'classification.auc')
+        
+        Returns:
+            List[Dict]: Filtered history data
+        """
+        history = manager.get_history()
+        if metric_type and history:
+            return [item for item in history if item['metric_name'] == metric_type]
+        return history
+
 
 history_record_manager = HistoryRecordManager()
