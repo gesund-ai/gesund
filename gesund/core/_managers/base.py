@@ -1,3 +1,4 @@
+import datetime
 from typing import Callable, Dict, TypeVar, Generic, List, Optional
 
 from gesund.core._exceptions import FunctionNotFoundError, RegistrationNotAllowed
@@ -19,6 +20,35 @@ class GenericPMManager(Generic[T]):
             "instance_segmentation",
             "object_detection",
         ]
+        self._history: List[Dict] = []
+
+    def record_usage(self, name: str):
+        """
+        Record the usage of a metric or plot by appending its name and the current time to the history.
+
+        :param name: The name of the metric or plot being used.
+        :type name: str
+        """
+        self._history.append(
+            {
+                "metric_name": name,
+                "time": datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3],
+            }
+        )
+
+    def get_history(self) -> List[Dict]:
+        """
+        Get the history of recorded usages.
+
+        :return: A list of dictionaries containing metric names and their usage times.
+        """
+        return self._history
+
+    def clear_history(self):
+        """
+        Clear the recorded usage history.
+        """
+        self._history.clear()
 
     def register(self, name: str) -> Callable[[T], T]:
         """
