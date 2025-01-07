@@ -470,7 +470,6 @@ class PlotTopLosses:
             title_str = f"{title_txt}"
 
         ax.set_title(title_str, fontdict={"fontsize": 16, "fontweight": "medium"})
-        ax.legend(loc="lower right")
 
         plot_manager.record_usage("object_detection.top_losses")
         return fig

@@ -211,7 +211,6 @@ class PlotAuc:
             title_str,
             fontdict={"fontsize": 16, "fontweight": "medium"},
         )
-        ax.legend(loc="lower right")
 
         plot_manager.record_usage("classification.auc")
         return fig
