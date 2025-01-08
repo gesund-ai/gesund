@@ -15,4 +15,5 @@ from ._metrics.common import (
     iou_distribution,
     dice_distribution,
     blind_spot,
+    object_counts,
 )
