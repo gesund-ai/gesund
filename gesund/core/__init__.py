@@ -4,6 +4,7 @@ from ._managers.history_manager import history_record_manager
 from ._metrics.common import (
     auc,
     confusion_matrix,
+    dataset_population_distribution,
     lift_chart,
     most_confused,
     stats_tables,
@@ -15,5 +16,4 @@ from ._metrics.common import (
     iou_distribution,
     dice_distribution,
     blind_spot,
-    object_counts,
 )
