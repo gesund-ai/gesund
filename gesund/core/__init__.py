@@ -13,6 +13,7 @@ from ._metrics.common import (
     average_precision,
     predicted_distribution,
     confidence_distribution,
+    confidence_distribution_histogram,
     iou_distribution,
     dice_distribution,
     blind_spot,
