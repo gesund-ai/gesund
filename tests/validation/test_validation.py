@@ -216,25 +216,67 @@ def test_metrics_manager(plot_config, setup_and_teardown, problem_type, threshol
             "object_detection",
         ),
         (
+            {"problem_type": "object_detection"},
+            "confidence_distribution_histogram",
+            None,
+            [],
+            "object_detection",
+        ),
+        (
+            {"problem_type": "object_detection"},
+            "dataset_population_distribution_ethnicity",
+            None,
+            [],
+            "object_detection",
+        ),
+        (
             {"problem_type": "semantic_segmentation"},
-            "dataset_population_distribution",
+            "dataset_population_distribution_ethnicity",
             None,
             [],
             "semantic_segmentation",
         ),
         (
             {"problem_type": "object_detection"},
-            "dataset_population_distribution",
+            "dataset_population_distribution_age",
             None,
             [],
             "object_detection",
         ),
         (
+            {"problem_type": "semantic_segmentation"},
+            "dataset_population_distribution_age",
+            None,
+            [],
+            "semantic_segmentation",
+        ),
+        (
             {"problem_type": "object_detection"},
-            "confidence_distribution_histogram",
+            "dataset_population_distribution_gender",
             None,
             [],
             "object_detection",
+        ),
+        (
+            {"problem_type": "semantic_segmentation"},
+            "dataset_population_distribution_gender",
+            None,
+            [],
+            "semantic_segmentation",
+        ),
+        (
+            {"problem_type": "object_detection"},
+            "object_counts",
+            None,
+            [],
+            "object_detection",
+        ),
+        (
+            {"problem_type": "semantic_segmentation"},
+            "object_counts",
+            None,
+            [],
+            "semantic_segmentation",
         ),
     ],
 )
@@ -341,3 +383,4 @@ def test_clear_and_save_history_fixture(clear_and_save_history_fixture):
         history = json.load(f)
     assert "test_runs" in history
     assert isinstance(history["test_runs"], list)
+#a
