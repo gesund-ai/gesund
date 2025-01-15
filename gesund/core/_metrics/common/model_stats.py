@@ -89,6 +89,9 @@ class ObjectDetection:
     ) -> dict:
         pass
 
+    def _calc_highlited_overall_metrics(self):
+        pass
+
     def __calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
         pass
 
