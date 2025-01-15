@@ -270,7 +270,7 @@ def ensure_history_directory_exists():
     """
     import json
 
-    history_dir = "validation_mechanism_history"
+    history_dir = "evaluation_history"
     os.makedirs(history_dir, exist_ok=True)
     history_path = os.path.join(history_dir, "val_history.json")
     if not os.path.exists(history_path):
@@ -303,7 +303,7 @@ def test_ensure_history_directory_exists():
     """
     Verify that the history directory and the validation history file are successfully created.
     """
-    history_dir = "validation_mechanism_history"
+    history_dir = "evaluation_history"
     history_path = os.path.join(history_dir, "val_history.json")
     assert os.path.exists(history_dir) is True
     assert os.path.exists(history_path) is True
@@ -315,7 +315,7 @@ def test_clear_and_save_history_fixture(clear_and_save_history_fixture):
     """
     import json
 
-    history_path = os.path.join("validation_mechanism_history", "val_history.json")
+    history_path = os.path.join("evaluation_history", "val_history.json")
     with open(history_path, "r") as f:
         history = json.load(f)
     assert "test_runs" in history
