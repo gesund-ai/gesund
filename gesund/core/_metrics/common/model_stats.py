@@ -102,11 +102,13 @@ class ObjectDetection:
 
 class PlotModelStats:
     def __init__(self, data: dict, cohort_id: Optional[int] = None):
-        pass
+        self.data = data
+        self.cohort_id = cohort_id
 
     def _validate_data(self):
-        pass
-
+        if not isinstance(self.data["result"], pd.DataFrame):
+            raise ValueError(f"Data must be a data frame.")
+        
     def save(self, fig: Figure, filename: str) -> str:
         dir_path = "plots"
         if not os.path.exists(dir_path):
@@ -122,6 +124,14 @@ class PlotModelStats:
 
     def plot(self) -> Figure:
         pass
+        sns.set_style("whitegrid")
+        self._validate_data()
+        fig, ax = plt.subplots(figsize=(10, 7))
+
+        #sns plot steps
+        #----------------
+
+        return fig
 
 problem_type_map = {
     "classification": Classification,
