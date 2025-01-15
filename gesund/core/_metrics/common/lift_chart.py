@@ -115,6 +115,8 @@ class Classification:
 
         # calculate the metrics
         result = self.__calculate_metrics(data, data.get("class_mapping"))
+
+        metric_manager.record_usage("classification.lift_chart")
         return result
 
 
@@ -280,6 +282,8 @@ class PlotLiftChart:
             filepath = f"{dir_path}/{filename}"
 
         fig.savefig(filepath, format="png")
+
+        plot_manager.record_usage("classification.lift_chart")
         return filepath
 
     def plot(self) -> Figure:
@@ -314,6 +318,8 @@ class PlotLiftChart:
 
         ax.set_title(title_str, fontdict={"fontsize": 16, "fontweight": "medium"})
         ax.legend()
+
+        plot_manager.record_usage("classification.lift_chart")
         return fig
 
 

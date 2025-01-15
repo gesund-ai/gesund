@@ -104,6 +104,7 @@ class SemanticSegmentation:
         # calculate the metrics
         result["dice_distribution"] = self._calculate_metrics(data)
 
+        metric_manager.record_usage("semantic_segmentation.dice_distribution")
         return result
 
 
@@ -130,6 +131,8 @@ class PlotDiceDistribution:
             filepath = f"{dir_path}/{filename}"
 
         fig.savefig(filepath, format="png")
+
+        plot_manager.record_usage("semantic_segmentation.dice_distribution")
         return filepath
 
     def plot(self) -> Figure:
@@ -147,12 +150,14 @@ class PlotDiceDistribution:
 
         g = sns.JointGrid(data=plot_data, x="dice", y="iou", space=0, height=9, ratio=7)
 
-        g.plot_joint(sns.scatterplot, palette="pastel")
+        g.plot_joint(sns.scatterplot)
         g.plot_marginals(sns.histplot, kde=True, color=".5")
 
         g.set_axis_labels("DICE", "IoU", fontsize=14)
         g.figure.suptitle("Scatterplot DICE vs IoU", fontsize=16)
         plt.subplots_adjust(top=0.95)
+
+        plot_manager.record_usage("semantic_segmentation.dice_distribution")
         return g.figure
 
 

@@ -1,5 +1,6 @@
 from ._managers.metric_manager import metric_manager
 from ._managers.plot_manager import plot_manager
+from ._managers.history_manager import history_record_manager
 from ._metrics.common import (
     auc,
     confusion_matrix,
@@ -13,4 +14,5 @@ from ._metrics.common import (
     confidence_distribution,
     iou_distribution,
     dice_distribution,
+    blind_spot,
 )
