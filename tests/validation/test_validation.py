@@ -278,6 +278,13 @@ def test_metrics_manager(plot_config, setup_and_teardown, problem_type, threshol
             [],
             "semantic_segmentation",
         ),
+        (
+            {"problem_type": "object_detection"},
+            "model_stats",
+            None,
+            [],
+            "object_detection",
+        ),
     ],
 )
 def test_plot_manager_single_metric(
