@@ -285,6 +285,13 @@ def test_metrics_manager(plot_config, setup_and_teardown, problem_type, threshol
             [],
             "object_detection",
         ),
+        (
+            {"problem_type": "object_detection"},
+            "train_and_validation_performance",
+            None,
+            [],
+            "object_detection",
+        ),
     ],
 )
 def test_plot_manager_single_metric(
