@@ -4,23 +4,21 @@ import datetime
 import time
 from typing import Dict, Any, List, Optional
 
-from gesund.core._managers.base import GenericPMManager
-
-class HistoryRecordManager(GenericPMManager):
+class HistoryRecordManager:
     def __init__(
             self,
-            history_dir: str = "validation_mechanism_history", 
+            history_dir: str = "evaluation_history", 
             history_file: str = "val_history.json"
     ):
         """
         Initialize the HistoryRecordManager with specified history directory and file.
 
-        :param history_dir: The directory where history files are stored. Defaults to "validation_mechanism_history".
+        :param history_dir: The directory where history files are stored. Defaults to "evaluation_history".
         :type history_dir: str
         :param history_file: The name of the history JSON file. Defaults to "val_history.json".
         :type history_file: str
         """
-        super().__init__()
+
         self.history_dir = history_dir
         self.history_file = os.path.join(history_dir, history_file)
         os.makedirs(self.history_dir, exist_ok=True)

@@ -20,7 +20,7 @@ class GenericPMManager(Generic[T]):
             "instance_segmentation",
             "object_detection",
         ]
-        self._history: List[Dict] = []
+        self.__history: List[Dict] = []
 
     def record_usage(self, name: str):
         """
@@ -29,7 +29,7 @@ class GenericPMManager(Generic[T]):
         :param name: The name of the metric or plot being used.
         :type name: str
         """
-        self._history.append(
+        self.__history.append(
             {
                 "metric_name": name,
                 "time": datetime.datetime.now().strftime("%H:%M:%S.%f")[:-3],
@@ -42,13 +42,13 @@ class GenericPMManager(Generic[T]):
 
         :return: A list of dictionaries containing metric names and their usage times.
         """
-        return self._history
+        return self.__history
 
     def clear_history(self):
         """
         Clear the recorded usage history.
         """
-        self._history.clear()
+        self.__history.clear()
 
     def register(self, name: str) -> Callable[[T], T]:
         """
