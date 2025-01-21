@@ -22,4 +22,5 @@ from ._metrics.common import (
     object_counts,
     model_stats,
     train_and_validation_performance,
+    overall_metric,
 )
