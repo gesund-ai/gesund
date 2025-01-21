@@ -37,7 +37,7 @@ dependencies = [
     "opencv-python",
     "dictances==1.5.3",
     "miseval==1.2.2",
-    "numpy==1.21.6",
+    "numpy==1.22.1",
     "numba==0.55.2",
     "tqdm",
     "pydantic==2.9.2"
