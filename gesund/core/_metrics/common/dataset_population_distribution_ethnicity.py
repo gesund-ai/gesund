@@ -151,6 +151,24 @@ problem_type_map = {
     "object_detection": ObjectDetection,
 }
 
+def _get_json_file_path(problem_type: str) -> str:
+    project_root = os.path.dirname(
+        os.path.dirname(
+            os.path.dirname(
+                os.path.dirname(
+                    os.path.dirname(__file__)
+                )
+            )
+        )
+    )
+    return os.path.join(
+        project_root,
+        'tests',
+        '_data',
+        problem_type,
+        'test_metadata_new.json'
+    )
+
 @metric_manager.register("object_detection.dataset_population_distribution_ethnicity")
 @metric_manager.register("semantic_segmentation.dataset_population_distribution_ethnicity")
 def calculate_dataset_population_distribution_metric(data: dict, problem_type: str):
@@ -169,13 +187,15 @@ def plot_dataset_population_distribution_ethnicity(
     suffix: str = '',
     problem_type: str = 'semantic_segmentation'
 ) -> Union[dict, None]:
-
+    """
+    Plot dataset population distribution for semantic segmentation, optionally saving the plot to disk.
+    """
     plotter = PlotDatasetPopulationDistributionEthnicity(cohort_id=cohort_id)
-    json_file = os.path.expanduser(f"~/gesund/tests/_data/{problem_type}/test_metadata_new.json")
-    ethnicity_fig = plotter.plot_ethnicity(json_file, suffix)
-
+    json_file = _get_json_file_path(problem_type)
+    plotter._validate_data(json_file)
+    fig = plotter.plot_ethnicity(json_file, suffix=suffix)
     if save_plot:
-        return plotter.save(ethnicity_fig, file_name)
+        return plotter.save(fig, filename=file_name)
     else:
         plt.show()
 
@@ -189,12 +209,14 @@ def plot_dataset_population_distribution_ethnicity(
     suffix: str = '',
     problem_type: str = 'object_detection'
 ) -> Union[dict, None]:
-
+    """
+    Plot dataset population distribution for object detection, optionally saving the plot to disk.
+    """
     plotter = PlotDatasetPopulationDistributionEthnicity(cohort_id=cohort_id)
-    json_file = os.path.expanduser(f"~/gesund/tests/_data/{problem_type}/test_metadata_new.json")
-    ethnicity_fig = plotter.plot_ethnicity(json_file, suffix)
-
+    json_file = _get_json_file_path(problem_type)
+    plotter._validate_data(json_file)
+    fig = plotter.plot_ethnicity(json_file, suffix=suffix)
     if save_plot:
-        return plotter.save(ethnicity_fig, file_name)
+        return plotter.save(fig, filename=file_name)
     else:
         plt.show()
