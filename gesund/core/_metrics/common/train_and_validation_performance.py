@@ -162,9 +162,15 @@ class PlotTrainAndValidationPerformance:
     
     def plot(self) -> Figure:
         self._validate_data()
-        df = self.data["result"]  
+        df = self.data["result"]
         df_mAP = df[df["metric"] == "mAP"].copy()
-        df_pivot = df_mAP.pivot(index=None, columns="threshold", values="value")
+        
+        df_pivot = df_mAP.pivot_table(
+            index=lambda x: 0, 
+            columns="threshold", 
+            values="value", 
+            aggfunc="mean"
+        )
 
         rename_map = {
             0.5: "mAP@50",
