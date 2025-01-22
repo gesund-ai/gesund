@@ -48,17 +48,28 @@ class ObjectDetection:
 
     def _load_class_mappings(self) -> Dict[int, str]:
         """Loads a JSON file mapping label IDs to class names."""
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        project_root = os.path.dirname(
+            os.path.dirname(
+                os.path.dirname(
+                    os.path.dirname(
+                        os.path.dirname(__file__)
+                    )
+                )
+            )
+        )
         json_file = os.path.join(
             project_root,
             'tests',
             '_data',
-            'object_detection' if isinstance(self, ObjectDetection) else 'semantic_segmentation',
+            'semantic_segmentation' if isinstance(self, SemanticSegmentation) else 'object_detection',
             'test_class_mappings.json'
         )
         if not os.path.exists(json_file):
-            raise FileNotFoundError(f"Class mappings file not found at {json_file}")
-        
+            fallback_file = os.path.join(project_root, 'tests', '_data', 'test_class_mappings_default.json')
+            if not os.path.exists(fallback_file):
+                raise FileNotFoundError(f"Neither {json_file} nor {fallback_file} could be found.")
+            json_file = fallback_file
+
         with open(json_file, 'r') as f:
             class_mapping_original = json.load(f)
         return {
@@ -233,7 +244,15 @@ class SemanticSegmentation:
 
     def _load_class_mappings(self) -> Dict[int, str]:
         """Loads a JSON file mapping label IDs to class names."""
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        project_root = os.path.dirname(
+            os.path.dirname(
+                os.path.dirname(
+                    os.path.dirname(
+                        os.path.dirname(__file__)
+                    )
+                )
+            )
+        )
         json_file = os.path.join(
             project_root,
             'tests',
@@ -242,8 +261,11 @@ class SemanticSegmentation:
             'test_class_mappings.json'
         )
         if not os.path.exists(json_file):
-            raise FileNotFoundError(f"Class mappings file not found at {json_file}")
-        
+            fallback_file = os.path.join(project_root, 'tests', '_data', 'test_class_mappings_default.json')
+            if not os.path.exists(fallback_file):
+                raise FileNotFoundError(f"Neither {json_file} nor {fallback_file} could be found.")
+            json_file = fallback_file
+
         with open(json_file, 'r') as f:
             class_mapping_original = json.load(f)
         return {
