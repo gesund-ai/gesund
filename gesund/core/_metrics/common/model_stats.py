@@ -61,7 +61,7 @@ class ObjectDetection:
             project_root,
             'tests',
             '_data',
-            'semantic_segmentation' if isinstance(self, SemanticSegmentation) else 'object_detection',
+            'object_detection' if isinstance(self, ObjectDetection) else 'semantic_segmentation',
             'test_class_mappings.json'
         )
         if not os.path.exists(json_file):
