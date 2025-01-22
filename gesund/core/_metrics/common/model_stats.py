@@ -47,7 +47,15 @@ class ObjectDetection:
         self.label_to_class_name = self._load_class_mappings()
 
     def _load_class_mappings(self) -> Dict[int, str]:
-        json_file = os.path.expanduser('~/gesund/tests/_data/object_detection/test_class_mappings.json')
+        """Loads a JSON file mapping label IDs to class names."""
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        json_file = os.path.join(
+            project_root,
+            'tests',
+            '_data',
+            'object_detection' if isinstance(self, ObjectDetection) else 'semantic_segmentation',
+            'test_class_mappings.json'
+        )
         if not os.path.exists(json_file):
             raise FileNotFoundError(f"Class mappings file not found at {json_file}")
         
@@ -224,15 +232,24 @@ class SemanticSegmentation:
         self.label_to_class_name = self._load_class_mappings()
 
     def _load_class_mappings(self) -> Dict[int, str]:
-        """Loads a JSON file mapping label IDs to class names for segmentation."""
-        json_file = os.path.expanduser('~/gesund/tests/_data/semantic_segmentation/test_class_mappings.json')
+        """Loads a JSON file mapping label IDs to class names."""
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        json_file = os.path.join(
+            project_root,
+            'tests',
+            '_data',
+            'semantic_segmentation' if isinstance(self, SemanticSegmentation) else 'object_detection',
+            'test_class_mappings.json'
+        )
         if not os.path.exists(json_file):
             raise FileNotFoundError(f"Class mappings file not found at {json_file}")
+        
         with open(json_file, 'r') as f:
-            return {
-                int(k): v.lower().replace(" ", "_")
-                for k, v in json.load(f).items()
-            }
+            class_mapping_original = json.load(f)
+        return {
+            int(k): v.lower().replace(" ", "_")
+            for k, v in class_mapping_original.items()
+        }
 
     def _validate_data(self, data: dict) -> None:
         """
