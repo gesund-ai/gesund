@@ -524,9 +524,8 @@ def calculate_model_stats(data: dict, problem_type: str):
     """
     Calculate metrics by instantiating the appropriate class based on the problem type.
     """
-    calculator_class = problem_type_map[problem_type]
-    calculator_instance = calculator_class()
-    result = calculator_instance.calculate(data)
+    metric_calculator = problem_type_map[problem_type]()
+    result = metric_calculator.calculate(data)
     return result
 
 @plot_manager.register("object_detection.model_stats")
