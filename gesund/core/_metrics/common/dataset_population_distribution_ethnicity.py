@@ -97,7 +97,7 @@ class PlotDatasetPopulationDistributionEthnicity:
         plt.style.use('dark_background')
         sns.set_theme(style="darkgrid", font_scale=1.2)
 
-        fig = Figure(figsize=figsize, facecolor='black')
+        fig, ax = plt.subplots(figsize=figsize, facecolor='black')
         ax = fig.add_subplot(111)
         ax.set_facecolor('black')
         return fig, ax
