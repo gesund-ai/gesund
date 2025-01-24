@@ -68,8 +68,8 @@ class PlotDatasetPopulationDistributionEthnicity:
         try:
             with open(json_file, 'r') as f:
                 self.data = json.load(f)
-            if not isinstance(self.data, list) or not all('Age' in item for item in self.data):
-                raise ValueError("Invalid data format: Must be a list of dictionaries with 'Age' field")
+            if not isinstance(self.data, list) or not all('Ethnicity' in item for item in self.data):
+                raise ValueError("Invalid data format: Must be a list of dictionaries with 'Ethnicity' field")
         except Exception as e:
             raise ValueError(f"Error reading JSON file: {str(e)}")
 
@@ -77,11 +77,11 @@ class PlotDatasetPopulationDistributionEthnicity:
         if self.data is None:
             raise ValueError("No data loaded. Call _validate_data first.")
 
-        ages = [item['Age'] for item in self.data]
+        ethnicity = [item['Ethnicity'] for item in self.data]
         return {
-            'ages': ages,
-            'mean_age': np.mean(ages),
-            'median_age': np.median(ages)
+            'ethnicity': ethnicity,
+            'mean_ethnicity_count': np.mean([ethnicity.count(g) for g in set(ethnicity)]),
+            'unique_ethnicity': list(set(ethnicity))
         }
 
     def save(self, fig: Figure, filename: str) -> str:
