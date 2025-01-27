@@ -18,6 +18,17 @@ class ObjectDetection:
 
 class IoUCalc:
     def calculate(self, pred_mask: np.ndarray, gt_mask: np.ndarray) -> float:
+        """
+        Calculates the Intersection over Union (IoU) score between predicted and ground truth masks.
+
+        :param pred_mask: Predicted mask as a NumPy array.
+        :type pred_mask: np.ndarray
+        :param gt_mask: Ground truth mask as a NumPy array.
+        :type gt_mask: np.ndarray
+
+        :return: IoU score.
+        :rtype: float
+        """
         intersection = np.logical_and(pred_mask, gt_mask)
         union = np.logical_or(pred_mask, gt_mask)
         iou_score = np.sum(intersection) / np.sum(union) if np.sum(union) > 0 else 0.0
@@ -26,9 +37,21 @@ class IoUCalc:
 
 class SemanticSegmentation:
     def __init__(self):
+        """
+        Initializes the SemanticSegmentation class with an IoU calculator.
+        """
         self.iou = IoUCalc()
 
     def _validate_data(self, data: dict) -> None:
+        """
+        Validates the data required for metric calculation.
+
+        :param data: The input data containing predictions and ground truths.
+        :type data: dict
+
+        :return: None
+        :rtype: None
+        """
         check_keys = ("ground_truth", "prediction", "metric_args")
         for _key in check_keys:
             if _key not in data:
@@ -42,6 +65,19 @@ class SemanticSegmentation:
                 raise ValueError(f"Missing 'shape' key for image {image_id}")
 
     def _decode_rle(self, rle_str: str, height: int, width: int) -> np.ndarray:
+        """
+        Decodes a Run-Length Encoded (RLE) string into a binary mask.
+
+        :param rle_str: The RLE string.
+        :type rle_str: str
+        :param height: Height of the mask.
+        :type height: int
+        :param width: Width of the mask.
+        :type width: int
+
+        :return: Decoded binary mask.
+        :rtype: np.ndarray
+        """
         if rle_str == "":
             return np.zeros((height, width), dtype=np.uint8)
         rle_numbers = list(map(int, rle_str.split()))
@@ -53,6 +89,15 @@ class SemanticSegmentation:
         return mask.reshape((height, width))
 
     def _preprocess(self, data: dict) -> pd.DataFrame:
+        """
+        Preprocesses the input data into a pandas DataFrame for metric calculation.
+
+        :param data: The input data containing predictions and ground truths.
+        :type data: dict
+
+        :return: Preprocessed data as a DataFrame.
+        :rtype: pd.DataFrame
+        """
         results = {
             "image_id": [],
             "height": [],
@@ -103,7 +148,15 @@ class SemanticSegmentation:
         return pd.DataFrame(results)
 
     def _calc_overall_metrics(self, data: pd.DataFrame) -> pd.DataFrame:
-        """Calculate overall mean Average Precision and mean Average Recall metrics."""
+        """
+        Calculates overall mean Average Precision and mean Average Recall metrics.
+
+        :param data: Preprocessed data as a DataFrame.
+        :type data: pd.DataFrame
+
+        :return: DataFrame containing the calculated metrics.
+        :rtype: pd.DataFrame
+        """
         results = {"metric": [], "value": []}
 
         thresholds = [0.10, 0.50, 0.75, 0.95]
@@ -187,11 +240,29 @@ class SemanticSegmentation:
         return pd.DataFrame(results)
 
     def __calculate_metrics(self, data: dict) -> pd.DataFrame:
+        """
+        Calculates metrics after validating and preprocessing the data.
+
+        :param data: The input data containing predictions and ground truths.
+        :type data: dict
+
+        :return: DataFrame containing the calculated metrics.
+        :rtype: pd.DataFrame
+        """
         self._validate_data(data)
         preprocessed_data = self._preprocess(data)
         return self._calc_overall_metrics(preprocessed_data)
 
     def calculate(self, data: dict) -> dict:
+        """
+        Calculates overall metrics and returns the result.
+
+        :param data: The input data containing predictions and ground truths.
+        :type data: dict
+
+        :return: Dictionary containing the result DataFrame.
+        :rtype: dict
+        """
         try:
             result = self.__calculate_metrics(data)
             return {"result": result}
@@ -201,14 +272,42 @@ class SemanticSegmentation:
 
 class PlotOverallMetric:
     def __init__(self, data: dict, cohort_id: Optional[int] = None):
+        """
+        Initializes the PlotOverallMetric class with data and an optional cohort ID.
+
+        :param data: The result data containing metrics.
+        :type data: dict
+        :param cohort_id: Optional cohort identifier.
+        :type cohort_id: Optional[int]
+
+        :return: None
+        :rtype: None
+        """
         self.data = data
         self.cohort_id = cohort_id
 
     def _validate_data(self):
+        """
+        Validates that the result data is a pandas DataFrame.
+
+        :return: None
+        :rtype: None
+        """
         if not isinstance(self.data["result"], pd.DataFrame):
             raise ValueError("Data must be a DataFrame.")
 
     def save(self, fig: plt.Figure, filename: str) -> str:
+        """
+        Saves the plot figure to a file.
+
+        :param fig: The matplotlib figure to save.
+        :type fig: plt.Figure
+        :param filename: The name of the file to save the plot.
+        :type filename: str
+
+        :return: Path to the saved file.
+        :rtype: str
+        """
         dir_path = "plots"
         os.makedirs(dir_path, exist_ok=True)
         filepath = os.path.join(dir_path, f"{self.cohort_id}_{filename}" if self.cohort_id else filename)
@@ -216,49 +315,55 @@ class PlotOverallMetric:
         return filepath
 
     def plot(self) -> plt.Figure:
-            plt.style.use('dark_background')
-            sns.set_style("darkgrid")
-            self._validate_data()
+        """
+        Generates and returns a matplotlib figure of the metrics table with a white background.
 
-            metrics = self.data["result"]
-            metrics_filtered = metrics[metrics['metric'].str.contains('mAP|mAR')]
-            metrics_sorted = metrics_filtered.sort_values(by='metric', 
-                key=lambda x: pd.Categorical(x, 
-                    ['mAP@10', 'mAP@50', 'mAP@75', 'mAP@[50,95]',
-                    'mAR@max=1', 'mAR@max=10', 'mAR@max=100']))
-            
-            values_only = metrics_sorted['value'].round(3).values
-            metrics_only = metrics_sorted['metric'].values
-            display_data = np.column_stack([metrics_only, values_only])
+        :return: The generated matplotlib figure.
+        :rtype: plt.Figure
+        """
+        plt.style.use('default')
+        sns.set_style("whitegrid")
+        self._validate_data()
 
-
-            fig, ax = plt.subplots(figsize=(8, len(metrics_sorted) * 0.6 + 2))
-            fig.patch.set_facecolor('#2E2E2E')
-            ax.set_facecolor('#2E2E2E')
-            ax.axis('off')
-
-
-            table = ax.table(cellText=display_data,
-                            cellLoc='center',
-                            loc='center')
+        metrics = self.data["result"]
+        metrics_filtered = metrics[metrics['metric'].str.contains('mAP|mAR')]
+        metrics_sorted = metrics_filtered.sort_values(by='metric', 
+            key=lambda x: pd.Categorical(x, 
+                ['mAP@10', 'mAP@50', 'mAP@75', 'mAP@[50,95]',
+                'mAR@max=1', 'mAR@max=10', 'mAR@max=100']))
+        
+        values_only = metrics_sorted['value'].round(3).values
+        metrics_only = metrics_sorted['metric'].values
+        display_data = np.column_stack([metrics_only, values_only])
 
 
-            cell_color = '#363636'
-            text_color = 'white'
+        fig, ax = plt.subplots(figsize=(8, len(metrics_sorted) * 0.6 + 2))
+        fig.patch.set_facecolor('white')
+        ax.set_facecolor('white')
+        ax.axis('off')
 
-            for _, cell in table._cells.items():
-                cell.set_facecolor(cell_color)
-                cell.set_text_props(color=text_color)
-                cell.set_edgecolor('gray')
 
-            table.auto_set_font_size(False)
-            table.set_fontsize(12)
-            table.scale(1, 1.5)
+        table = ax.table(cellText=display_data,
+                        cellLoc='center',
+                        loc='center')
 
-            title = f"Overall Metrics: Cohort - {self.cohort_id}" if self.cohort_id else "Overall Metrics"
-            ax.set_title(title, fontsize=16, pad=20, color='white')
 
-            return fig
+        cell_color = 'white'
+        text_color = 'black'
+
+        for _, cell in table._cells.items():
+            cell.set_facecolor(cell_color)
+            cell.set_text_props(color=text_color)
+            cell.set_edgecolor('gray')
+
+        table.auto_set_font_size(False)
+        table.set_fontsize(12)
+        table.scale(1, 1.5)
+
+        title = f"Overall Metrics: Cohort - {self.cohort_id}" if self.cohort_id else "Overall Metrics"
+        ax.set_title(title, fontsize=16, pad=20, color='black')
+
+        return fig
 
 
 problem_type_map = {
@@ -269,10 +374,36 @@ problem_type_map = {
 
 @metric_manager.register("semantic_segmentation.overall_metric")
 def calculate_overall_metric(data: dict, problem_type: str):
+    """
+    Calculates the overall metric based on the problem type.
+
+    :param data: The input data containing predictions and ground truths.
+    :type data: dict
+    :param problem_type: The type of problem (e.g., classification, semantic_segmentation, object_detection).
+    :type problem_type: str
+
+    :return: Dictionary containing the result DataFrame.
+    :rtype: dict
+    """
     return problem_type_map[problem_type]().calculate(data)
 
 @plot_manager.register("semantic_segmentation.overall_metric")
 def plot_overall_metric(results: dict, save_plot: bool, file_name: str = "overall_metric.png", cohort_id: Optional[int] = None) -> Union[str, None]:
+    """
+    Plots the overall metrics and optionally saves the plot to a file.
+
+    :param results: The result data containing metrics.
+    :type results: dict
+    :param save_plot: Flag indicating whether to save the plot.
+    :type save_plot: bool
+    :param file_name: The name of the file to save the plot. Defaults to "overall_metric.png".
+    :type file_name: str
+    :param cohort_id: Optional cohort identifier.
+    :type cohort_id: Optional[int]
+
+    :return: Path to the saved file if saved, otherwise None.
+    :rtype: Union[str, None]
+    """
     plotter = PlotOverallMetric(results, cohort_id)
     fig = plotter.plot()
     return plotter.save(fig, file_name) if save_plot else plt.show()
