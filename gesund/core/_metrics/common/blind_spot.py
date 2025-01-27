@@ -221,7 +221,6 @@ class Classification:
 
         result = self.__calculate_metrics(data, data.get("class_mapping"))
 
-        metric_manager.record_usage("classification.blind_spot")    
         return result
 
 class ObjectDetection:
@@ -276,7 +275,6 @@ class PlotBlindSpot:
 
         fig.savefig(filepath, format="png")
 
-        plot_manager.record_usage("classification.blind_spot")
         return filepath
 
     def plot(self) -> Figure:
@@ -371,7 +369,6 @@ class PlotBlindSpot:
         ax_metrics.legend(title="Class", bbox_to_anchor=(1.05, 1), loc="upper left")
         plt.tight_layout()
 
-        plot_manager.record_usage("classification.blind_spot")
         return fig_metrics
 
 

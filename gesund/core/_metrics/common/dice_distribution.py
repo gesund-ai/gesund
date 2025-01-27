@@ -104,7 +104,6 @@ class SemanticSegmentation:
         # calculate the metrics
         result["dice_distribution"] = self._calculate_metrics(data)
 
-        metric_manager.record_usage("semantic_segmentation.dice_distribution")
         return result
 
 
@@ -132,7 +131,6 @@ class PlotDiceDistribution:
 
         fig.savefig(filepath, format="png")
 
-        plot_manager.record_usage("semantic_segmentation.dice_distribution")
         return filepath
 
     def plot(self) -> Figure:
@@ -157,7 +155,6 @@ class PlotDiceDistribution:
         g.figure.suptitle("Scatterplot DICE vs IoU", fontsize=16)
         plt.subplots_adjust(top=0.95)
 
-        plot_manager.record_usage("semantic_segmentation.dice_distribution")
         return g.figure
 
 

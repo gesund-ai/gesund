@@ -111,7 +111,6 @@ class SemanticSegmentation:
     def calculate(self, data: dict) -> dict:
         """Validate data and calculate metrics."""
         self._validate_data(data)
-        metric_manager.record_usage("semantic_segmentation.object_counts")
         return self._calculate_metrics(data)
 
 
@@ -168,7 +167,6 @@ class ObjectDetection:
         """Validate data and calculate metrics."""
         try:
             self._validate_data(data)
-            metric_manager.record_usage("object_detection.object_counts")
             return self._calculate_metrics(data)
         except Exception as e:
             print(f"Debug: Error in calculate: {str(e)}")
@@ -219,7 +217,6 @@ class PlotObjectCounts:
         ax.legend()
 
         fig.tight_layout()
-        plot_manager.record_usage("object_detection.object_counts")
         return fig
 
     def save(self, fig: Figure, filename: str) -> str:
@@ -229,7 +226,6 @@ class PlotObjectCounts:
         filepath = f"{dir_path}/{self.cohort_id}_{filename}" if self.cohort_id else f"{dir_path}/{filename}"
         fig.savefig(filepath, format="png")
         plt.close(fig)  
-        plot_manager.record_usage("object_detection.object_counts")
         return filepath
 
 

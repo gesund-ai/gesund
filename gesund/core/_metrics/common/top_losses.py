@@ -168,7 +168,6 @@ class Classification:
         # calculate the metrics
         result = self.__calculate_metrics(data)
 
-        metric_manager.record_usage("classification.top_losses")
         return result
 
 
@@ -242,7 +241,6 @@ class SemanticSegmentation:
         result["loss_data"] = self._calculate_metrics(data)
         result["overall_loss"] = result["loss_data"]["loss"].mean()
 
-        metric_manager.record_usage("semantic_segmentation.dice_distribution")
         return result
 
 
@@ -371,7 +369,6 @@ class ObjectDetection:
 
         result["overall_loss"] = round(result["loss_data"]["loss"].mean(), 4)
 
-        metric_manager.record_usage("object_detection.top_losses")
         return result
 
 
@@ -408,7 +405,6 @@ class PlotTopLosses:
 
         fig.savefig(filepath, format="png")
 
-        plot_manager.record_usage("object_detection.top_losses")
         return filepath
 
     def plot(self, top_k: int = 9) -> Figure:
@@ -471,7 +467,6 @@ class PlotTopLosses:
 
         ax.set_title(title_str, fontdict={"fontsize": 16, "fontweight": "medium"})
 
-        plot_manager.record_usage("object_detection.top_losses")
         return fig
 
 

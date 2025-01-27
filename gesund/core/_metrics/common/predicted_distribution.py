@@ -90,7 +90,6 @@ class SemanticSegmentation:
         # calculate the metrics
         result = self._calculate_metrics(data)
 
-        metric_manager.record_usage("semantic_segmentation.predicted_distribution")
         return result
 
 
@@ -198,7 +197,6 @@ class ObjectDetection:
         # calculate the metrics
         result = self._calculate_metrics(data, data.get("class_mapping"))
 
-        metric_manager.record_usage("object_detection.predicted_distribution")
         return result
 
 
@@ -237,7 +235,6 @@ class PlotPredictedDistribution:
 
         fig.savefig(filepath, format="png")
 
-        plot_manager.record_usage("object_detection.predicted_distribution")
         return filepath
 
     def plot(self) -> Figure:
@@ -312,7 +309,6 @@ class PlotPredictedDistribution:
 
         plt.suptitle("Label Distribution")
 
-        plot_manager.record_usage("object_detection.predicted_distribution")
         return figx
 
 

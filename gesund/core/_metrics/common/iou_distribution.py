@@ -201,7 +201,6 @@ class SemanticSegmentation:
             data, class_mapping=data.get("class_mapping", {})
         )
 
-        metric_manager.record_usage("semantic_segmentation.iou_distribution")
         return result
 
 
@@ -240,7 +239,6 @@ class PlotPredictedDistribution:
 
         fig.savefig(filepath, format="png")
 
-        plot_manager.record_usage("semantic_segmentation.iou_distribution")
         return filepath
 
     def plot(self) -> Figure:
@@ -268,7 +266,6 @@ class PlotPredictedDistribution:
 
         ax.set_title(title_str, fontdict={"fontsize": 16, "fontweight": "bold"})
 
-        plot_manager.record_usage("semantic_segmentation.iou_distribution")
         return fig
 
 

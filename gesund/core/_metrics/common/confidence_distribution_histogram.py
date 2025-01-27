@@ -109,7 +109,6 @@ class ObjectDetection:
         # calculate the metrics
         result = self._calculate_metrics(data, data.get("class_mapping"))
 
-        metric_manager.record_usage("object_detection.confidence_distribution_histogram")
         return result
 
 
@@ -140,7 +139,6 @@ class PlotConfidenceDistributionHistogram:
 
         fig.savefig(filepath, format="png")
 
-        plot_manager.record_usage("object_detection.confidence_distribution_histogram")
         return filepath
 
     def plot(self) -> Figure:
@@ -179,7 +177,6 @@ class PlotConfidenceDistributionHistogram:
                 spine.set_color('#e6e6e6')
             
             plt.tight_layout()
-            plot_manager.record_usage("object_detection.confidence_distribution_histogram")
             return fig
 
 problem_type_map = {

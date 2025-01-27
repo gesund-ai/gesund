@@ -177,7 +177,6 @@ class Classification:
         # calculate the metrics
         result = self.__calculate_metrics(data, data.get("class_mapping"))
 
-        metric_manager.record_usage("classification.threshold")
         return result
 
 
@@ -216,7 +215,6 @@ class PlotThreshold:
 
         fig.savefig(filepath, format="png")
 
-        plot_manager.record_usage("classification.threshold")
         return filepath
 
     def plot(self) -> Figure:
@@ -256,7 +254,6 @@ class PlotThreshold:
         )
         ax.legend(loc="lower right")
 
-        plot_manager.record_usage("classification.threshold")
         return fig
 
 

@@ -131,7 +131,6 @@ class Classification:
         # calculate results
         result = self.__calculate_metrics(data, data.get("class_mapping"))
 
-        metric_manager.record_usage("classification.auc")
         return result
 
 
@@ -182,7 +181,6 @@ class PlotAuc:
             filepath = f"{dir_path}/{filename}"
         fig.savefig(filepath, format="png")
 
-        plot_manager.record_usage("classification.auc")
         return filepath
 
     def plot(self) -> Figure:
@@ -212,7 +210,6 @@ class PlotAuc:
             fontdict={"fontsize": 16, "fontweight": "medium"},
         )
 
-        plot_manager.record_usage("classification.auc")
         return fig
 
 
