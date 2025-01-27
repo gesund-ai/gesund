@@ -93,11 +93,9 @@ class PlotDatasetPopulationDistributionAge:
         return filepath
 
     def _setup_plot(self, figsize=(12, 7)):
-        plt.style.use('dark_background')
-        sns.set_theme(style="darkgrid", font_scale=1.2)
-
-        fig, ax = plt.subplots(figsize=figsize, facecolor='black')
-        ax.set_facecolor('black')
+        sns.set_theme(style="whitegrid", font_scale=1.2)
+        fig, ax = plt.subplots(figsize=figsize, facecolor='white')
+        ax.set_facecolor('white')
         return fig, ax
 
     def _annotate_bars(self, ax):
@@ -107,15 +105,15 @@ class PlotDatasetPopulationDistributionAge:
             y = p.get_height()
             ax.annotate(f'{count}', (x, y),
                         ha='center', va='bottom',
-                        fontsize=10, color='white')
+                        fontsize=10, color='black')
 
     def _customize_plot(self, ax, title, xlabel, ylabel):
-        ax.set_title(title, fontsize=16, pad=20, color='white')
-        ax.set_xlabel(xlabel, fontsize=12, color='white')
-        ax.set_ylabel(ylabel, fontsize=12, color='white')
-        ax.tick_params(colors='white')
+        ax.set_title(title, fontsize=16, pad=20, color='black')
+        ax.set_xlabel(xlabel, fontsize=12, color='black')
+        ax.set_ylabel(ylabel, fontsize=12, color='black')
+        ax.tick_params(colors='black')
         for spine in ax.spines.values():
-            spine.set_color('white')
+            spine.set_color('black')
 
 
 
@@ -197,10 +195,13 @@ def plot_dataset_population_distribution_age(
     plotter._validate_data(json_file)
     fig = plotter.plot_age(json_file, suffix=suffix)
     if save_plot:
-        return plotter.save(fig, filename=file_name)
+        saved_path = plotter.save(fig, filename=file_name)
+        plt.close(fig)
+        return saved_path
     else:
         plt.show()
-
+        plt.close(fig)
+        
 @plot_manager.register("object_detection.dataset_population_distribution_age")
 def plot_dataset_population_distribution_age(
     results: dict,
@@ -218,6 +219,9 @@ def plot_dataset_population_distribution_age(
     plotter._validate_data(json_file)
     fig = plotter.plot_age(json_file, suffix=suffix)
     if save_plot:
-        return plotter.save(fig, filename=file_name)
+        saved_path = plotter.save(fig, filename=file_name)
+        plt.close(fig)
+        return saved_path
     else:
         plt.show()
+        plt.close(fig)
