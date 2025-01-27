@@ -14,11 +14,30 @@ class Classification:
     pass
 
 class SemanticSegmentation:
+    """
+    Performs semantic segmentation metric calculations.
+    """
     def __init__(self, class_mappings: Optional[dict] = None):
+        """
+        Initializes the SemanticSegmentation metric calculator with optional class mappings.
+
+        :param class_mappings: Dictionary mapping class IDs to class names, defaults to None.
+        :type class_mappings: Optional[dict], optional
+        """
         self.class_mappings = class_mappings or {}
 
     def _validate_data(self, data: dict) -> bool:
-        """Validate input data structure."""
+        """
+        Validates the data required for semantic segmentation metric calculation.
+
+        :param data: The input data required for calculation, {"ground_truth":, "predictions":}
+        :type data: dict
+
+        :return: Status indicating if the data is valid.
+        :rtype: bool
+
+        :raises ValueError: If data is not a dictionary or missing required keys, or if ground truth or prediction data is empty.
+        """
         if not isinstance(data, dict):
             raise ValueError("Data must be a dictionary.")
         if "ground_truth" not in data:
@@ -32,7 +51,19 @@ class SemanticSegmentation:
         return True
 
     def _decode_rle(self, encoded_mask: str, shape: tuple) -> np.ndarray:
-        """Decode RLE format mask."""
+        """
+        Decodes a Run-Length Encoded (RLE) mask into a binary mask array.
+
+        :param encoded_mask: The RLE encoded mask string.
+        :type encoded_mask: str
+        :param shape: Shape of the mask as (height, width).
+        :type shape: tuple
+
+        :return: Decoded binary mask as a NumPy array.
+        :rtype: np.ndarray
+
+        :raises ValueError: If the encoded mask cannot be decoded properly.
+        """
         if not encoded_mask:
             return np.zeros(shape, dtype=np.uint8)
         
@@ -47,7 +78,17 @@ class SemanticSegmentation:
         return mask.reshape(shape)
 
     def _preprocess(self, data: dict) -> dict:
-        """Process masks and return pixel counts per class."""
+        """
+        Processes ground truth and prediction masks to calculate pixel counts per class.
+
+        :param data: Dictionary containing 'ground_truth' and 'predictions' data.
+        :type data: dict
+
+        :return: Dictionary with ground truth and prediction pixel counts per class.
+        :rtype: dict
+
+        :raises ValueError: If there is an error during preprocessing.
+        """
         try:
             results = {"gt_counts": {}, "pred_counts": {}}
             class_mappings = {str(k): v for k, v in self.class_mappings.items()}
@@ -98,7 +139,17 @@ class SemanticSegmentation:
             raise ValueError(f"Error preprocessing data: {str(e)}")
 
     def _calculate_metrics(self, data: dict) -> dict:
-        """Calculate ground truth and prediction pixel counts."""
+        """
+        Calculates ground truth and prediction pixel counts.
+
+        :param data: Dictionary containing preprocessed data.
+        :type data: dict
+
+        :return: Dictionary with ground truth and prediction pixel counts.
+        :rtype: dict
+
+        :raises ValueError: If there is an error during metric calculation.
+        """
         try:
             counts = self._preprocess(data)
             return {
@@ -109,16 +160,45 @@ class SemanticSegmentation:
             raise ValueError(f"Error calculating metrics: {str(e)}")
 
     def calculate(self, data: dict) -> dict:
-        """Validate data and calculate metrics."""
+        """
+        Validates data and calculates semantic segmentation metrics.
+
+        :param data: The input data required for calculation, {"ground_truth":, "predictions":}
+        :type data: dict
+
+        :return: Calculated metric results including ground truth and prediction counts.
+        :rtype: dict
+
+        :raises ValueError: If data validation fails.
+        """
         self._validate_data(data)
         return self._calculate_metrics(data)
 
 
 class ObjectDetection:
+    """
+    Performs object detection metric calculations.
+    """
     def __init__(self, class_mappings: Optional[dict] = None):
+        """
+        Initializes the ObjectDetection metric calculator with optional class mappings.
+
+        :param class_mappings: Dictionary mapping class IDs to class names, defaults to None.
+        :type class_mappings: Optional[dict], optional
+        """
         self.class_mappings = class_mappings or {}
     def _validate_data(self, data: dict) -> bool:
-        """Validate input data structure."""
+        """
+        Validates the data required for object detection metric calculation.
+
+        :param data: The input data required for calculation, {"ground_truth":, "predictions":}
+        :type data: dict
+
+        :return: Status indicating if the data is valid.
+        :rtype: bool
+
+        :raises ValueError: If data is not a dictionary or missing required keys, or if ground truth or prediction data is empty.
+        """
         if not isinstance(data, dict):
             raise ValueError("Data must be a dictionary.")
         if not data.get("ground_truth"):
@@ -128,7 +208,17 @@ class ObjectDetection:
         return True
 
     def _preprocess(self, data: dict) -> pd.DataFrame:
-        """Preprocess ground truth and prediction data into a DataFrame."""
+        """
+        Preprocesses ground truth and prediction data into a DataFrame containing class labels.
+
+        :param data: Dictionary containing 'ground_truth' and 'predictions' data.
+        :type data: dict
+
+        :return: DataFrame with ground truth and prediction class labels.
+        :rtype: pd.DataFrame
+
+        :raises ValueError: If there is an error during preprocessing.
+        """
         results = {"gt_class_label": [], "pred_class_label": []}
         class_mappings = {str(k): v for k, v in self.class_mappings.items()}
 
@@ -153,7 +243,17 @@ class ObjectDetection:
         return pd.DataFrame(results)
 
     def _calculate_metrics(self, data: dict) -> dict:
-        """Calculate ground truth and prediction counts."""
+        """
+        Calculates ground truth and prediction counts for object detection.
+
+        :param data: Dictionary containing preprocessed data.
+        :type data: dict
+
+        :return: Dictionary with ground truth and prediction counts.
+        :rtype: dict
+
+        :raises ValueError: If there is an error during metric calculation.
+        """
         try:
             df = self._preprocess(data)
             return {
@@ -164,7 +264,15 @@ class ObjectDetection:
             raise ValueError(f"Error calculating object detection metrics: {str(e)}")
 
     def calculate(self, data: dict) -> dict:
-        """Validate data and calculate metrics."""
+        """
+        Validates data and calculates object detection metrics.
+
+        :param data: The input data required for calculation, {"ground_truth":, "predictions":}
+        :type data: dict
+
+        :return: Calculated metric results including ground truth and prediction counts.
+        :rtype: dict
+        """
         try:
             self._validate_data(data)
             return self._calculate_metrics(data)
@@ -176,11 +284,28 @@ class ObjectDetection:
             }
 
 class PlotObjectCounts:
+    """
+    Class to generate and save plots for object counts in ground truth and predictions.
+    """
     def __init__(self, cohort_id: Optional[int] = None):
+        """
+        Initializes the PlotObjectCounts with an optional cohort identifier.
+
+        :param cohort_id: Optional identifier for the cohort, defaults to None.
+        :type cohort_id: Optional[int], optional
+        """
         self.cohort_id = cohort_id
 
     def _setup_plot(self, figsize: tuple = (12, 8)) -> tuple:
-        """Set up the plot with a white background and grid."""
+        """
+        Sets up the matplotlib plot with predefined styles.
+
+        :param figsize: Size of the figure, defaults to (12, 8).
+        :type figsize: tuple, optional
+
+        :return: Tuple containing the figure and axes objects.
+        :rtype: tuple
+        """
         plt.close('all')  
         plt.style.use('default')  
         sns.set_theme(style="whitegrid")
@@ -190,7 +315,19 @@ class PlotObjectCounts:
         return fig, ax
 
     def plot_object_counts(self, gt_data: dict, pred_data: dict) -> Figure:
-        """Plot ground truth and prediction counts in descending order."""
+        """
+        Plots ground truth and prediction object counts in descending order.
+
+        :param gt_data: Dictionary containing ground truth counts per class.
+        :type gt_data: dict
+        :param pred_data: Dictionary containing prediction counts per class.
+        :type pred_data: dict
+
+        :return: Matplotlib Figure object with the object counts plot.
+        :rtype: Figure
+
+        :raises ValueError: If there is an error during plotting.
+        """
 
         labels = sorted(set(gt_data.keys()).union(pred_data.keys()))
         total_counts = {
@@ -220,7 +357,17 @@ class PlotObjectCounts:
         return fig
 
     def save(self, fig: Figure, filename: str) -> str:
-        """Save the plot to a file and clean up."""
+        """
+        Saves the matplotlib figure to a local directory.
+
+        :param fig: A Matplotlib Figure object.
+        :type fig: Figure
+        :param filename: Name of the file to save the figure.
+        :type filename: str
+
+        :return: File path where the plot is saved.
+        :rtype: str
+        """
         dir_path = "plots"
         os.makedirs(dir_path, exist_ok=True)
         filepath = f"{dir_path}/{self.cohort_id}_{filename}" if self.cohort_id else f"{dir_path}/{filename}"
@@ -238,7 +385,19 @@ problem_type_map = {
 @metric_manager.register("semantic_segmentation.object_counts")
 @metric_manager.register("object_detection.object_counts") 
 def calculate_object_count_metric(data: dict, problem_type: str, class_mappings: Optional[dict] = None) -> dict:
-    """Calculate object count metrics for given problem type."""
+    """
+    Calculates object count metrics based on the problem type.
+
+    :param data: Dictionary containing 'ground_truth' and 'predictions' data.
+    :type data: dict
+    :param problem_type: Type of the problem (e.g., classification, semantic_segmentation, object_detection).
+    :type problem_type: str
+    :param class_mappings: Optional dictionary mapping class IDs to class names, defaults to None.
+    :type class_mappings: Optional[dict], optional
+
+    :return: Dictionary with ground truth and prediction object counts.
+    :rtype: dict
+    """
     try:
         if "prediction" in data and "predictions" not in data:
             data["predictions"] = data["prediction"]
@@ -271,8 +430,26 @@ def plot_object_count(
     cohort_id: Optional[int] = None,
     problem_type: str = 'object_detection'
 ) -> Union[dict, None]:
-    """Plot and optionally save object counts."""
-    
+    """
+    Plots and optionally saves object counts for ground truth and predictions.
+
+    :param results: Dictionary containing ground truth and prediction counts.
+    :type results: dict
+    :param save_plot: Flag indicating whether to save the plot.
+    :type save_plot: bool
+    :param file_name: Name of the file to save the plot as, defaults to "object_counts.png".
+    :type file_name: str
+    :param cohort_id: Optional identifier for the cohort, defaults to None.
+    :type cohort_id: Optional[int], optional
+    :param problem_type: Type of the problem, defaults to 'object_detection'.
+    :type problem_type: str, optional
+
+    :return: File path of the saved plot if saved, otherwise None.
+    :rtype: Union[dict, None]
+
+    :raises ValueError: If there is an error during plotting.
+    """
+
     gt_counts = results.get("ground_truth_counts", {})
     pred_counts = results.get("prediction_counts", {})
     

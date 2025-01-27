@@ -25,9 +25,23 @@ class SemanticSegmentation:
 
 class ObjectDetection:
     def __init__(self):
+        """
+        Initializes the ObjectDetection metric calculator.
+
+        Initializes the IoU calculator instance.
+        """
         self.iou = IoUCalc()
 
     def _validate_data(self, data: dict) -> bool:
+        """
+        Validates the data required for metric calculation and plotting.
+
+        :param data: The input data required for calculation, {"prediction":, "ground_truth": }
+        :type data: dict
+
+        :return: Status if the data is valid
+        :rtype: bool
+        """
         check_keys = ("ground_truth", "prediction", "class_mapping", "metric_args")
         for _key in check_keys:
             if _key not in data:
@@ -43,6 +57,19 @@ class ObjectDetection:
 
     @staticmethod
     def _preprocess(data: dict, get_label=False, get_pred_scores=False) -> tuple:
+        """
+        Preprocesses the input data to extract ground truth and prediction boxes.
+
+        :param data: The input data containing ground truth and predictions
+        :type data: dict
+        :param get_label: Flag to include labels in the boxes, defaults to False
+        :type get_label: bool, optional
+        :param get_pred_scores: Flag to include prediction scores, defaults to False
+        :type get_pred_scores: bool, optional
+
+        :return: A tuple of ground truth boxes and prediction boxes
+        :rtype: tuple
+        """
         gt_boxes, pred_boxes = {}, {}
         for image_id in data["ground_truth"]:
             for _ant in data["ground_truth"][image_id]["annotation"]:
@@ -68,6 +95,19 @@ class ObjectDetection:
         return gt_boxes, pred_boxes
 
     def _calc_precision_recall(self, gt_boxes, pred_boxes, threshold: float) -> tuple:
+        """
+        Calculates precision and recall based on IoU threshold.
+
+        :param gt_boxes: Ground truth bounding boxes
+        :type gt_boxes: list
+        :param pred_boxes: Predicted bounding boxes
+        :type pred_boxes: list
+        :param threshold: IoU threshold for determining true positives
+        :type threshold: float
+
+        :return: A tuple containing precision and recall
+        :rtype: tuple
+        """
         num_gt_boxes = len(gt_boxes)
         true_positives, false_positives = 0, 0
 
@@ -91,6 +131,19 @@ class ObjectDetection:
         return (precision, recall)
 
     def _calc_mAP_mAR(self, gt_boxes_dict: dict, pred_boxes_dict: dict, thresholds: list):
+        """
+        Calculates mean Average Precision (mAP) and mean Average Recall (mAR) for given thresholds.
+
+        :param gt_boxes_dict: Dictionary of ground truth boxes
+        :type gt_boxes_dict: dict
+        :param pred_boxes_dict: Dictionary of predicted boxes
+        :type pred_boxes_dict: dict
+        :param thresholds: List of IoU thresholds
+        :type thresholds: list
+
+        :return: DataFrame containing mAP and mAR values for each threshold
+        :rtype: pd.DataFrame
+        """
         results = {"metric": [], "threshold": [], "value": []}
         for threshold in thresholds or [0.5, 0.75, 0.95]:
             image_precisions, image_recalls = [], []
@@ -113,6 +166,17 @@ class ObjectDetection:
         return pd.DataFrame(results)
 
     def __calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
+        """
+        Calculates the metrics based on input data and class mapping.
+
+        :param data: The input data containing predictions and ground truth
+        :type data: dict
+        :param class_mapping: Mapping of class labels
+        :type class_mapping: dict
+
+        :return: DataFrame with calculated metrics
+        :rtype: dict
+        """
         self._validate_data(data)
         gt_boxes, pred_boxes = self._preprocess(data)
         thresholds = data["metric_args"].get("threshold", [])
@@ -122,17 +186,34 @@ class ObjectDetection:
         return results_df
 
     def calculate(self, data: dict) -> dict:
+        """
+        Calculates the performance metrics for object detection.
+
+        :param data: The input data containing predictions and ground truth
+        :type data: dict
+
+        :return: Dictionary with the results DataFrame
+        :rtype: dict
+        """
         result_df = self.__calculate_metrics(data, data.get("class_mapping", {}))
         return {"result": result_df}
 
 class PlotTrainAndValidationPerformance:
     def __init__(self, data: dict, cohort_id: Optional[int] = None):
+        """
+        Initializes the plotter for training and validation performance.
+
+        :param data: The results data to plot
+        :type data: dict
+        :param cohort_id: Optional cohort identifier, defaults to None
+        :type cohort_id: Optional[int], optional
+        """
         self.data = data
         self.cohort_id = cohort_id
 
     def _validate_data(self):
         """
-        validates the data required for plotting the bar plot
+        Validates the data required for plotting the bar plot.
         """
         if not isinstance(self.data["result"], pd.DataFrame):
             raise ValueError(f"Data must be a data frame.")
@@ -161,6 +242,12 @@ class PlotTrainAndValidationPerformance:
         return filepath
     
     def plot(self) -> Figure:
+        """
+        Generates the bar plot for training and validation performance.
+
+        :return: The matplotlib figure object containing the plot
+        :rtype: Figure
+        """
         self._validate_data()
         df = self.data["result"]
         df_mAP = df[df["metric"] == "mAP"].copy()
@@ -212,7 +299,15 @@ problem_type_map = {
 @metric_manager.register("object_detection.train_and_validation_performance")
 def calculate_train_and_validation_performance(data: dict, problem_type: str):
     """
-    A wrapper function to calculate the training and validation performance
+    A wrapper function to calculate the training and validation performance.
+
+    :param data: The input data containing predictions and ground truth
+    :type data: dict
+    :param problem_type: The type of problem
+    :type problem_type: str
+
+    :return: Dictionary with the calculated performance results
+    :rtype: dict
     """
     _metric_calculator = problem_type_map[problem_type]()
     result = _metric_calculator.calculate(data)

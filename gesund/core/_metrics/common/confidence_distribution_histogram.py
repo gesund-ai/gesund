@@ -21,10 +21,23 @@ class SemanticSegmentation:
 
 class ObjectDetection:
     def __init__(self):
+        """
+        Initializes the ObjectDetection metric calculator with an IoU calculator.
+        """
         self.iou = IoUCalc()
 
     def _validate_data(self, data: dict) -> bool:
+        """
+        Validates the data required for metric calculation and plotting.
 
+        :param data: The input data required for calculation, {"prediction":, "ground_truth": }
+        :type data: dict
+
+        :return: Status if the data is valid
+        :rtype: bool
+
+        :raises ValueError: If required keys are missing or keys do not match.
+        """
         # check for the important keys in the data
         check_keys = ("ground_truth", "prediction")
         for _key in check_keys:
@@ -42,7 +55,17 @@ class ObjectDetection:
             )
 
     def _preprocess(self, data: dict) -> tuple:
+        """
+        Preprocesses the prediction and ground truth data for metric calculation.
 
+        :param data: Dictionary containing 'prediction' and 'ground_truth' data.
+        :type data: dict
+
+        :return: Tuple of ground truth boxes and predicted boxes dictionaries.
+        :rtype: tuple
+
+        :raises ValueError: If preprocessing fails.
+        """
         from .average_precision import ObjectDetection
 
         return ObjectDetection._preprocess(data, get_label=False, get_pred_scores=True)
@@ -50,7 +73,19 @@ class ObjectDetection:
     def _calculate_conf_dist(
         self, gt_boxes_dict, pred_boxes_dict: dict
     ) -> pd.DataFrame:
+        """
+        Calculates the confidence distribution for true positives and false positives.
 
+        :param gt_boxes_dict: Dictionary of ground truth bounding boxes.
+        :type gt_boxes_dict: dict
+        :param pred_boxes_dict: Dictionary of predicted bounding boxes with scores.
+        :type pred_boxes_dict: dict
+
+        :return: DataFrame with confidence scores and labels.
+        :rtype: pd.DataFrame
+
+        :raises ValueError: If confidence distribution calculation fails.
+        """
         results = []
         for image_id, pred_boxes in pred_boxes_dict.items():
             gt_boxes = gt_boxes_dict[image_id]
@@ -87,7 +122,19 @@ class ObjectDetection:
         return data
 
     def _calculate_metrics(self, data: dict, class_mapping: dict) -> dict:
+        """
+        Calculates the confidence distribution histogram metrics.
 
+        :param data: Dictionary containing 'prediction' and 'ground_truth' data.
+        :type data: dict
+        :param class_mapping: Dictionary mapping class IDs to class names.
+        :type class_mapping: dict
+
+        :return: Dictionary with confidence distribution histogram data.
+        :rtype: dict
+
+        :raises ValueError: If metric calculation fails.
+        """
         results = {}
 
         # preprocess the data
@@ -100,6 +147,17 @@ class ObjectDetection:
         return results
 
     def calculate(self, data: dict) -> dict:
+        """
+        Calculates the confidence distribution histogram for the given data.
+
+        :param data: The input data required for calculation and plotting, {"prediction":, "ground_truth": , "class_mapping":}
+        :type data: dict
+
+        :return: Calculated metric results
+        :rtype: dict
+
+        :raises ValueError: If data validation or calculation fails.
+        """
 
         result = {}
 
@@ -114,12 +172,22 @@ class ObjectDetection:
 
 class PlotConfidenceDistributionHistogram:
     def __init__(self, data: dict, cohort_id: Optional[int] = None):
+        """
+        Initializes the PlotConfidenceDistributionHistogram with data and an optional cohort identifier.
+
+        :param data: Dictionary containing confidence distribution histogram data.
+        :type data: dict
+        :param cohort_id: Optional identifier for the cohort, defaults to None.
+        :type cohort_id: Optional[int], optional
+        """
         self.data = data
         self.cohort_id = cohort_id
 
     def _validate_data(self):
         """
-        validates the data required for plotting the bar plot
+        Validates the data required for plotting the confidence distribution histogram.
+
+        :raises ValueError: If required data keys are missing or data format is incorrect.
         """
         if "confidence_distribution_histogram" not in self.data:
             raise ValueError("confidence_distribution_histogram data is missing.")
@@ -128,6 +196,17 @@ class PlotConfidenceDistributionHistogram:
             raise ValueError(f"Data must be a data frame.")
 
     def save(self, fig: Figure, filename: str) -> str:
+        """
+        Saves a Matplotlib Figure object to a file.
+
+        :param fig: A Matplotlib Figure object.
+        :type fig: Figure
+        :param filename: Name of the file to save the figure.
+        :type filename: str
+
+        :return: File path where the plot is saved.
+        :rtype: str
+        """
         dir_path = "plots"
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
@@ -142,42 +221,50 @@ class PlotConfidenceDistributionHistogram:
         return filepath
 
     def plot(self) -> Figure:
-            self._validate_data()
-            plot_data = self.data["confidence_distribution_histogram"]
-            
-            tp_data = plot_data[plot_data['label'] == 'TP']['confidence'].values
-            fp_data = plot_data[plot_data['label'] == 'FP']['confidence'].values            
-            bins = np.linspace(0, 1, 11)
-            
-            
-            plt.style.use('default')
-            sns.set_style("white")
-            
-            fig, ax = plt.subplots(figsize=(12, 7))
-            
-            n_tp, _, _ = ax.hist(tp_data, bins=bins, alpha=0.6, color='#aed6dc', 
-                                edgecolor='#7c99b4', linewidth=1)
-            n_fp, _, _ = ax.hist(fp_data, bins=bins, alpha=0.6, color='#ff9a8c', 
-                                edgecolor='#e88a7d', linewidth=1)
-            
-            ax.set_title("Confidence Score Distribution", fontsize=16, pad=20, color='#2f4858')
-            ax.set_xlabel("Confidence Score", fontsize=12, color='#2f4858')
-            ax.set_ylabel("Count", fontsize=12, color='#2f4858')
-            
-            ax.grid(True, color='#e6e6e6', linestyle='-')
-            ax.set_axisbelow(True)
-            
-            
-            ax.tick_params(labelsize=10, colors='#2f4858')
-            
-            ax.set_xlim(-0.05, 1.05)
-            
-            
-            for spine in ax.spines.values():
-                spine.set_color('#e6e6e6')
-            
-            plt.tight_layout()
-            return fig
+        """
+        Plots the confidence distribution histogram.
+
+        :return: Matplotlib Figure object with the confidence distribution histogram.
+        :rtype: Figure
+
+        :raises ValueError: If plotting fails.
+        """
+        self._validate_data()
+        plot_data = self.data["confidence_distribution_histogram"]
+
+        tp_data = plot_data[plot_data['label'] == 'TP']['confidence'].values
+        fp_data = plot_data[plot_data['label'] == 'FP']['confidence'].values            
+        bins = np.linspace(0, 1, 11)
+
+        plt.style.use('default')
+        sns.set_style("white")
+
+        fig, ax = plt.subplots(figsize=(12, 7))
+
+        n_tp, _, _ = ax.hist(tp_data, bins=bins, alpha=0.6, color='#aed6dc', 
+                            edgecolor='#7c99b4', linewidth=1, label='True Positives')
+        n_fp, _, _ = ax.hist(fp_data, bins=bins, alpha=0.6, color='#ff9a8c', 
+                            edgecolor='#e88a7d', linewidth=1, label='False Positives')
+
+        ax.set_title("Confidence Score Distribution", fontsize=16, pad=20, color='#2f4858')
+        ax.set_xlabel("Confidence Score", fontsize=12, color='#2f4858')
+        ax.set_ylabel("Count", fontsize=12, color='#2f4858')
+
+        ax.grid(True, color='#e6e6e6', linestyle='-')
+        ax.set_axisbelow(True)
+
+        ax.tick_params(labelsize=10, colors='#2f4858')
+
+        ax.set_xlim(-0.05, 1.05)
+
+        for spine in ax.spines.values():
+            spine.set_color('#e6e6e6')
+
+        ax.legend()
+
+        plt.tight_layout()
+        return fig
+
 
 problem_type_map = {
     "classification": Classification,
@@ -201,7 +288,23 @@ def plot_confidence_distribution_histogram_od(
     file_name: str = "confidence_distribution_histogram.png",
     cohort_id: Optional[int] = None,
 ) -> Union[str, None]:
+    """
+    Plots the confidence distribution histogram for object detection.
 
+    :param results: Dictionary containing confidence distribution histogram data.
+    :type results: dict
+    :param save_plot: Flag indicating whether to save the plot.
+    :type save_plot: bool
+    :param file_name: Name of the file to save the plot as, defaults to "confidence_distribution_histogram.png".
+    :type file_name: str
+    :param cohort_id: Optional identifier for the cohort, defaults to None.
+    :type cohort_id: Optional[int], optional
+
+    :return: File path of the saved plot if saved, otherwise None.
+    :rtype: Union[str, None]
+
+    :raises ValueError: If plotting fails.
+    """
     plotter = PlotConfidenceDistributionHistogram(data=results, cohort_id=cohort_id)
     fig = plotter.plot()
     if save_plot:

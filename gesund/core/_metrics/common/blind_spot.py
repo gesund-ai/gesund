@@ -231,6 +231,14 @@ class SemanticSegmentation:
 
 class PlotBlindSpot:
     def __init__(self, data: dict, cohort_id: Optional[int] = None):
+        """
+        Initializes the PlotBlindSpot with data and an optional cohort identifier.
+
+        :param data: Dictionary containing metric results.
+        :type data: dict
+        :param cohort_id: Optional identifier for the cohort, defaults to None.
+        :type cohort_id: Optional[int], optional
+        """
         self.data = data
         self.per_class_metrics = data["per_class_metrics"]
         self.overall_metrics = data["overall_metrics"]
@@ -241,6 +249,8 @@ class PlotBlindSpot:
     def _validate_data(self):
         """
         Validates the data required for plotting the stats tables.
+
+        :raises ValueError: If required data keys are missing.
         """
         required_keys = [
             "per_class_metrics",
@@ -280,6 +290,11 @@ class PlotBlindSpot:
     def plot(self) -> Figure:
         """
         Plots the blind spot chart.
+
+        :return: Matplotlib Figure object with the blind spot plot.
+        :rtype: Figure
+
+        :raises ValueError: If plotting fails.
         """
         self._validate_data()
         sns.set_style("whitegrid")

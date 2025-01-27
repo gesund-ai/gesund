@@ -17,11 +17,15 @@ class Classification:
 class IoUCalc:
     def calculate(self, box1: List[float], box2: List[float]) -> float:
         """
-        Calculate the IoU between two bounding boxes.
+        Calculate the Intersection over Union (IoU) between two bounding boxes.
         
-        :param box1: [x1, y1, x2, y2]
-        :param box2: [x1, y1, x2, y2]
+        :param box1: List of coordinates [x1, y1, x2, y2] for the first box.
+        :type box1: List[float]
+        :param box2: List of coordinates [x1, y1, x2, y2] for the second box.
+        :type box2: List[float]
+        
         :return: IoU value in the range [0, 1].
+        :rtype: float
         """
         xi1 = max(box1[0], box2[0])
         yi1 = max(box1[1], box2[1])
@@ -43,11 +47,19 @@ class IoUCalc:
 
 class ObjectDetection:
     def __init__(self):
+        """
+        Initializes the ObjectDetection metric calculator and loads class mappings.
+        """
         self.iou = IoUCalc()
         self.label_to_class_name = self._load_class_mappings()
 
     def _load_class_mappings(self) -> Dict[int, str]:
-        """Loads a JSON file mapping label IDs to class names."""
+        """
+        Loads a JSON file mapping label IDs to class names.
+        
+        :return: Dictionary mapping label IDs to class names.
+        :rtype: Dict[int, str]
+        """
         project_root = os.path.dirname(
             os.path.dirname(
                 os.path.dirname(
@@ -79,10 +91,13 @@ class ObjectDetection:
 
     def _validate_data(self, data: Dict) -> bool:
         """
-        Checks that required keys exist and ground truth IDs match prediction IDs.
+        Validates the data required for metric calculation.
         
         :param data: Dictionary containing 'ground_truth', 'prediction', 'class_mapping', 'metric_args'.
-        :return: True if passes validation, otherwise raises ValueError.
+        :type data: Dict
+        
+        :return: True if data is valid.
+        :rtype: bool
         """
         required_keys = {"ground_truth", "prediction", "class_mapping", "metric_args"}
         missing_keys = required_keys - data.keys()
@@ -96,6 +111,19 @@ class ObjectDetection:
         return True
 
     def _preprocess(self, data: Dict, get_label: bool = True, get_pred_scores: bool = True) -> Tuple[Dict, Dict]:
+        """
+        Preprocesses the input data to extract ground truth and prediction boxes.
+        
+        :param data: Dictionary containing 'ground_truth' and 'prediction' data.
+        :type data: Dict
+        :param get_label: Flag to include labels in the boxes, defaults to True.
+        :type get_label: bool
+        :param get_pred_scores: Flag to include prediction scores, defaults to True.
+        :type get_pred_scores: bool
+        
+        :return: Tuple of dictionaries containing ground truth boxes and prediction boxes.
+        :rtype: Tuple[Dict, Dict]
+        """
         gt_boxes, pred_boxes = {}, {}
         for image_id in data["ground_truth"]:
             for annotation in data["ground_truth"][image_id].get("annotation", []):
@@ -119,9 +147,13 @@ class ObjectDetection:
 
     def _preprocess_by_class(self, data: Dict) -> Tuple[Dict, Dict, Dict]:
         """
-        Organize ground truth/predictions by class for simpler metric calculation.
+        Organizes ground truth and predictions by class for metric calculation.
         
-        :return: Dictionaries containing GT boxes, predicted boxes, and confidences keyed by class.
+        :param data: Dictionary containing preprocessed ground truth and prediction boxes.
+        :type data: Dict
+        
+        :return: Tuple of dictionaries containing GT boxes, predicted boxes, and confidences by class.
+        :rtype: Tuple[Dict, Dict, Dict]
         """
         gt_boxes, pred_boxes = self._preprocess(data, get_label=True, get_pred_scores=True)
         classes = list(self.label_to_class_name.values()) + ["unknown"]
@@ -186,7 +218,15 @@ class ObjectDetection:
         return ap, mean_recall
 
     def _calc_metrics_per_class(self, data: Dict) -> Dict:
-        """Calculate metrics (AP/AR) per class and return a dictionary of results."""
+        """
+        Calculates metrics (AP/AR) per class.
+        
+        :param data: Dictionary containing ground truth and prediction data.
+        :type data: Dict
+        
+        :return: Dictionary of metrics per class.
+        :rtype: Dict
+        """
         gt_dict, pred_dict, conf_dict = self._preprocess_by_class(data)
         metrics = {}
         for cls, gt_boxes in gt_dict.items():
@@ -209,8 +249,10 @@ class ObjectDetection:
 
     def plot_metrics(self, metrics: Dict) -> None:
         """
-        Generate bar plot of metrics by class.
-        Saves the plot as 'metrics_plot.png' and displays it.
+        Generates and displays a bar plot of metrics by class.
+        
+        :param metrics: Dictionary containing per-class metrics.
+        :type metrics: Dict
         """
         metrics_order = ["AP@10", "AP@50", "AP@75", "AP@[.50,.95]", "AR@max=100", "AR@max=10", "AR@max=1"]
         data = [
@@ -229,7 +271,13 @@ class ObjectDetection:
 
     def calculate(self, data: Dict) -> Dict:
         """
-        Public method to validate data, calculate metrics, and return results.
+        Validates data and calculates object detection metrics.
+        
+        :param data: Dictionary containing 'prediction', 'ground_truth', 'class_mapping', 'metric_args'.
+        :type data: Dict
+        
+        :return: Dictionary with calculated metrics.
+        :rtype: Dict
         """
         self._validate_data(data)
         metrics = self._calc_metrics_per_class(data)
@@ -238,12 +286,19 @@ class ObjectDetection:
 
 class SemanticSegmentation:
     """Performs semantic segmentation metric calculations."""
-
     def __init__(self) -> None:
+        """
+        Initializes the SemanticSegmentation metric calculator and loads class mappings.
+        """
         self.label_to_class_name = self._load_class_mappings()
 
     def _load_class_mappings(self) -> Dict[int, str]:
-        """Loads a JSON file mapping label IDs to class names."""
+        """
+        Loads a JSON file mapping label IDs to class names.
+        
+        :return: Dictionary mapping label IDs to class names.
+        :rtype: Dict[int, str]
+        """        
         project_root = os.path.dirname(
             os.path.dirname(
                 os.path.dirname(
@@ -275,8 +330,12 @@ class SemanticSegmentation:
 
     def _validate_data(self, data: dict) -> None:
         """
-        Validate keys and shapes for ground truth and prediction data.
-        Raises ValueError if checks fail.
+        Validates the data required for semantic segmentation metric calculation.
+        
+        :param data: Dictionary containing 'ground_truth', 'prediction', and 'metric_args'.
+        :type data: dict
+        
+        :raises ValueError: If required keys are missing or data is malformed.
         """
         for key in ["ground_truth", "prediction", "metric_args"]:
             if key not in data:
@@ -332,9 +391,13 @@ class SemanticSegmentation:
 
     def _preprocess(self, data: dict) -> Tuple[np.ndarray, np.ndarray]:
         """
-        Convert annotations and predictions into numeric masks.
+        Converts annotations and predictions into numeric masks.
         
-        :return: Numpy arrays of GT masks and predicted masks stacked by image.
+        :param data: Dictionary containing 'ground_truth' and 'prediction' data.
+        :type data: dict
+        
+        :return: Tuple of numpy arrays for ground truth masks and predicted masks.
+        :rtype: Tuple[np.ndarray, np.ndarray]
         """
         gt_masks, pred_masks = [], []
         for img_id in data["ground_truth"]:
@@ -374,9 +437,13 @@ class SemanticSegmentation:
 
     def calculate(self, data: Dict) -> Dict:
         """
-        Public method to validate semantic segmentation data and calculate metrics.
+        Validates data and calculates semantic segmentation metrics.
         
-        :return: Dictionary with per-class metrics in 'highlighted'.
+        :param data: Dictionary containing 'ground_truth', 'prediction', and 'metric_args'.
+        :type data: Dict
+        
+        :return: Dictionary with calculated metrics.
+        :rtype: Dict
         """
         self._validate_data(data)
         gt_masks, pred_masks = self._preprocess(data)
@@ -407,9 +474,13 @@ class SemanticSegmentation:
 
     def plot_metrics(self, metrics: Dict) -> Figure:
         """
-        Generate bar plot for segmentation metrics per class.
+        Generates a bar plot for semantic segmentation metrics per class.
+        
+        :param metrics: Dictionary containing per-class metrics.
+        :type metrics: Dict
         
         :return: Matplotlib Figure object with the bar plot.
+        :rtype: Figure
         """
         per_class = {k: v for k, v in metrics.items() if k != "overall"}
         rows = []
@@ -431,12 +502,24 @@ class PlotModelStats:
     Class to generate and save plots for model metrics results.
     Supports separate table-like views for semantic segmentation.
     """
-
     def __init__(self, data: dict, cohort_id: Optional[int] = None) -> None:
+        """
+        Initializes the PlotModelStats with data and optional cohort identifier.
+        
+        :param data: Dictionary containing metric results.
+        :type data: dict
+        :param cohort_id: Optional identifier for the cohort, defaults to None.
+        :type cohort_id: Optional[int], optional
+        """
         self.data = data
         self.cohort_id = cohort_id
 
     def _validate_data(self) -> None:
+        """
+        Validates that the data contains a DataFrame in 'result'.
+        
+        :raises ValueError: If 'result' is not a DataFrame.
+        """
         if not isinstance(self.data["result"], pd.DataFrame):
             raise ValueError("Data must be a DataFrame.")
 
@@ -461,7 +544,12 @@ class PlotModelStats:
 
     def plot(self) -> Figure:
         """
-        Decide which plot method to call based on the structure of 'highlighted'.
+        Determines the appropriate plotting method based on the data structure.
+        
+        :return: Matplotlib Figure object with the generated plot.
+        :rtype: Figure
+        
+        :raises ValueError: If no highlighted metrics are found.
         """
         highlighted = self.data.get("highlighted", {})
         if not highlighted:
@@ -472,10 +560,13 @@ class PlotModelStats:
 
     def _plot_segmentation_table(self, metrics: Dict) -> Figure:
         """
-        Create a table showing semantic segmentation metrics.
+        Creates a table showing semantic segmentation metrics.
         
         :param metrics: Dictionary containing the metric results.
-        :return: A Matplotlib Figure with a table of segmentation metrics.
+        :type metrics: Dict
+        
+        :return: Matplotlib Figure with a table of segmentation metrics.
+        :rtype: Figure
         """
         metrics_order = ["AP@10", "AP@50", "AP@75", "AP@[.50,.95]", "AR@max=100", "AR@max=10", "AR@max=1"]
         data = []
@@ -509,10 +600,13 @@ class PlotModelStats:
 
     def _plot_generic_table(self, metrics: Dict) -> Figure:
         """
-        Create a generic table for displaying metrics, used for object detection or fallback.
+        Creates a generic table for displaying metrics, used for object detection or as a fallback.
         
         :param metrics: Dictionary containing the metric information.
-        :return: A Matplotlib Figure object with a table of metrics.
+        :type metrics: Dict
+        
+        :return: Matplotlib Figure object with a table of metrics.
+        :rtype: Figure
         """
         if "per_class" in metrics:
             per_class_data = metrics["per_class"]
@@ -561,7 +655,15 @@ problem_type_map = {
 @metric_manager.register("object_detection.model_stats")
 def calculate_model_stats(data: dict, problem_type: str):
     """
-    Calculate metrics by instantiating the appropriate class based on the problem type.
+    Calculates model statistics based on the problem type.
+    
+    :param data: Dictionary containing prediction and ground truth data.
+    :type data: dict
+    :param problem_type: Type of the problem 
+    :type problem_type: str
+    
+    :return: Calculated metric results.
+    :rtype: dict
     """
     metric_calculator = problem_type_map[problem_type]()
     result = metric_calculator.calculate(data)
@@ -575,7 +677,19 @@ def plot_model_stats(
     cohort_id: Optional[int] = None,
 ) -> Union[str, None]:
     """
-    Plot object detection metrics, optionally saving the plot to disk.
+    Plots object detection metrics, optionally saving the plot to disk.
+    
+    :param results: Dictionary containing metric results.
+    :type results: dict
+    :param save_plot: Flag indicating whether to save the plot.
+    :type save_plot: bool
+    :param file_name: Name of the file to save the plot as, defaults to "model_stats.png".
+    :type file_name: str
+    :param cohort_id: Optional identifier for the cohort, defaults to None.
+    :type cohort_id: Optional[int], optional
+    
+    :return: File path of the saved plot if saved, otherwise None.
+    :rtype: Union[str, None]
     """
     plotter = PlotModelStats(data=results, cohort_id=cohort_id)
     fig = plotter.plot()
@@ -592,7 +706,19 @@ def plot_model_stats_semantic_segmentation(
     cohort_id: Optional[int] = None,
 ) -> Union[str, None]:
     """
-    Plot semantic segmentation metrics, optionally saving the plot to disk.
+    Plots semantic segmentation metrics, optionally saving the plot to disk.
+    
+    :param results: Dictionary containing metric results.
+    :type results: dict
+    :param save_plot: Flag indicating whether to save the plot.
+    :type save_plot: bool
+    :param file_name: Name of the file to save the plot as, defaults to "model_stats.png".
+    :type file_name: str
+    :param cohort_id: Optional identifier for the cohort, defaults to None.
+    :type cohort_id: Optional[int], optional
+    
+    :return: File path of the saved plot if saved, otherwise None.
+    :rtype: Union[str, None]
     """
     plotter = PlotModelStats(data=results, cohort_id=cohort_id)
     fig = plotter.plot()
