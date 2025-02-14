@@ -10,8 +10,9 @@ name: Publish to testpypi
 
 on:
   push:
-    tags:
-      - "v*.*.*"
+    branches:
+      - main
+      - refactor/document_automation
   workflow_dispatch:
 
 jobs:
