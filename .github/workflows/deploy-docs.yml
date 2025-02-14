@@ -10,12 +10,12 @@
 
 name: Deploy Sphinx Documentation
 
-on:
-  push:
-    branches:
-      - main
-      - refactor/document_automation
-  workflow_dispatch:
+on: release
+  # push:
+  #   branches:
+  #     - main
+  #     - refactor/document_automation
+  # workflow_dispatch:
 
 permissions:
   contents: write
