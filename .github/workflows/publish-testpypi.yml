@@ -9,7 +9,9 @@
 name: Publish to testpypi
 
 on:
-  release:
+  push:
+    tags:
+      - "v*.*.*"
   workflow_dispatch:
 
 jobs:
