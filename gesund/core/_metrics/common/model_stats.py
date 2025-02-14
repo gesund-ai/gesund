@@ -13,7 +13,8 @@ from gesund.core import metric_manager, plot_manager
 class Classification:
     pass
 
-#1.40 minute with from iou.py ->> normally with this class  20 second it takes.
+# 1.40 minute with from iou.py ->> normally with this class  20 second it takes.
+# Double checked still got time difference issue.
 class IoUCalc:
     def calculate(self, box1: List[float], box2: List[float]) -> float:
         """

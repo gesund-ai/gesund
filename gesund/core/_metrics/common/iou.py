@@ -81,11 +81,22 @@ class IoUCalc:
         if mask1.shape != mask2.shape:
             raise ValueError("Masks must have the same shape.")
 
+        # Validate that the masks are not empty
+        if mask1.size == 0 or mask2.size == 0:
+            raise ValueError("Input masks must not be empty.")
+
         intersection = np.logical_and(mask1, mask2)
         union = np.logical_or(mask1, mask2)
 
-        if np.sum(union) == 0:
-            iou = 1.0
-        else:
-            iou = np.sum(intersection) / np.sum(union)
+        total_union = np.sum(union)
+        # If union is zero, check if both masks are empty (all False)
+        if total_union == 0:
+            if np.sum(mask1)==0 and np.sum(mask2)==0:
+                #TODO: Both masks are completely.
+                return 1.0
+            else:
+                #TODO: Otherwise the data might be problematic
+                raise ValueError("Union of the masks is zero, please check the mask data.")
+
+        iou = np.sum(intersection) / total_union
         return round(iou, 4)
