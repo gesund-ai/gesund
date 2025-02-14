@@ -238,6 +238,7 @@ class PlotPredictedDistribution:
             filepath = f"{dir_path}/{filename}"
 
         fig.savefig(filepath, format="png")
+
         return filepath
 
     def plot(self) -> Figure:
@@ -264,6 +265,7 @@ class PlotPredictedDistribution:
             title_str = "IoU distribution"
 
         ax.set_title(title_str, fontdict={"fontsize": 16, "fontweight": "bold"})
+
         return fig
 
 

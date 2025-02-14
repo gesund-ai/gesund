@@ -5,9 +5,12 @@
 # Validation Metrics Library
 
 [![Test  Workflow](https://github.com/gesund-ai/gesund/actions/workflows/test.yml/badge.svg)](https://github.com/gesund-ai/gesund/actions/workflows/test.yml)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
 [![PyPi](https://img.shields.io/pypi/v/gesund)](https://pypi.org/project/gesund)
 [![PyPI Downloads](https://img.shields.io/pypi/dm/gesund.svg?label=PyPI%20downloads)](
 https://pypi.org/project/gesund/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![python](https://img.shields.io/badge/Python-3.8-3776AB.svg?logo=python)](https://www.python.org)
 
 
 This library provides tools for calculating validation metrics for predictions and annotations in machine learning workflows. It includes a command-line tool for computing and displaying validation metrics.

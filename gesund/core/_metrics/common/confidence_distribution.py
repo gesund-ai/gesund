@@ -150,6 +150,7 @@ class ObjectDetection:
 
         # calculate the metrics
         result = self._calculate_metrics(data, data.get("class_mapping"))
+
         return result
 
 
@@ -179,6 +180,7 @@ class PlotConfidenceDistribution:
             filepath = f"{dir_path}/{filename}"
 
         fig.savefig(filepath, format="png")
+
         return filepath
 
     def plot(self) -> Figure:

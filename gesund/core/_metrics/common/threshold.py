@@ -100,9 +100,9 @@ class Classification:
 
         # calculate the metrics
         metrics = {}
-        metrics["f1_score"] = f1_score(y_true, predicted)
-        metrics["precision"] = precision_score(y_true, predicted)
-        metrics["sensitivity"] = recall_score(y_true, predicted)
+        metrics["f1_score"] = f1_score(y_true, predicted, zero_division=0)
+        metrics["precision"] = precision_score(y_true, predicted, zero_division=0)
+        metrics["sensitivity"] = recall_score(y_true, predicted, zero_division=0)
         metrics["specificity"] = round(tn / (tn + fp), 4)
         metrics["mcc"] = matthews_corrcoef(y_true, predicted)
         metrics["fpr"] = round(fp / (fp + tn), 4)
@@ -214,6 +214,7 @@ class PlotThreshold:
             filepath = f"{dir_path}/{filename}"
 
         fig.savefig(filepath, format="png")
+
         return filepath
 
     def plot(self) -> Figure:
@@ -252,6 +253,7 @@ class PlotThreshold:
             fontdict={"fontsize": 16, "fontweight": "medium"},
         )
         ax.legend(loc="lower right")
+
         return fig
 
 

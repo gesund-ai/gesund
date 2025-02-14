@@ -130,6 +130,7 @@ class PlotDiceDistribution:
             filepath = f"{dir_path}/{filename}"
 
         fig.savefig(filepath, format="png")
+
         return filepath
 
     def plot(self) -> Figure:
@@ -147,12 +148,13 @@ class PlotDiceDistribution:
 
         g = sns.JointGrid(data=plot_data, x="dice", y="iou", space=0, height=9, ratio=7)
 
-        g.plot_joint(sns.scatterplot, palette="pastel")
+        g.plot_joint(sns.scatterplot)
         g.plot_marginals(sns.histplot, kde=True, color=".5")
 
         g.set_axis_labels("DICE", "IoU", fontsize=14)
         g.figure.suptitle("Scatterplot DICE vs IoU", fontsize=16)
         plt.subplots_adjust(top=0.95)
+
         return g.figure
 
 

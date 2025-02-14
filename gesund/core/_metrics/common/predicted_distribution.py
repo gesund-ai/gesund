@@ -234,6 +234,7 @@ class PlotPredictedDistribution:
             filepath = f"{dir_path}/{filename}"
 
         fig.savefig(filepath, format="png")
+
         return filepath
 
     def plot(self) -> Figure:

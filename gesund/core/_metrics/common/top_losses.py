@@ -167,6 +167,7 @@ class Classification:
 
         # calculate the metrics
         result = self.__calculate_metrics(data)
+
         return result
 
 
@@ -239,6 +240,7 @@ class SemanticSegmentation:
         # calculate the metrics
         result["loss_data"] = self._calculate_metrics(data)
         result["overall_loss"] = result["loss_data"]["loss"].mean()
+
         return result
 
 
@@ -402,6 +404,7 @@ class PlotTopLosses:
             filepath = f"{dir_path}/{filename}"
 
         fig.savefig(filepath, format="png")
+
         return filepath
 
     def plot(self, top_k: int = 9) -> Figure:
@@ -415,21 +418,45 @@ class PlotTopLosses:
         """
         # Validate the data
         self._validate_data()
-        sns.set_style("whitegrid")
-        fig, ax = plt.subplots(figsize=(10, 7))
+        sns.set_style("whitegrid", {"grid.linestyle": "--"})
+        plt.rcParams["axes.edgecolor"] = "#333333"
+
+        fig, ax = plt.subplots(figsize=(12, 8))
         plot_data = self.data["loss_data"].head(20)
         hue_value = "ground_truth" if "ground_truth" in plot_data.columns else None
-        sns.barplot(
-            data=plot_data,
-            x="image_id",
-            y="loss",
-            ax=ax,
-            palette="pastel",
-            hue=hue_value,
-        )
+        if hue_value:
+            sns.barplot(
+                data=plot_data,
+                x="image_id",
+                y="loss",
+                ax=ax,
+                hue=hue_value,
+                palette="husl",
+                saturation=0.9,
+                edgecolor="#2f2f2f",
+                linewidth=1,
+            )
+        else:
+            sns.barplot(
+                data=plot_data,
+                x="image_id",
+                y="loss",
+                ax=ax,
+                color="#3498db",
+                alpha=0.8,
+                edgecolor="#2f2f2f",
+                linewidth=1,
+            )
 
+        ax.grid(True, linestyle="--", alpha=0.7)
+        ax.set_facecolor("#f8f9fa")
+        fig.patch.set_facecolor("#ffffff")
         ax.set_xlabel("Image id", fontdict={"fontsize": 14, "fontweight": "medium"})
-        ax.set_xticklabels(ax.get_xticklabels(), rotation=45, ha="right")
+
+        ticks = range(len(plot_data["image_id"]))
+        ax.set_xticks(ticks)
+        ax.set_xticklabels(plot_data["image_id"], rotation=45, ha="right")
+
         ax.set_ylabel("Loss Value", fontdict={"fontsize": 14, "fontweight": "medium"})
 
         title_txt = f"Top losses : Overall loss: {self.data['overall_loss']} : Top 20"
@@ -439,7 +466,7 @@ class PlotTopLosses:
             title_str = f"{title_txt}"
 
         ax.set_title(title_str, fontdict={"fontsize": 16, "fontweight": "medium"})
-        ax.legend(loc="lower right")
+
         return fig
 
 

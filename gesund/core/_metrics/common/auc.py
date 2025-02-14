@@ -180,6 +180,7 @@ class PlotAuc:
         else:
             filepath = f"{dir_path}/{filename}"
         fig.savefig(filepath, format="png")
+
         return filepath
 
     def plot(self) -> Figure:
@@ -208,7 +209,7 @@ class PlotAuc:
             title_str,
             fontdict={"fontsize": 16, "fontweight": "medium"},
         )
-        ax.legend(loc="lower right")
+
         return fig
 
 

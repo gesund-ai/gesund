@@ -22,15 +22,14 @@ from gesund.core import metric_manager, plot_manager
 class Classification:
     def _validate_data(self, data: dict) -> bool:
         """
-        A function to validate the data that is required for metric calculation and plotting.
+        Validates the data required for metric calculation and plotting.
 
-        :param data: The input data required for calculation, {"prediction":, "ground_truth": , "metadata":}
+        :param data: The input data required for calculation, {"prediction":, "ground_truth": }
         :type data: dict
 
         :return: Status if the data is valid
         :rtype: bool
         """
-        # Basic validation checks
         if not isinstance(data, dict):
             raise ValueError("Data must be a dictionary.")
         required_keys = ["prediction", "ground_truth"]
@@ -57,7 +56,7 @@ class Classification:
         """
         Preprocesses the data
 
-        :param data: dictionary containing the data prediction, ground truth, metadata
+        :param data: dictionary containing the data prediction, ground truth
         :type data: dict
         :param get_logits: in case of multi class classification set to True
         :type get_logits: boolean
@@ -108,19 +107,23 @@ class Classification:
         true = ground_truth
         cm = confusion_matrix(true, pred_categorical, labels=class_order)
         per_class_metrics = {}
+        TP_sum = FP_sum = FN_sum = TN_sum = 0
         for idx, _cls in enumerate(class_order):
             tp = cm[idx, idx]
             fn = cm[idx, :].sum() - tp
             fp = cm[:, idx].sum() - tp
             tn = cm.sum() - (tp + fp + fn)
+            TP_sum += tp
+            FP_sum += fp
+            FN_sum += fn
+            TN_sum += tn
 
             sensitivity = tp / (tp + fn) if (tp + fn) > 0 else 0
             specificity = tn / (tn + fp) if (tn + fp) > 0 else 0
             precision = tp / (tp + fp) if (tp + fp) > 0 else 0
             f1 = (
                 2 * precision * sensitivity / (precision + sensitivity)
-                if (precision + sensitivity) > 0
-                else 0
+                if (precision + sensitivity) > 0 else 0
             )
             mcc = matthews_corrcoef(
                 (true == _cls).astype(int), (pred_categorical == _cls).astype(int)
@@ -138,6 +141,35 @@ class Classification:
                 "Matthews CC": mcc,
             }
 
+        # Calculate micro metrics
+        if TP_sum + FP_sum > 0:
+            micro_precision = TP_sum / (TP_sum + FP_sum)
+        else:
+            micro_precision = 0.0
+
+        if TP_sum + FN_sum > 0:
+            micro_recall = TP_sum / (TP_sum + FN_sum)
+        else:
+            micro_recall = 0.0
+
+        if micro_precision + micro_recall > 0:
+            micro_f1 = 2 * (micro_precision * micro_recall) / (micro_precision + micro_recall)
+        else:
+            micro_f1 = 0.0
+
+        if TN_sum + FP_sum > 0:
+            micro_specificity = TN_sum / (TN_sum + FP_sum)
+        else:
+            micro_specificity = 0.0
+
+        if pred_logits is not None:
+            try:
+                micro_auc = roc_auc_score(true, pred_logits, multi_class="ovo", average="micro")
+            except ValueError:
+                micro_auc = np.nan
+        else:
+            micro_auc = np.nan
+
         # Calculate overall metrics
         overall_accuracy = accuracy_score(true, pred_categorical)
         macro_f1 = f1_score(true, pred_categorical, average="macro")
@@ -148,16 +180,6 @@ class Classification:
         )
         macro_mcc = matthews_corrcoef(true, pred_categorical)
 
-        if pred_logits is not None:
-            try:
-                macro_auc = roc_auc_score(
-                    true, pred_logits, multi_class="ovo", average="macro"
-                )
-            except ValueError:
-                macro_auc = "Undefined"
-        else:
-            macro_auc = "Undefined"
-
         overall_metrics = {
             "Accuracy": overall_accuracy,
             "Macro F1 Score": macro_f1,
@@ -165,7 +187,12 @@ class Classification:
             "Macro Recall": macro_recall,
             "Macro Specificity": macro_specificity,
             "Matthews CC": macro_mcc,
-            "Macro AUC": macro_auc,
+            "Macro AUC": roc_auc_score(true, pred_logits, multi_class="ovo", average="macro") if pred_logits is not None else np.nan,
+            "Micro Precision": micro_precision,
+            "Micro Recall": micro_recall,
+            "Micro F1 Score": micro_f1,
+            "Micro Specificity": micro_specificity,
+            "Micro AUC": micro_auc,
         }
 
         result = {
@@ -179,7 +206,7 @@ class Classification:
 
     def calculate(self, data: dict) -> dict:
         """
-        Calculates the lift chart for the given data.
+        Calculates the blind spot chart for the given data.
 
         :param data: The input data required for calculation and plotting
                      {"prediction":, "ground_truth": , "metadata":, "class_mappings":}
@@ -190,17 +217,28 @@ class Classification:
         """
         result = {}
 
-        # Validate the data
         self._validate_data(data)
 
-        # calculate the result
         result = self.__calculate_metrics(data, data.get("class_mapping"))
 
         return result
 
+class ObjectDetection:
+    pass
 
-class PlotStatsTables:
+class SemanticSegmentation:
+    pass
+
+class PlotBlindSpot:
     def __init__(self, data: dict, cohort_id: Optional[int] = None):
+        """
+        Initializes the PlotBlindSpot with data and an optional cohort identifier.
+
+        :param data: Dictionary containing metric results.
+        :type data: dict
+        :param cohort_id: Optional identifier for the cohort, defaults to None.
+        :type cohort_id: Optional[int], optional
+        """
         self.data = data
         self.per_class_metrics = data["per_class_metrics"]
         self.overall_metrics = data["overall_metrics"]
@@ -211,6 +249,8 @@ class PlotStatsTables:
     def _validate_data(self):
         """
         Validates the data required for plotting the stats tables.
+
+        :raises ValueError: If required data keys are missing.
         """
         required_keys = [
             "per_class_metrics",
@@ -222,7 +262,7 @@ class PlotStatsTables:
             if key not in self.data:
                 raise ValueError(f"Data must contain '{key}'.")
 
-    def save(self, figs: List[Figure], filenames: List[str]) -> List[str]:
+    def save(self, fig: Figure, filename: str) -> str:
         """
         Saves multiple Matplotlib Figure objects to files.
 
@@ -234,146 +274,167 @@ class PlotStatsTables:
         :return: List of file paths where the plot images are saved
         :rtype: List[str]
         """
-        filepaths = []
         dir_path = "plots"
         if not os.path.exists(dir_path):
             os.makedirs(dir_path)
 
-        for fig, filename in zip(figs, filenames):
-            if self.cohort_id:
-                filepath = f"{dir_path}/{self.cohort_id}_{filename}"
-            else:
-                filepath = f"{dir_path}/{filename}"
+        if self.cohort_id:
+            filepath = f"{dir_path}/{self.cohort_id}_{filename}"
+        else:
+            filepath = f"{dir_path}/{filename}"
 
-            fig.savefig(filepath, format="png")
-            filepaths.append(filepath)
+        fig.savefig(filepath, format="png")
 
-        return filepaths
+        return filepath
 
-    def plot(self) -> List[Figure]:
+    def plot(self) -> Figure:
         """
-        Plots the stats tables and returns the figure objects.
+        Plots the blind spot chart.
 
-        :return: List of Matplotlib Figure objects [confusion_matrix, per_class_metrics]
-        :rtype: List[Figure]
+        :return: Matplotlib Figure object with the blind spot plot.
+        :rtype: Figure
+
+        :raises ValueError: If plotting fails.
         """
+        self._validate_data()
         sns.set_style("whitegrid")
 
-        # validate data
-        self._validate_data()
-        figures = []
+        metrics_df = pd.DataFrame.from_dict(self.per_class_metrics, orient='index').reset_index()
+        metrics_df.rename(columns={'index': 'Class'}, inplace=True)
 
-        # Plot confusion matrix
-        fig_cm, ax_cm = plt.subplots(figsize=(8, 6))
-        cm = self.confusion_matrix
-        sns.heatmap(
-            cm,
-            annot=True,
-            fmt="d",
-            cmap="Blues",
-            xticklabels=self.classes,
-            yticklabels=self.classes,
-            ax=ax_cm,
-        )
-        ax_cm.set_xlabel(
-            "Predicted Labels", fontdict={"fontsize": 14, "fontweight": "medium"}
-        )
-        ax_cm.set_ylabel(
-            "True Labels", fontdict={"fontsize": 14, "fontweight": "medium"}
-        )
+        per_class_cols = ["Sensitivity", "Specificity", "Precision", "F1 Score"]
+        for col in per_class_cols:
+            if col not in metrics_df.columns:
+                metrics_df[col] = np.nan
 
-        if self.cohort_id:
-            title_str = f"Confusion Matrix : cohort - {self.cohort_id}"
-        else:
-            title_str = "Confusion Matrix"
+        metrics_df = metrics_df[["Class"] + per_class_cols]
+        class_df = metrics_df.melt(id_vars="Class", var_name="Metric", value_name="Value")
 
-        ax_cm.set_title(title_str)
-        figures.append(fig_cm)
+        macro_cols = [
+            "Accuracy",
+            "Macro F1 Score",
+            "Macro Precision",
+            "Macro Recall",
+            "Macro Specificity",
+        ]
+        micro_cols = [
+            "Micro Precision",
+            "Micro Recall",
+            "Micro F1 Score",
+            "Micro Specificity",
+        ]
 
-        # Plot per-class metrics
-        metrics_df = pd.DataFrame(self.per_class_metrics).T
-        metrics_to_plot = ["Sensitivity", "Specificity", "Precision", "F1 Score"]
-        metrics_df = metrics_df[metrics_to_plot].reset_index()
-        metrics_df = metrics_df.melt(
-            id_vars="index", var_name="Metric", value_name="Value"
-        )
+        # Macro
+        macro_values = {c: self.overall_metrics.get(c, np.nan) for c in macro_cols}
+        macro_df = pd.DataFrame([macro_values]).melt(var_name="Metric", value_name="Value")
+        macro_df["Class"] = "Overall (Macro)"
 
-        fig_metrics, ax_metrics = plt.subplots(figsize=(10, 6))
+        # Micro
+        micro_values = {c: self.overall_metrics.get(c, np.nan) for c in micro_cols}
+        micro_df = pd.DataFrame([micro_values]).melt(var_name="Metric", value_name="Value")
+        micro_df["Class"] = "Overall (Micro)"
+
+        # Combine
+        plot_df = pd.concat([class_df, macro_df, micro_df], ignore_index=True)
+
+        unique_classes = plot_df["Class"].unique()
+        base_colors = sns.color_palette("Set2", len(unique_classes))
+        custom_palette = {}
+        for idx, cls_name in enumerate(unique_classes):
+            if cls_name == "Overall (Macro)":
+                custom_palette[cls_name] = "blue"
+            elif cls_name == "Overall (Micro)":
+                custom_palette[cls_name] = "red"
+            else:
+                custom_palette[cls_name] = base_colors[idx]
+
+        fig_metrics, ax_metrics = plt.subplots(figsize=(20, 15))
         sns.barplot(
-            data=metrics_df,
-            x="index",
+            data=plot_df,
+            x="Metric",
             y="Value",
-            hue="Metric",
-            palette="Set2",
-            ax=ax_metrics,
-        )
-        ax_metrics.set_xlabel(
-            "Classes", fontdict={"fontsize": 14, "fontweight": "medium"}
-        )
-        ax_metrics.set_ylabel(
-            "Metric Value", fontdict={"fontsize": 14, "fontweight": "medium"}
+            hue="Class",
+            palette=custom_palette,
+            ax=ax_metrics
         )
 
+        for p in ax_metrics.patches:
+            height = p.get_height()
+            ax_metrics.annotate(
+                format(height, ".2f"),
+                (p.get_x() + p.get_width() / 2.0, height),
+                ha="center",
+                va="bottom",
+                xytext=(0, 6),
+                textcoords="offset points"
+            )
+
+        ax_metrics.set_xlabel("Metrics", fontdict={"fontsize": 14, "fontweight": "medium"})
+        ax_metrics.set_ylabel("Metric Value", fontdict={"fontsize": 14, "fontweight": "medium"})
         if self.cohort_id:
-            title_str = f"Per-Class Metrics : cohort - {self.cohort_id}"
+            ax_metrics.set_title(
+                f"Comparison of Performance Metrics Across Classes : cohort - {self.cohort_id}",
+                fontdict={"fontsize": 16, "fontweight": "medium"}
+            )
         else:
-            title_str = "Per-Class Metrics"
+            ax_metrics.set_title(
+                "Comparison of Performance Metrics Across Classes",
+                fontdict={"fontsize": 16, "fontweight": "medium"}
+            )
+        ax_metrics.legend(title="Class", bbox_to_anchor=(1.05, 1), loc="upper left")
+        plt.tight_layout()
 
-        ax_metrics.set_title(
-            title_str, fontdict={"fontsize": 16, "fontweight": "medium"}
-        )
-        ax_metrics.legend(title="Metric")
-        figures.append(fig_metrics)
-
-        return figures
-
-
-class SemanticSegmentation(Classification):
-    pass
-
-
-class ObjectDetection(Classification):
-    pass
+        return fig_metrics
 
 
 problem_type_map = {
     "classification": Classification,
-    "semantic_segmentation": SemanticSegmentation,
     "object_detection": ObjectDetection,
+    "semantic_segmentation": SemanticSegmentation,
 }
 
+@metric_manager.register("classification.blind_spot")
+def calculate_blind_spot(data: dict, problem_type: str) -> dict:
+    """
+    A wrapper function to calculate the blind spot.
 
-@metric_manager.register("classification.stats_tables")
-def calculate_stats_tables(data: dict, problem_type: str):
+    :param data: Dictionary of data: {"prediction": , "ground_truth": }
+    :type data: dict
+    :param problem_type: Type of the problem
+    :type problem_type: str
+
+    :return: Dict of calculated results
+    :rtype: dict
     """
-    Calculates the stats tables metric.
-    """
-    metric_calculator = problem_type_map[problem_type]()
-    result = metric_calculator.calculate(data)
+    metric_manager = problem_type_map[problem_type]()
+    result = metric_manager.calculate(data)
     return result
 
-
-@plot_manager.register("classification.stats_tables")
-def plot_stats_tables(
-    results: dict, save_plot: bool, file_name: str
-) -> Union[List[str], List[Figure]]:
+@plot_manager.register("classification.blind_spot")
+def plot_blind_spot(
+    results: dict,
+    save_plot: bool,
+    file_name: Optional[str] = "blind_spot.png",
+    cohort_id: Optional[int] = None,
+) -> Union[str, None]:
     """
-    Plots the stats tables.
+    A wrapper function to plot the blind spot.
 
     :param results: Dictionary of the results
     :type results: dict
-    :param save_plot: Boolean value to save plots
+    :param save_plot: Boolean value to save plot
     :type save_plot: bool
-    :param file_name: name of the files
+    :param file_name: name of the file
     :type file_name: str
+    :param cohort_id: id of the cohort
+    :type cohort_id: int
 
-    :return: List of figure objects or paths to the saved plots
-    :rtype: Union[List[str], List[Figure]]
+    :return: None or path to the saved plot
+    :rtype: Union[str, None]
     """
-    plotter = PlotStatsTables(data=results)
-    figs = plotter.plot()
+    plotter = PlotBlindSpot(data=results, cohort_id=cohort_id)
+    fig = plotter.plot()
     if save_plot:
-        filenames = [f"{file_name}_{i}.png" for i in range(len(figs))]
-        return plotter.save(figs, filenames=filenames)
+        return plotter.save(fig, file_name)
     else:
         plt.show()

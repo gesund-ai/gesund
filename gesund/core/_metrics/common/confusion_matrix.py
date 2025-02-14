@@ -180,6 +180,7 @@ class PlotConfusionMatrix:
             filepath = f"{dir_path}/{filename}"
 
         fig.savefig(filepath, format="png")
+
         return filepath
 
     def plot(self) -> Figure:
@@ -215,6 +216,7 @@ class PlotConfusionMatrix:
             title_str = "Confusion matrix"
 
         ax.set_title(title_str, fontdict={"fontsize": 16, "fontweight": "medium"})
+
         return fig
 
 

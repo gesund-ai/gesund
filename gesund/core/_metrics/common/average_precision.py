@@ -262,6 +262,7 @@ class PlotAvgPrecision:
             filepath = f"{dir_path}/{filename}"
 
         fig.savefig(filepath, format="png")
+
         return filepath
 
     def plot(self) -> Figure:
@@ -295,6 +296,7 @@ class PlotAvgPrecision:
             fontdict={"fontsize": 16, "fontweight": "medium"},
         )
         ax.legend(loc="lower right")
+
         return fig
 
 
