@@ -8,7 +8,9 @@
 
 name: Publish to testpypi
 
-on: release
+on:
+  release:
+  workflow_dispatch:
 
 jobs:
   build:
