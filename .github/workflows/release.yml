@@ -11,6 +11,7 @@ on:
 env:
   PACKAGE_NAME: "sdkgesund"
   OWNER: "gesund.ai"
+  PYTHON_VERSION: "3.8" 
 
 jobs:
   details:
@@ -20,25 +21,20 @@ jobs:
       suffix: ${{ steps.release.outputs.suffix }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Extract tag and Details
         id: release
         run: |
-          if [ "${{ github.ref_type }}" = "tag" ]; then
-            TAG_NAME=${GITHUB_REF#refs/tags/}
-            NEW_VERSION=$(echo $TAG_NAME | awk -F'-' '{print $1}')
-            SUFFIX=$(echo $TAG_NAME | grep -oP '[a-z]+[0-9]+' || echo "")
-            echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
-            echo "suffix=$SUFFIX" >> "$GITHUB_OUTPUT"
-            echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
-            echo "Version is $NEW_VERSION"
-            echo "Suffix is $SUFFIX"
-            echo "Tag name is $TAG_NAME"
-          else
-            echo "No tag found"
-            exit 1
-          fi
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          NEW_VERSION=$(echo $TAG_NAME | awk -F'-' '{print $1}')
+          SUFFIX=$(echo $TAG_NAME | grep -oP '[a-z]+[0-9]+' || echo "")
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "suffix=$SUFFIX" >> "$GITHUB_OUTPUT"
+          echo "tag_name=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "Version is $NEW_VERSION"
+          echo "Suffix is $SUFFIX"
+          echo "Tag name is $TAG_NAME"
 
   check_pypi:
     needs: details
@@ -47,7 +43,11 @@ jobs:
       - name: Fetch information from PyPI
         run: |
           response=$(curl -s https://pypi.org/pypi/${{ env.PACKAGE_NAME }}/json || echo "{}")
-          latest_previous_version=$(echo $response | jq --raw-output "select(.releases != null) | .releases | keys_unsorted | last")
+          if [ -z "$response" ]; then
+            echo "Failed to fetch information from PyPI."
+            exit 1
+          fi
+          latest_previous_version=$(echo "$response" | jq --raw-output "select(.releases != null) | .releases | keys_unsorted | last")
           if [ -z "$latest_previous_version" ]; then
             echo "Package not found on PyPI."
             latest_previous_version="0.0.0"
@@ -59,7 +59,7 @@ jobs:
         run: |
           NEW_VERSION=${{ needs.details.outputs.new_version }}
           LATEST_VERSION=$latest_previous_version
-          if [ "$(printf '%s\n' "$LATEST_VERSION" "$NEW_VERSION" | sort -rV | head -n 1)" != "$NEW_VERSION" ] || [ "$NEW_VERSION" == "$LATEST_VERSION" ]; then
+          if [[ $(printf '%s\n' "$LATEST_VERSION" "$NEW_VERSION" | sort -rV | head -n 1) != "$NEW_VERSION" || "$NEW_VERSION" == "$LATEST_VERSION" ]]; then
             echo "The new version $NEW_VERSION is not greater than the latest version $LATEST_VERSION on PyPI."
             exit 1
           else
@@ -70,48 +70,97 @@ jobs:
     needs: [details, check_pypi]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.8"
+          python-version: ${{ env.PYTHON_VERSION }} 
 
-      - name: Install pypa/build
-        run: python3 -m pip install build --user
-      - name: Build a binary wheel and a source tarball
-        run: python3 -m build 
-      - name: Upload artifacts
+      - name: Install build dependencies
+        run: |
+          python3 -m pip install build --user
+
+      - name: Prepare source and update version
+        run: |
+          # Create a copy of the source code
+          mkdir -p gesund-src
+          cp -R gesund gesund-src/
+          # Update version in project.toml using the new version from tag
+          cd gesund-src
+          NEW_VERSION="${{ needs.details.outputs.new_version }}"
+          # Adjust the sed command to match your project.toml format if necessary
+          sed -i "s/^version *= *.*/version = \"$NEW_VERSION\"/" project.toml
+          # Verify that the version was updated
+          echo "Updated project.toml with version:"
+          grep "^version" project.toml
+          cd ..
+
+      - name: Build distributions
+        run: |
+          cd gesund-src
+          python3 -m build
+          cd ..
+          # Copy the built artifacts to root for later jobs
+          cp -R gesund-src/dist .
+
+      - name: Upload built artifacts
         uses: actions/upload-artifact@v3
         with:
           name: dist
-          path: dist/
+          path: dist
 
   pypi_publish:
     name: Upload release to PyPI
-    needs: [setup_and_build, details]
+    needs: setup_and_build
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
     steps:
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v3
         with:
           name: dist
           path: dist/
-
       - name: Publish distribution to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        env:
+          TWINE_USERNAME: "__token__"
+          TWINE_PASSWORD: ${{ env.PYPI_API_TOKEN }}
+        run: |
+          python3 -m pip install twine --user
+          twine upload dist/*
+
+  test_deployment:
+    name: Test deployment from PyPI
+    needs: pypi_publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up test environment
+        run: |
+          NEW_VERSION="${{ needs.details.outputs.new_version }}"
+          mkdir test_sdk_v${NEW_VERSION}
+          cd test_sdk_v${NEW_VERSION}
+          python3 -m venv test_env
+          . test_env/bin/activate
+          cp ../gesund/requirements.txt .
+          pip install -r requirements.txt
+          # Install the package from PyPI
+          pip install sdkgesund==${NEW_VERSION}
+          pip install pytest
+          cp -r ../gesund/tests .
+          pytest tests/
+
+      - name: Cleanup test environment
+        run: |
+          NEW_VERSION="${{ needs.details.outputs.new_version }}"
+          cd ..
+          rm -rf test_sdk_v${NEW_VERSION}
 
   github_release:
     name: Create GitHub Release
-    needs: [setup_and_build, details]
+    needs: [setup_and_build, details, test_deployment]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
